@@ -17,7 +17,7 @@
 
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "sensor_msgs/msg/battery_state.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
@@ -28,6 +28,7 @@ class dsrAgent: public rclcpp::Node{
 		dsrAgent();
 		~dsrAgent();
 	private:
+		rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_sub_;
 		rclcpp::TimerBase::SharedPtr timer_;
 		int count_;
 
@@ -40,6 +41,7 @@ class dsrAgent: public rclcpp::Node{
 		//std::unique_ptr<DSR::DSRViewer> graph_viewer_;
 
 		void timer_callback();
+		void battery_callback(const sensor_msgs::msg::BatteryState::SharedPtr msg);
 };
 
 #endif  // DSR_AGENT__DSR_AGENT_HPP_

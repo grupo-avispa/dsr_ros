@@ -18,7 +18,7 @@ dsrAgent::dsrAgent(): Node("dsr_agent"), count_(0), agent_name_("agent2"), agent
 	// Create graph
 	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "/home/alberto/initial_dsr.json");
 	//G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
-	RCLCPP_INFO(this->get_logger(), "Graph loaded2");
+	/*RCLCPP_INFO(this->get_logger(), "Graph loaded2");
 	auto world_node = G_->get_node("world");
 	if(!world_node.has_value()){
 		RCLCPP_ERROR(this->get_logger(), "World node not found");
@@ -30,11 +30,17 @@ dsrAgent::dsrAgent(): Node("dsr_agent"), count_(0), agent_name_("agent2"), agent
 	}
 	DSR::Node robot_node = DSR::Node::create<robot_node_type>("robot");
 	G_->insert_node(robot_node);
-	G_->write_to_json_file("/home/alberto/initial_dsr2.json");
+	G_->write_to_json_file("/home/alberto/initial_dsr2.json");*/
 
 	// DSR graph viewer
 	//graph_viewer_ = std::make_unique<DSR::DSRViewer>(this, G_, 0, DSR::DSRViewer::view::none);
 	//QWidget::setWindowTitle(QString::fromStdString(agent_name_ + "-") + QString::number(agent_id_));
+
+	// Subscriber
+	battery_sub_ = this->create_subscription<sensor_msgs::msg::BatteryState>(
+						"battery", 
+						rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
+						std::bind(&dsrAgent::battery_callback, this, std::placeholders::_1));
 }
 
 dsrAgent::~dsrAgent() {
@@ -47,6 +53,23 @@ void dsrAgent::timer_callback(){
 	// Update the node in the graph to set the modified attributes available
 	G_->update_node(robot_node.value());
 	RCLCPP_INFO(this->get_logger(), "Robot node updated with level: %d", count_);
+}
+
+void dsrAgent::battery_callback(const sensor_msgs::msg::BatteryState::SharedPtr msg){
+	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to battery topic [%s]", "battery");
+	// Get the node from the graph
+	if (auto battery_node = G_->get_node("battery"); battery_node.has_value()){
+		// Modify the attributes of the node
+		G_->add_or_modify_attrib_local<battery_load_att>(battery_node.value(), msg->percentage);
+		// Update the node in the graph to set the modified attributes available
+		G_->update_node(battery_node.value());
+		RCLCPP_INFO(this->get_logger(), "Battery node updated with level [%f]", msg->percentage);
+	}else{
+		RCLCPP_ERROR(this->get_logger(), "Battery node not found");
+		auto new_battery_node = DSR::Node::create<battery_node_type>("battery");
+		auto id = G_->insert_node(new_battery_node);
+		RCLCPP_INFO(this->get_logger(), "Battery node created with id [%d]", id.value());
+	}
 }
 
 int main(int argc, char** argv){

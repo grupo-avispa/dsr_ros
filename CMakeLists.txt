@@ -19,6 +19,9 @@ find_package(rclcpp REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
+find_package(fastrtps REQUIRED)
+find_package(fastcdr REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 ###########
 ## Build ##
@@ -38,6 +41,7 @@ add_executable (${PROJECT_NAME} src/dsr_agent.cpp)
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   Eigen3
+  sensor_msgs
 )
 target_link_libraries(${PROJECT_NAME} ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
