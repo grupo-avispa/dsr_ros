@@ -17,7 +17,8 @@
 
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/battery_state.hpp"
+#include "rclcpp/generic_subscription.hpp"
+#include "rclcpp/serialization.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
@@ -28,20 +29,23 @@ class dsrAgent: public rclcpp::Node{
 		dsrAgent();
 		~dsrAgent();
 	private:
-		rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_sub_;
-		rclcpp::TimerBase::SharedPtr timer_;
-		int count_;
+		rclcpp::GenericSubscription::SharedPtr generic_sub_;
+		std::string ros_topic_;
 
 		// DSR graph
 		std::shared_ptr<DSR::DSRGraph> G_;
 		std::string agent_name_;
 		int agent_id_;
+		std::string dsr_node_name_;
 
 		// DSR graph viewer
 		//std::unique_ptr<DSR::DSRViewer> graph_viewer_;
 
-		void timer_callback();
-		void battery_callback(const sensor_msgs::msg::BatteryState::SharedPtr msg);
+		void get_params();
+		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
+		template <typename T> void create_and_insert_node(const std::string &name);
+		void modify_battery_attibutes_and_update(const std::optional<DSR::Node> &node, 
+												const sensor_msgs::msg::BatteryState &msg);
 };
 
 #endif  // DSR_AGENT__DSR_AGENT_HPP_
