@@ -92,10 +92,14 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 		serializer.deserialize_message(msg.get(), &battery_msg);
 		// Get the node from the graph
 		if (auto dsr_node = G_->get_node(dsr_node_name_); dsr_node.has_value()){
-			modify_battery_attibutes_and_update(dsr_node, battery_msg);
+			//modify_battery_attributes_and_update(dsr_node, battery_msg);
+			modify_node_attributes_and_update<sensor_msgs::msg::BatteryState>(dsr_node, battery_msg);
 		}else{
 			create_and_insert_node<battery_node_type>(dsr_node_name_);
 		}
+
+		// Using template
+		//deserialize_and_update<sensor_msgs::msg::BatteryState, battery_node_type>(msg, dsr_node_name_);
 	}else if (topic_type == "std_msgs/msg/String"){
 		// Create a ROS2 message of type String
 		std_msgs::msg::String string_msg;
@@ -104,6 +108,20 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 		// TODO: Publish to DSR
 	}else{
 		RCLCPP_WARN_ONCE(this->get_logger(), "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
+	}
+}
+template <typename R, typename D> 
+void dsrAgent::deserialize_and_update(const std::shared_ptr<rclcpp::SerializedMessage> msg, 
+										const std::string &node_name){
+	// Create a ROS2 message of type R
+	R ros_msg;
+	auto serializer = rclcpp::Serialization<R>();
+	serializer.deserialize_message(msg.get(), &ros_msg);
+	// Get the node from the graph
+	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
+		modify_battery_attributes_and_update(dsr_node, ros_msg);
+	}else{
+		create_and_insert_node<D>(node_name);
 	}
 }
 
@@ -115,7 +133,7 @@ void dsrAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_INFO(this->get_logger(), "%s node created with id [%d]", id.value());
 }
 
-void dsrAgent::modify_battery_attibutes_and_update(const std::optional<DSR::Node> &node, 
+void dsrAgent::modify_battery_attributes_and_update(const std::optional<DSR::Node> &node, 
 												const sensor_msgs::msg::BatteryState &msg){
 	// Modify the attributes of the node
 	G_->add_or_modify_attrib_local<battery_voltage_att>(node.value(), msg.voltage);
@@ -136,6 +154,12 @@ void dsrAgent::modify_battery_attibutes_and_update(const std::optional<DSR::Node
 	// Update the node in the graph to set the modified attributes available
 	G_->update_node(node.value());
 	RCLCPP_INFO(this->get_logger(), "%s node updated", node..value().name());
+}
+
+template <> 
+void dsr_agent::modify_node_attributes_and_update<sensor_msgs::msg::BatteryState>(
+	const std::optional<DSR::Node> &node, const sensor_msgs::msg::BatteryState &msg){
+
 }
 
 int main(int argc, char** argv){
