@@ -81,10 +81,11 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 	// In order to deserialize the message we have to manually create a ROS2
 	// message in which we want to convert the serialized data.
 	auto data = rclcpp::Node::get_topic_names_and_types();
-	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to topic [%s] of type %s", 
-						ros_topic_, data[ros_topic_][0].c_str());
+	const std::string topic_type = data[ros_topic_][0];
+	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to topic [%s] of type [%s]", 
+						ros_topic_, topic_type.c_str());
 
-	if (data[ros_topic_][0] == "sensor_msgs/msg/BatteryState"){
+	if (topic_type == "sensor_msgs/msg/BatteryState"){
 		// Create a ROS2 message of type BatteryState
 		sensor_msgs::msg::BatteryState battery_msg;
 		auto serializer = rclcpp::Serialization<sensor_msgs::msg::BatteryState>();
@@ -95,14 +96,14 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 		}else{
 			create_and_insert_node<battery_node_type>(dsr_node_name_);
 		}
-	}else if (data[ros_topic_][0] == "std_msgs/msg/String"){
+	}else if (topic_type == "std_msgs/msg/String"){
 		// Create a ROS2 message of type String
 		std_msgs::msg::String string_msg;
 		auto serializer = rclcpp::Serialization<std_msgs::msg::String>();
 		serializer.deserialize_message(msg.get(), &string_msg);
 		// TODO: Publish to DSR
 	}else{
-		RCLCPP_WARN_ONCE(this->get_logger(), "Received message of type %s. Unknown for the DSR.", data[ros_topic_][0].c_str());
+		RCLCPP_WARN_ONCE(this->get_logger(), "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
 	}
 }
 
