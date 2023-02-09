@@ -27,10 +27,10 @@ REGISTER_TYPE(battery_power_supply_status, int, false)
 REGISTER_TYPE(battery_power_supply_health, int, false)
 REGISTER_TYPE(battery_power_supply_technology, int, false)
 REGISTER_TYPE(battery_present, bool, false)
-REGISTER_TYPE(battery_cell_voltage, std::reference_wrapper<const std::vector<float>>, true)
-REGISTER_TYPE(battery_cell_temperature, std::reference_wrapper<const std::vector<float>>, true)
-REGISTER_TYPE(battery_location, std::reference_wrapper<const std::string>, false)
-REGISTER_TYPE(battery_serial_number, std::reference_wrapper<const std::string>, false)
+REGISTER_TYPE(battery_cell_voltage, std::reference_wrapper<const std::vector<float>>, false)
+REGISTER_TYPE(battery_cell_temperature, std::reference_wrapper<const std::vector<float>>, false)
+REGISTER_TYPE(battery_location, std::string, false)
+REGISTER_TYPE(battery_serial_number, std::string, false)
 
 
 #endif  // DSR_AGENT__ROS_ATTR_NAME_HPP_

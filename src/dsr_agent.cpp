@@ -142,7 +142,7 @@ void dsrAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "%s node not found", name.c_str());
 	auto new_dsr_node = DSR::Node::create<T>(name);
 	auto id = G_->insert_node(new_dsr_node);
-	RCLCPP_INFO(this->get_logger(), "%s node created with id [%d]", id.value());
+	RCLCPP_INFO(this->get_logger(), "%s node created with id [%d]", name.c_str(), std::to_string(id.value()));
 }
 
 void dsrAgent::modify_battery_attributes_and_update(std::optional<DSR::Node> node, 
@@ -165,7 +165,11 @@ void dsrAgent::modify_battery_attributes_and_update(std::optional<DSR::Node> nod
 	G_->add_or_modify_attrib_local<battery_serial_number_att>(node.value(), msg.serial_number);
 	// Update the node in the graph to set the modified attributes available
 	G_->update_node(node.value());
-	RCLCPP_INFO(this->get_logger(), "%s node updated", node.value().name());
+	// Print the attributes of the node
+	RCLCPP_INFO(this->get_logger(), "%s node updated with attributes:", node.value().name().c_str());
+	for (auto &[key, value] : node.value().attrs()){
+		RCLCPP_INFO(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
+	}
 }
 
 template <> 
