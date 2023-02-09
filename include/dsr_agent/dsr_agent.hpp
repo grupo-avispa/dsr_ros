@@ -42,15 +42,13 @@ class dsrAgent: public rclcpp::Node{
 		//std::unique_ptr<DSR::DSRViewer> graph_viewer_;
 
 		void get_params();
-		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
-		// TODO: Remove this function
-		template <typename R, typename D> void deserialize_and_update(
+		template <typename NODE_TYPE> void create_and_insert_node(const std::string &name);
+		template <typename ROS_TYPE> void modify_node_attributes(std::optional<DSR::Node> &node, 
+																const ROS_TYPE &msg);
+		template <typename ROS_TYPE, typename NODE_TYPE> void deserialize_and_update_attributes(
 			const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string &node_name);
-		template <typename T> void create_and_insert_node(const std::string &name);
-		template <typename T> void modify_node_attributes_and_update(std::optional<DSR::Node> node, 
-																const T &msg);
-		void modify_battery_attributes_and_update(std::optional<DSR::Node> node, 
-												const sensor_msgs::msg::BatteryState &msg);
+
+		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
 };
 
 #endif  // DSR_AGENT__DSR_AGENT_HPP_
