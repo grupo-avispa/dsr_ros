@@ -9,9 +9,6 @@
  *
  */
 
-// QT
-#include <QWidget>
-
 // ROS
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "nav2_util/node_utils.hpp"
@@ -26,20 +23,15 @@ dsrAgent::dsrAgent(): Node("dsr_agent"){
 	get_params();
 
 	// Create graph
-	//G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
+	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
 
-	//! This is only for testing
-	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "/home/alberto/initial_dsr.json");
-	RCLCPP_INFO(this->get_logger(), "Graph loaded");
-	auto world_node = G_->get_node("world");
-	if(!world_node.has_value()){
-		RCLCPP_ERROR(this->get_logger(), "World node not found");
-		auto world_node = DSR::Node::create<world_node_type>("world");
-		auto id = G_->insert_node(world_node);
-		RCLCPP_INFO(this->get_logger(), "World node created with id: %d", id.value());
-	}else{
-		G_->update_node(world_node.value());
-	}
+	// Add connection signals
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_signal, this, &dsrAgent::node_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &dsrAgent::node_attributes_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_signal, this, &dsrAgent::edge_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &dsrAgent::edge_attributes_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::del_edge_signal, this, &dsrAgent::edge_deleted);
+	QObject::connect(G_.get(), &DSR::DSRGraph::del_node_signal, this, &dsrAgent::node_deleted);
 
 	// Subscriber to the topic with a generic subscription
 	auto data = rclcpp::Node::get_topic_names_and_types();
@@ -54,6 +46,9 @@ dsrAgent::dsrAgent(): Node("dsr_agent"){
 }
 
 dsrAgent::~dsrAgent() {
+	// TODO: Save the log into a file
+	//G_->write_to_json_file("./"+agent_name+".json");
+	G_.reset();
 }
 
 /* Initialize ROS parameters */
@@ -96,7 +91,7 @@ void dsrAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "%s node not found", name.c_str());
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	auto id = G_->insert_node(new_dsr_node);
-	RCLCPP_INFO(this->get_logger(), "%s node created with id [%d]", name.c_str(), std::to_string(id.value()));
+	RCLCPP_INFO(this->get_logger(), "%s node created with id [%s]", name.c_str(), std::to_string(id.value()));
 }
 
 template <> 
@@ -160,10 +155,33 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 	}
 }
 
-int main(int argc, char** argv){
-	rclcpp::init(argc, argv);
-	auto node = std::make_shared<dsrAgent>();
-	rclcpp::spin(node);
-	rclcpp::shutdown();
-	return 0;
+
+void dsrAgent::node_updated(std::uint64_t id, const std::string &type){
+	if (type == "battery"){
+		if (auto node = G_->get_node(id); node.has_value()){
+			RCLCPP_INFO(this->get_logger(), "Id %s, type: %s", id, type.c_str());
+			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
+			RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", static_cast<float>(voltage.value()));
+		}
+	}
+}
+
+void dsrAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+
+}
+
+void dsrAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+
+}
+
+void dsrAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, const std::string &type, const std::vector<std::string>& att_names){
+
+}
+
+void dsrAgent::node_deleted(std::uint64_t id){
+
+}
+
+void dsrAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
+
 }

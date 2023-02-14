@@ -15,6 +15,9 @@
 // C++
 #include <string>
 
+// Qt
+#include <QObject>
+
 // ROS
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/generic_subscription.hpp"
@@ -24,18 +27,28 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr/gui/dsr_gui.h"
 
-class dsrAgent: public rclcpp::Node{
+class dsrAgent: public QObject, public rclcpp::Node{
+	Q_OBJECT
 	public:
 		dsrAgent();
 		~dsrAgent();
+
+	public slots:
+		void node_updated(std::uint64_t id, const std::string &type);
+		void node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names);
+		void edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type);
+		void edge_attributes_updated(std::uint64_t from, std::uint64_t to, const std::string &type, const std::vector<std::string>& att_names);
+		void node_deleted(std::uint64_t id);
+		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
+
 	private:
 		rclcpp::GenericSubscription::SharedPtr generic_sub_;
 		std::string ros_topic_;
 
 		// DSR graph
 		std::shared_ptr<DSR::DSRGraph> G_;
-		std::string agent_name_;
 		int agent_id_;
+		std::string agent_name_;
 		std::string dsr_node_name_;
 
 		// DSR graph viewer
