@@ -91,7 +91,9 @@ void dsrAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "%s node not found", name.c_str());
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	auto id = G_->insert_node(new_dsr_node);
-	RCLCPP_INFO(this->get_logger(), "%s node created with id [%s]", name.c_str(), std::to_string(id.value()));
+	if (id.has_value()){
+		RCLCPP_INFO(this->get_logger(), "%s node created with id [%u]", name.c_str(), id.value());
+	}
 }
 
 template <> 
@@ -155,13 +157,14 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 	}
 }
 
-
 void dsrAgent::node_updated(std::uint64_t id, const std::string &type){
 	if (type == "battery"){
 		if (auto node = G_->get_node(id); node.has_value()){
-			RCLCPP_INFO(this->get_logger(), "Id %s, type: %s", id, type.c_str());
+			RCLCPP_INFO(this->get_logger(), "Id %u, type: %s", id, type.c_str());
 			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
-			RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", static_cast<float>(voltage.value()));
+			if (voltage.has_value()){
+				RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", static_cast<float>(voltage.value()));
+			}
 		}
 	}
 }
