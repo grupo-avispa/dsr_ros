@@ -13,6 +13,7 @@
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "nav2_util/node_utils.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
+#include "sensor_msgs/msg/image.hpp"
 
 #include "dsr_agent/dsr_agent.hpp"
 #include "dsr_agent/ros_attr_name.hpp"
@@ -84,15 +85,35 @@ void dsrAgent::get_params(){
 							.set__description("The name of the node in the DSR graph"));
 	this->get_parameter("dsr_node_name", dsr_node_name_);
 	RCLCPP_INFO(this->get_logger(), "The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
+
+	nav2_util::declare_parameter_if_not_declared(this, "dsr_parent_node_name", rclcpp::ParameterValue("robot"), 
+							rcl_interfaces::msg::ParameterDescriptor()
+							.set__description("The name of the parent node in the DSR graph"));
+	this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
+	RCLCPP_INFO(this->get_logger(), "The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
 }
 
 template <typename NODE_TYPE> 
-void dsrAgent::create_and_insert_node(const std::string &name){
+std::optional<uint64_t> dsrAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "%s node not found", name.c_str());
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	auto id = G_->insert_node(new_dsr_node);
 	if (id.has_value()){
-		RCLCPP_INFO(this->get_logger(), "%s node created with id [%u]", name.c_str(), id.value());
+		RCLCPP_INFO(this->get_logger(), "%s node inserted successfully with id [%u]", name.c_str(), id.value());
+	}
+	return id;
+}
+
+template <typename EDGE_TYPE> 
+void dsrAgent::create_and_insert_edge(uint64_t from, uint64_t to){
+	RCLCPP_ERROR_STREAM(this->get_logger(), "Edge: " << from << "->" << to << " not found");
+	auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
+	if (G_->insert_or_assign_edge(new_edge)){
+		RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge: " << from << "->" << to <<
+			" of type: " << new_edge.type().c_str());
+	}else{
+		RCLCPP_ERROR_STREAM(this->get_logger(), "The edge: " << from << "->" << to <<
+			" of type: [" << new_edge.type().c_str() << "] couldn't be inserted");
 	}
 }
 
@@ -122,9 +143,23 @@ void dsrAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 	}
 }
 
-template <typename ROS_TYPE, typename NODE_TYPE> 
+template <> 
+void dsrAgent::modify_node_attributes<sensor_msgs::msg::Image>(
+	std::optional<DSR::Node> &node, const sensor_msgs::msg::Image &msg){
+	// Modify the attributes of the node
+	G_->add_or_modify_attrib_local<cam_rgb_att>(node.value(), msg.data);
+	G_->add_or_modify_attrib_local<cam_rgb_height_att>(node.value(), static_cast<int>(msg.height));
+	G_->add_or_modify_attrib_local<cam_rgb_width_att>(node.value(), static_cast<int>(msg.width));
+	// Print the attributes of the node
+	RCLCPP_DEBUG(this->get_logger(), "%s node updated with attributes:", node.value().name().c_str());
+	for (auto &[key, value] : node.value().attrs()){
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
+	}
+}
+
+template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
 void dsrAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::SerializedMessage> msg, 
-										const std::string &node_name){
+										const std::string &node_name, const std::string &parent_name){
 	// Deserialize a message to ROS_TYPE
 	ROS_TYPE ros_msg;
 	auto serializer = rclcpp::Serialization<ROS_TYPE>();
@@ -135,7 +170,12 @@ void dsrAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::S
 		modify_node_attributes<ROS_TYPE>(dsr_node, ros_msg);
 		G_->update_node(dsr_node.value());
 	}else{
-		create_and_insert_node<NODE_TYPE>(node_name);
+		auto new_id = create_and_insert_node<NODE_TYPE>(node_name);
+		if (!parent_name.empty()){
+			if (auto parent_node = G_->get_node(parent_name); parent_node.has_value()){
+				create_and_insert_edge<EDGE_TYPE>(parent_node.value().id(), new_id.value());
+			}
+		}
 	}
 }
 
@@ -147,11 +187,15 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to topic [%s] of type [%s]", 
 						ros_topic_.c_str(), topic_type.c_str());
 
+	// TODO: Replace 'has_edge_type' to a type according to (sensor, actuator, navigation, etc)
 	if (topic_type == "sensor_msgs/msg/BatteryState"){
-		deserialize_and_update_attributes<sensor_msgs::msg::BatteryState, battery_node_type>(msg, dsr_node_name_);
-	}else if (topic_type == "std_msgs/msg/String"){
-		// Create a ROS2 message of type String
-		// TODO: Publish to DSR
+		deserialize_and_update_attributes<sensor_msgs::msg::BatteryState, 
+											battery_node_type,
+											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+	}else if (topic_type == "sensor_msgs/msg/Image"){
+		deserialize_and_update_attributes<sensor_msgs::msg::Image, 
+											camera_node_type,
+											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
 	}else{
 		RCLCPP_WARN_ONCE(this->get_logger(), "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
 	}
@@ -163,7 +207,7 @@ void dsrAgent::node_updated(std::uint64_t id, const std::string &type){
 			RCLCPP_INFO(this->get_logger(), "Id %u, type: %s", id, type.c_str());
 			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
 			if (voltage.has_value()){
-				RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", static_cast<float>(voltage.value()));
+				RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", voltage.value());
 			}
 		}
 	}

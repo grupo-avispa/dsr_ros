@@ -49,17 +49,20 @@ class dsrAgent: public QObject, public rclcpp::Node{
 		std::shared_ptr<DSR::DSRGraph> G_;
 		int agent_id_;
 		std::string agent_name_;
-		std::string dsr_node_name_;
+		std::string dsr_node_name_, dsr_parent_node_name_;
 
 		// DSR graph viewer
 		//std::unique_ptr<DSR::DSRViewer> graph_viewer_;
 
 		void get_params();
-		template <typename NODE_TYPE> void create_and_insert_node(const std::string &name);
+		template <typename NODE_TYPE> std::optional<uint64_t> create_and_insert_node(const std::string &name);
+		template <typename EDGE_TYPE> void create_and_insert_edge(uint64_t from, uint64_t to);
 		template <typename ROS_TYPE> void modify_node_attributes(std::optional<DSR::Node> &node, 
 																const ROS_TYPE &msg);
-		template <typename ROS_TYPE, typename NODE_TYPE> void deserialize_and_update_attributes(
-			const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string &node_name);
+		template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
+			void deserialize_and_update_attributes(
+				const std::shared_ptr<rclcpp::SerializedMessage> msg, 
+				const std::string &node_name, const std::string &parent_name);
 
 		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
 };
