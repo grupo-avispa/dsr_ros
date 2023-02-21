@@ -36,14 +36,28 @@ include_directories(
 set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
 set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 
+############
+## Qt Moc ##
+############
+
+file(GLOB_RECURSE HEADERS_TO_MOC include/*.hpp)
+
+qt5_wrap_cpp(nodes_moc
+    ${HEADERS_TO_MOC}
+  TARGET ${PROJECT_NAME}
+  OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
+)
+
 # Executable node
-add_executable (${PROJECT_NAME} src/dsr_agent.cpp)
+add_executable (${PROJECT_NAME} src/dsr_agent.cpp src/dsr_agent_node.cpp)
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   Eigen3
   sensor_msgs
+  Qt5
 )
 target_link_libraries(${PROJECT_NAME} ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(${PROJECT_NAME} PRIVATE ${nodes_moc})
 
 #############
 ## Install ##
@@ -58,6 +72,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION include/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.hpp"
 #   PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
+install(DIRECTORY params
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 #############
