@@ -110,7 +110,7 @@ void dsrAgent::create_and_insert_edge(uint64_t from, uint64_t to){
 	auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
 	if (G_->insert_or_assign_edge(new_edge)){
 		RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" << from << "->" << to <<
-			"] of type [" << new_edge.type().c_str()) << "]";
+			"] of type [" << new_edge.type().c_str() << "]");
 	}else{
 		RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" << from << "->" << to <<
 			"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
