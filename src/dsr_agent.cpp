@@ -14,6 +14,7 @@
 #include "nav2_util/node_utils.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/laser_scan.hpp"
 
 #include "dsr_agent/dsr_agent.hpp"
 #include "dsr_agent/ros_attr_name.hpp"
@@ -40,7 +41,7 @@ dsrAgent::dsrAgent(): Node("dsr_agent"){
 		generic_sub_ = create_generic_subscription(
 						ros_topic_, 
 						type, 
-						rclcpp::QoS(rclcpp::SystemDefaultsQoS()),
+						rclcpp::QoS(rclcpp::SensorDataQoS()),
 						std::bind(&dsrAgent::serial_callback, this, std::placeholders::_1)
 						);
 	}
@@ -157,6 +158,28 @@ void dsrAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 	}
 }
 
+template <> 
+void dsrAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
+	std::optional<DSR::Node> &node, const sensor_msgs::msg::LaserScan &msg){
+	
+	// Convert from ROS to DSR
+	std::vector<float> angles(msg.ranges.size());
+	angles[0] = msg.angle_min;
+	for (uint i = 1; i < msg.ranges.size()-1; i++){
+		angles[i] = angles[i-1] + msg.angle_increment;
+	}
+	angles[msg.ranges.size()-1] = msg.angle_max;
+	
+	// Modify the attributes of the node
+	G_->add_or_modify_attrib_local<laser_angles_att>(node.value(), angles);
+	G_->add_or_modify_attrib_local<laser_dists_att>(node.value(), msg.ranges);
+	// Print the attributes of the node
+	RCLCPP_DEBUG(this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
+	for (auto &[key, value] : node.value().attrs()){
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
+	}
+}
+
 template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
 void dsrAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::SerializedMessage> msg, 
 										const std::string &node_name, const std::string &parent_name){
@@ -195,6 +218,10 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 	}else if (topic_type == "sensor_msgs/msg/Image"){
 		deserialize_and_update_attributes<sensor_msgs::msg::Image, 
 											rgbd_node_type,
+											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+	}else if (topic_type == "sensor_msgs/msg/LaserScan"){
+		deserialize_and_update_attributes<sensor_msgs::msg::LaserScan, 
+											laser_node_type,
 											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
 	}else{
 		RCLCPP_WARN_ONCE(this->get_logger(), "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
