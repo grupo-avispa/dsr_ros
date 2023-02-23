@@ -1,5 +1,5 @@
 /*
- * DSR AGENT ROS NODE
+ * GENERIC AGENT ROS NODE
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
@@ -17,11 +17,12 @@
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
-#include "dsr_agent/dsr_agent.hpp"
+# DSR
 #include "dsr_agent/ros_attr_name.hpp"
+#include "dsr_agent/generic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-dsrAgent::dsrAgent(): Node("dsr_agent"){
+genericAgent::genericAgent(): Node("generic_agent"){
 	// Get ROS parameters
 	get_params();
 
@@ -29,12 +30,12 @@ dsrAgent::dsrAgent(): Node("dsr_agent"){
 	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
 
 	// Add connection signals
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_signal, this, &dsrAgent::node_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &dsrAgent::node_attributes_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_signal, this, &dsrAgent::edge_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &dsrAgent::edge_attributes_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::del_edge_signal, this, &dsrAgent::edge_deleted);
-	QObject::connect(G_.get(), &DSR::DSRGraph::del_node_signal, this, &dsrAgent::node_deleted);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_signal, this, &genericAgent::node_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &genericAgent::node_attributes_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_signal, this, &genericAgent::edge_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &genericAgent::edge_attributes_updated);
+	QObject::connect(G_.get(), &DSR::DSRGraph::del_edge_signal, this, &genericAgent::edge_deleted);
+	QObject::connect(G_.get(), &DSR::DSRGraph::del_node_signal, this, &genericAgent::node_deleted);
 
 	// Subscriber to the topic with a generic subscription
 	auto data = rclcpp::Node::get_topic_names_and_types();
@@ -43,19 +44,19 @@ dsrAgent::dsrAgent(): Node("dsr_agent"){
 						ros_topic_, 
 						type, 
 						rclcpp::QoS(rclcpp::SensorDataQoS()),
-						std::bind(&dsrAgent::serial_callback, this, std::placeholders::_1)
+						std::bind(&genericAgent::serial_callback, this, std::placeholders::_1)
 						);
 	}
 }
 
-dsrAgent::~dsrAgent() {
+genericAgent::~genericAgent() {
 	// TODO: Save the log into a file
 	//G_->write_to_json_file("./"+agent_name+".json");
 	G_.reset();
 }
 
 /* Initialize ROS parameters */
-void dsrAgent::get_params(){
+void genericAgent::get_params(){
 	// Agent parameters
 	nav2_util::declare_parameter_if_not_declared(this, "agent_name", rclcpp::ParameterValue(""), 
 							rcl_interfaces::msg::ParameterDescriptor()
@@ -96,7 +97,7 @@ void dsrAgent::get_params(){
 }
 
 template <typename NODE_TYPE> 
-std::optional<uint64_t> dsrAgent::create_and_insert_node(const std::string &name){
+std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "Node [%s] not found", name.c_str());
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	auto id = G_->insert_node(new_dsr_node);
@@ -107,7 +108,7 @@ std::optional<uint64_t> dsrAgent::create_and_insert_node(const std::string &name
 }
 
 template <typename EDGE_TYPE> 
-void dsrAgent::create_and_insert_edge(uint64_t from, uint64_t to){
+void genericAgent::create_and_insert_edge(uint64_t from, uint64_t to){
 	RCLCPP_ERROR_STREAM(this->get_logger(), "Edge [" << from << "->" << to << "] not found");
 	auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
 	if (G_->insert_or_assign_edge(new_edge)){
@@ -120,7 +121,7 @@ void dsrAgent::create_and_insert_edge(uint64_t from, uint64_t to){
 }
 
 template <> 
-void dsrAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
+void genericAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::BatteryState &msg){
 	// Modify the attributes of the node
 	G_->add_or_modify_attrib_local<battery_voltage_att>(node.value(), msg.voltage);
@@ -146,7 +147,7 @@ void dsrAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 }
 
 template <> 
-void dsrAgent::modify_node_attributes<sensor_msgs::msg::Image>(
+void genericAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::Image &msg){
 	// Modify the attributes of the node depending the type of the image
 	if (msg.encoding == sensor_msgs::image_encodings::RGB8){
@@ -166,7 +167,7 @@ void dsrAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 }
 
 template <> 
-void dsrAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
+void genericAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::LaserScan &msg){
 	
 	// Convert from ROS to DSR
@@ -188,7 +189,7 @@ void dsrAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
 }
 
 template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
-void dsrAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::SerializedMessage> msg, 
+void genericAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::SerializedMessage> msg, 
 										const std::string &node_name, const std::string &parent_name){
 	// Deserialize a message to ROS_TYPE
 	ROS_TYPE ros_msg;
@@ -209,7 +210,7 @@ void dsrAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::S
 	}
 }
 
-void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){
+void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){
 	// In order to deserialize the message we have to manually create a ROS2
 	// message in which we want to convert the serialized data.
 	auto data = rclcpp::Node::get_topic_names_and_types();
@@ -235,7 +236,7 @@ void dsrAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> 
 	}
 }
 
-void dsrAgent::node_updated(std::uint64_t id, const std::string &type){
+void genericAgent::node_updated(std::uint64_t id, const std::string &type){
 	if (type == "battery"){
 		if (auto node = G_->get_node(id); node.has_value()){
 			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
@@ -246,22 +247,22 @@ void dsrAgent::node_updated(std::uint64_t id, const std::string &type){
 	}
 }
 
-void dsrAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+void genericAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
 
 }
 
-void dsrAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+void genericAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 
 }
 
-void dsrAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, const std::string &type, const std::vector<std::string>& att_names){
+void genericAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, const std::string &type, const std::vector<std::string>& att_names){
 
 }
 
-void dsrAgent::node_deleted(std::uint64_t id){
+void genericAgent::node_deleted(std::uint64_t id){
 
 }
 
-void dsrAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
+void genericAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
 
 }

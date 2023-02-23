@@ -38,26 +38,26 @@ include_directories(
 set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
 set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 
-###############
-## DSR AGENT ##
-###############
+###################
+## GENERIC AGENT ##
+###################
 
 ## Qt Moc
-qt5_wrap_cpp(dsr_moc include/${PROJECT_NAME}/dsr_agent.hpp
-  TARGET dsr_agent
+qt5_wrap_cpp(generic_moc include/${PROJECT_NAME}/generic_agent.hpp
+  TARGET generic_agent
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 
 # Executable node
-add_executable(dsr_agent src/dsr_agent.cpp src/dsr_agent_node.cpp)
-ament_target_dependencies(dsr_agent
+add_executable(generic_agent src/generic_agent.cpp src/generic_agent_node.cpp)
+ament_target_dependencies(generic_agent
   rclcpp
   Eigen3
   Qt5
   sensor_msgs
 )
-target_link_libraries(dsr_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(dsr_agent PRIVATE ${dsr_moc})
+target_link_libraries(generic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(generic_agent PRIVATE ${generic_moc})
 
 ##############
 ## TF AGENT ##
@@ -84,7 +84,7 @@ target_sources(tf_agent PRIVATE ${tf_moc})
 #############
 ## Install ##
 #############
-install(TARGETS dsr_agent tf_agent
+install(TARGETS generic_agent tf_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
