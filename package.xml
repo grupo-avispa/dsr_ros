@@ -16,6 +16,8 @@
   <depend>fastcdr</depend>
   <depend>fastrtps</depend>
   <depend>sensor_msgs</depend>
+  <depend>tf2_msgs</depend>
+  <depend>tf2_sensor_msgs</depend>
   <exec_depend>libqt5-core</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

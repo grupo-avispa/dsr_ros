@@ -1,5 +1,5 @@
 /*
- * DSR AGENT ROS NODE
+ * TF AGENT ROS NODE
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef DSR_AGENT__DSR_AGENT_HPP_
-#define DSR_AGENT__DSR_AGENT_HPP_
+#ifndef DSR_AGENT__TF_AGENT_HPP_
+#define DSR_AGENT__TF_AGENT_HPP_
 
 // C++
 #include <string>
@@ -20,17 +20,16 @@
 
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp/generic_subscription.hpp"
-#include "rclcpp/serialization.hpp"
+#include "tf2_msgs/msg/tf_message.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
 
-class dsrAgent: public QObject, public rclcpp::Node{
+class tfAgent: public QObject, public rclcpp::Node{
 	Q_OBJECT
 	public:
-		dsrAgent();
-		~dsrAgent();
+		tfAgent();
+		~tfAgent();
 
 	public slots:
 		void node_updated(std::uint64_t id, const std::string &type);
@@ -41,26 +40,18 @@ class dsrAgent: public QObject, public rclcpp::Node{
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 
 	private:
-		rclcpp::GenericSubscription::SharedPtr generic_sub_;
-		std::string ros_topic_;
+		rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;
 
 		// DSR graph
 		std::shared_ptr<DSR::DSRGraph> G_;
+		std::unique_ptr<DSR::RT_API> rt_;
 		int agent_id_;
 		std::string agent_name_;
-		std::string dsr_node_name_, dsr_parent_node_name_;
 
 		void get_params();
 		template <typename NODE_TYPE> std::optional<uint64_t> create_and_insert_node(const std::string &name);
-		template <typename EDGE_TYPE> void create_and_insert_edge(uint64_t from, uint64_t to);
-		template <typename ROS_TYPE> void modify_node_attributes(std::optional<DSR::Node> &node, 
-																const ROS_TYPE &msg);
-		template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
-			void deserialize_and_update_attributes(
-				const std::shared_ptr<rclcpp::SerializedMessage> msg, 
-				const std::string &node_name, const std::string &parent_name);
 
-		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
+		void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg);
 };
 
 #endif  // DSR_AGENT__DSR_AGENT_HPP_

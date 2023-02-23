@@ -22,6 +22,8 @@ find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(tf2_msgs REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
 
 ###########
 ## Build ##
@@ -36,33 +38,53 @@ include_directories(
 set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
 set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 
-############
-## Qt Moc ##
-############
+###############
+## DSR AGENT ##
+###############
 
-file(GLOB_RECURSE HEADERS_TO_MOC include/*.hpp)
-
-qt5_wrap_cpp(nodes_moc
-    ${HEADERS_TO_MOC}
-  TARGET ${PROJECT_NAME}
+## Qt Moc
+qt5_wrap_cpp(dsr_moc include/${PROJECT_NAME}/dsr_agent.hpp
+  TARGET dsr_agent
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 
 # Executable node
-add_executable (${PROJECT_NAME} src/dsr_agent.cpp src/dsr_agent_node.cpp)
-ament_target_dependencies(${PROJECT_NAME}
+add_executable(dsr_agent src/dsr_agent.cpp src/dsr_agent_node.cpp)
+ament_target_dependencies(dsr_agent
   rclcpp
   Eigen3
-  sensor_msgs
   Qt5
+  sensor_msgs
 )
-target_link_libraries(${PROJECT_NAME} ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(${PROJECT_NAME} PRIVATE ${nodes_moc})
+target_link_libraries(dsr_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(dsr_agent PRIVATE ${dsr_moc})
+
+##############
+## TF AGENT ##
+##############
+
+## Qt Moc 
+qt5_wrap_cpp(tf_moc include/${PROJECT_NAME}/tf_agent.hpp
+  TARGET tf_agent
+  OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
+)
+
+# Executable node
+add_executable(tf_agent src/tf_agent.cpp src/tf_agent_node.cpp)
+ament_target_dependencies(tf_agent
+  rclcpp
+  Eigen3
+  Qt5
+  tf2_msgs
+  tf2_sensor_msgs
+)
+target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(tf_agent PRIVATE ${tf_moc})
 
 #############
 ## Install ##
 #############
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS dsr_agent tf_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
