@@ -14,6 +14,7 @@
 #include "nav2_util/node_utils.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 #include "dsr_agent/dsr_agent.hpp"
@@ -147,10 +148,16 @@ void dsrAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 template <> 
 void dsrAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::Image &msg){
-	// Modify the attributes of the node
-	G_->add_or_modify_attrib_local<cam_rgb_att>(node.value(), msg.data);
-	G_->add_or_modify_attrib_local<cam_rgb_height_att>(node.value(), static_cast<int>(msg.height));
-	G_->add_or_modify_attrib_local<cam_rgb_width_att>(node.value(), static_cast<int>(msg.width));
+	// Modify the attributes of the node depending the type of the image
+	if (msg.encoding == sensor_msgs::image_encodings::RGB8){
+		G_->add_or_modify_attrib_local<cam_rgb_att>(node.value(), msg.data);
+		G_->add_or_modify_attrib_local<cam_rgb_height_att>(node.value(), static_cast<int>(msg.height));
+		G_->add_or_modify_attrib_local<cam_rgb_width_att>(node.value(), static_cast<int>(msg.width));
+	}else if (msg.encoding == sensor_msgs::image_encodings::TYPE_16UC1){
+		G_->add_or_modify_attrib_local<cam_depth_att>(node.value(), msg.data);
+		G_->add_or_modify_attrib_local<cam_depth_height_att>(node.value(), static_cast<int>(msg.height));
+		G_->add_or_modify_attrib_local<cam_depth_width_att>(node.value(), static_cast<int>(msg.width));
+	}
 	// Print the attributes of the node
 	RCLCPP_DEBUG(this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
