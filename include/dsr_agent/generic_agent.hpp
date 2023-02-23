@@ -1,5 +1,5 @@
 /*
- * DSR AGENT ROS NODE
+ * GENERIC AGENT ROS NODE
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef DSR_AGENT__DSR_AGENT_HPP_
-#define DSR_AGENT__DSR_AGENT_HPP_
+#ifndef DSR_AGENT__GENERIC_AGENT_HPP_
+#define DSR_AGENT__GENERIC_AGENT_HPP_
 
 // C++
 #include <string>
@@ -26,11 +26,11 @@
 // DSR
 #include "dsr/api/dsr_api.h"
 
-class dsrAgent: public QObject, public rclcpp::Node{
+class genericAgent: public QObject, public rclcpp::Node{
 	Q_OBJECT
 	public:
-		dsrAgent();
-		~dsrAgent();
+		genericAgent();
+		~genericAgent();
 
 	public slots:
 		void node_updated(std::uint64_t id, const std::string &type);
@@ -63,4 +63,4 @@ class dsrAgent: public QObject, public rclcpp::Node{
 		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
 };
 
-#endif  // DSR_AGENT__DSR_AGENT_HPP_
+#endif  // DSR_AGENT__GENERIC_AGENT_HPP_
