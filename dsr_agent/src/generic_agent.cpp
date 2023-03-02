@@ -89,7 +89,7 @@ void genericAgent::get_params(){
 	this->get_parameter("dsr_node_name", dsr_node_name_);
 	RCLCPP_INFO(this->get_logger(), "The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 
-	nav2_util::declare_parameter_if_not_declared(this, "dsr_parent_node_name", rclcpp::ParameterValue("robot"), 
+	nav2_util::declare_parameter_if_not_declared(this, "dsr_parent_node_name", rclcpp::ParameterValue(""), 
 							rcl_interfaces::msg::ParameterDescriptor()
 							.set__description("The name of the parent node in the DSR graph"));
 	this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
@@ -207,10 +207,18 @@ void genericAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcp
 		modify_node_attributes<ROS_TYPE>(dsr_node, ros_msg);
 		G_->update_node(dsr_node.value());
 	}else{
-		auto new_id = create_and_insert_node<NODE_TYPE>(node_name);
-		if (!parent_name.empty()){
-			if (auto parent_node = G_->get_node(parent_name); parent_node.has_value()){
-				create_and_insert_edge<EDGE_TYPE>(parent_node.value().id(), new_id.value());
+		create_and_insert_node<NODE_TYPE>(node_name);
+	}
+
+	// Create an edge between the node and its parent
+	if (!parent_name.empty()){
+		if (auto parent_node = G_->get_node(parent_name); parent_node.has_value()){
+			if (auto child_node = G_->get_node(node_name); child_node.has_value()){
+				if (auto edge = G_->get_edge(parent_node.value().id(), 
+											child_node.value().id(), 
+											"has"); !edge.has_value()){
+					create_and_insert_edge<EDGE_TYPE>(parent_node.value().id(), child_node.value().id());
+				}
 			}
 		}
 	}
@@ -243,14 +251,15 @@ void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessa
 }
 
 void genericAgent::node_updated(std::uint64_t id, const std::string &type){
-	if (type == "battery"){
+	// Only for debugging
+	/*if (type == "battery"){
 		if (auto node = G_->get_node(id); node.has_value()){
 			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
 			if (voltage.has_value()){
 				RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", voltage.value());
 			}
 		}
-	}
+	}*/
 }
 
 void genericAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
