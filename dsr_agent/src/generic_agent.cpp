@@ -99,10 +99,16 @@ void genericAgent::get_params(){
 template <typename NODE_TYPE> 
 std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "Node [%s] not found", name.c_str());
+	// Create node
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
+	// Add default level attribute
+	G_->add_or_modify_attrib_local<level_att>(new_dsr_node, 0);
+	// Insert node
 	auto id = G_->insert_node(new_dsr_node);
 	if (id.has_value()){
 		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+	}else{
+		RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 	}
 	return id;
 }

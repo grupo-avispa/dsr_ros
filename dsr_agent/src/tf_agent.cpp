@@ -42,7 +42,7 @@ tfAgent::tfAgent(): Node("tf_agent"){
 						std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
 	tf_static_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
 						"/tf_static", 
-						rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
+						rclcpp::QoS(1).transient_local(),
 						std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
 }
 
@@ -76,10 +76,16 @@ void tfAgent::get_params(){
 template <typename NODE_TYPE> 
 std::optional<uint64_t> tfAgent::create_and_insert_node(const std::string &name){
 	RCLCPP_ERROR(this->get_logger(), "Node [%s] not found", name.c_str());
+	// Create node
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
+	// Add default level attribute
+	G_->add_or_modify_attrib_local<level_att>(new_dsr_node, 0);
+	// Insert node
 	auto id = G_->insert_node(new_dsr_node);
 	if (id.has_value()){
-		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%u]", name.c_str(), id.value());
+		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+	}else{
+		RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 	}
 	return id;
 }
@@ -95,25 +101,32 @@ void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 		std::optional<DSR::Node> parent_node = G_->get_node(parent_frame);
 		std::optional<DSR::Node> child_node = G_->get_node(child_frame);
 
-		// Update the edge attributes or create the nodes
-		if (parent_node.has_value() && child_node.has_value()){
-			// Get translation and rotation
-			std::vector<float> trans = {trf.transform.translation.x, 
-										trf.transform.translation.y, 
-										trf.transform.translation.z};
-			tf2::Quaternion q;
-			tf2::fromMsg(trf.transform.rotation, q);
-			double roll, pitch, yaw;
-			tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
-			std::vector<float> rot = {static_cast<float>(roll), 
-									static_cast<float>(pitch), 
-									static_cast<float>(yaw)};
-			// TODO: Fix this
-			//rt_->insert_or_assign_edge_RT(parent_node.value(), child_node->id(), trans, rot);
-		}else{
-			RCLCPP_ERROR(this->get_logger(), "Parent or child node not found");
+		// Create the nodes if they don't exist
+		if (!parent_node.has_value()){
 			create_and_insert_node<transform_node_type>(parent_frame);
+		}
+		if (!child_node.has_value()){
 			create_and_insert_node<transform_node_type>(child_frame);
+		}
+
+		// Update the edge attributes or create the nodes
+		if (auto parent_node = G_->get_node(parent_frame); parent_node.has_value()){
+			if (auto child_node = G_->get_node(child_frame); child_node.has_value()){
+				// Get translation and rotation
+				std::vector<float> trans = {static_cast<float>(trf.transform.translation.x), 
+											static_cast<float>(trf.transform.translation.y), 
+											static_cast<float>(trf.transform.translation.z)};
+				tf2::Quaternion q;
+				tf2::fromMsg(trf.transform.rotation, q);
+				double roll, pitch, yaw;
+				tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+				std::vector<float> rot = {static_cast<float>(roll), 
+										static_cast<float>(pitch), 
+										static_cast<float>(yaw)};
+				// Insert or update edge
+				RCLCPP_INFO(this->get_logger(), "Inserting edge [%s] -> [%s]", parent_frame.c_str(), child_frame.c_str());
+				rt_->insert_or_assign_edge_RT(parent_node.value(), child_node.value().id(), trans, rot);
+			}
 		}
 	}
 }
