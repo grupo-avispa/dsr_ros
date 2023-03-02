@@ -11,7 +11,6 @@
 
 // ROS
 #include "nav2_util/node_utils.hpp"
-//#include "tf2_sensor_msgs/tf2_sensor_msgs.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include "dsr_agent/tf_agent.hpp"
@@ -91,6 +90,7 @@ std::optional<uint64_t> tfAgent::create_and_insert_node(const std::string &name)
 }
 
 void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
+	// Iterate over the transforms
 	for (auto trf : msg->transforms){
 		RCLCPP_DEBUG(this->get_logger(), "Frame parent %s", trf.header.frame_id.c_str());
 		RCLCPP_DEBUG(this->get_logger(), "Frame child %s", trf.child_frame_id.c_str());
@@ -98,6 +98,16 @@ void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 		// Get the parent and child nodes
 		std::string parent_frame = trf.header.frame_id;
 		std::string child_frame = trf.child_frame_id;
+
+		// Replace 'base_link' with robot
+		parent_frame = (parent_frame == "base_link") ? "robot" : parent_frame;
+		child_frame = (child_frame == "base_link") ? "robot" : child_frame;
+
+		// Replace 'map' with world
+		parent_frame = (parent_frame == "map") ? "world" : parent_frame;
+		child_frame = (child_frame == "map") ? "world" : child_frame;
+
+		// Get the nodes
 		std::optional<DSR::Node> parent_node = G_->get_node(parent_frame);
 		std::optional<DSR::Node> child_node = G_->get_node(child_frame);
 
@@ -124,7 +134,7 @@ void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 										static_cast<float>(pitch), 
 										static_cast<float>(yaw)};
 				// Insert or update edge
-				RCLCPP_INFO(this->get_logger(), "Inserting edge [%s] -> [%s]", parent_frame.c_str(), child_frame.c_str());
+				RCLCPP_DEBUG(this->get_logger(), "Inserting edge [%s] -> [%s]", parent_frame.c_str(), child_frame.c_str());
 				rt_->insert_or_assign_edge_RT(parent_node.value(), child_node.value().id(), trans, rot);
 			}
 		}
