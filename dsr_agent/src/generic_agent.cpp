@@ -102,7 +102,7 @@ std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	auto id = G_->insert_node(new_dsr_node);
 	if (id.has_value()){
-		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%u]", name.c_str(), id.value());
+		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
 	}
 	return id;
 }
