@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+	<name>dsr_agents</name>
+	<version>0.1.0</version>
+	<description>ROS2 to DSR stack</description>
+	<maintainer email="ajtudela@gmail.com">Alberto Tudela</maintainer>
+	<license>TODO</license>
+	<author email="ajtudela@gmail.com">Alberto Tudela</author>
+	<buildtool_depend>ament_cmake</buildtool_depend>
+	<exec_depend>dsr_agent</exec_depend>
+	<exec_depend>dsr_rqt_plugin</exec_depend>
+	<export>
+		<build_type>ament_cmake</build_type>
+	</export>
+</package>

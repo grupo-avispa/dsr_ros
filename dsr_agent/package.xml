@@ -2,8 +2,8 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>dsr_agent</name>
-  <version>0.0.0</version>
-  <description>ROS interface to connect to CORTEX architecture using a Deep State Representation (DSR) graph.</description>
+  <version>0.1.0</version>
+  <description>ROS2 interface to connect to CORTEX architecture using a Deep State Representation (DSR) graph.</description>
   <maintainer email="ajtudela@gmail.com">Alberto J. Tudela Roldán</maintainer>
   <license>TODO</license>
   <author email="ajtudela@gmail.com">Alberto J. Tudela Roldán</author>

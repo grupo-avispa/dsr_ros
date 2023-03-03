@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
- * This file is part of dsr_agent.
+ * This file is part of dsr_agents.
  * 
  * All rights reserved.
  *
@@ -58,7 +58,7 @@ genericAgent::~genericAgent() {
 /* Initialize ROS parameters */
 void genericAgent::get_params(){
 	// Agent parameters
-	nav2_util::declare_parameter_if_not_declared(this, "agent_name", rclcpp::ParameterValue(""), 
+	nav2_util::declare_parameter_if_not_declared(this, "agent_name", rclcpp::ParameterValue("generic_agent"), 
 							rcl_interfaces::msg::ParameterDescriptor()
 							.set__description("The agent name to publish to"));
 	this->get_parameter("agent_name", agent_name_);

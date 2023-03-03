@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
- * This file is part of dsr_agent.
+ * This file is part of dsr_agents.
  * 
  * All rights reserved.
  *
