@@ -94,6 +94,9 @@ void genericAgent::get_params(){
 							.set__description("The name of the parent node in the DSR graph"));
 	this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
 	RCLCPP_INFO(this->get_logger(), "The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
+
+	// Default DSR node name to ROS topic
+	dsr_node_name_ = dsr_node_name_.empty() ? ros_topic_ : dsr_node_name_;
 }
 
 template <typename NODE_TYPE> 
