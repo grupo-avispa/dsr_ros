@@ -24,6 +24,8 @@ find_package(fastcdr REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(nav2_util REQUIRED)
 
 ###########
 ## Build ##
@@ -55,6 +57,7 @@ ament_target_dependencies(generic_agent
   Eigen3
   Qt5
   sensor_msgs
+  nav2_util
 )
 target_link_libraries(generic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(generic_agent PRIVATE ${generic_moc})
@@ -77,6 +80,7 @@ ament_target_dependencies(tf_agent
   Qt5
   tf2_msgs
   tf2_sensor_msgs
+  tf2_geometry_msgs
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(tf_agent PRIVATE ${tf_moc})
