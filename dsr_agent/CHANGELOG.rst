@@ -2,6 +2,10 @@
 Changelog for package dsr_agent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.0 (25-04-2023)
+------------------
+* Prepare for humble release.
+
 0.1.0 (03-03-2022)
 ------------------
 * Initial release.

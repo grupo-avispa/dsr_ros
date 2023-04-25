@@ -1,6 +1,6 @@
 # dsr_agents
 
-![ROS2](https://img.shields.io/badge/ros2-galactic-purple?logo=ros&logoColor=white)
+![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
 
 ## Overview
 

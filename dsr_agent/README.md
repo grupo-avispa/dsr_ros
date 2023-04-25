@@ -1,5 +1,5 @@
 # dsr_agent
-![ROS2](https://img.shields.io/badge/ros2-galactic-purple?logo=ros&logoColor=white)
+![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
 
 ## Overview
 
@@ -13,7 +13,7 @@ This package features two additional nodes.
 
 **Author: Alberto Tudela<br />**
 
-The dsr_agent package has been tested under [ROS2] Galactic on [Ubuntu] 20.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
+The dsr_agent package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 ## Installation
 
@@ -21,7 +21,7 @@ The dsr_agent package has been tested under [ROS2] Galactic on [Ubuntu] 20.04. T
 
 #### Dependencies
 
-- [Robot Operating System (ROS) 2](https://docs.ros.org/en/galactic/) (middleware for robotics),
+- [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics),
 - [Cortex](hhttps://github.com/robocomp/cortex) (DSR library),
 - [FAST-DDS](https://github.com/eProsima/Fast-DDS) (eprosima Fast DDS)
 - [RCLCPP](https://github.com/grupo-avispa/rclcpp) (ROS Client Library for C++20)
@@ -31,9 +31,9 @@ The dsr_agent package has been tested under [ROS2] Galactic on [Ubuntu] 20.04. T
 To build from source, clone the latest version from the main repository into your colcon workspace and compile the package using
 
 	cd colcon_workspace/src
-	git clone https://gitlab.com/grupo-avispa/ros/dsr_agents.git -b galactic
+	git clone https://gitlab.com/grupo-avispa/ros/dsr_agents.git -b humble
 	cd ../
-	rosdep install -i --from-path src --rosdistro galactic -y
+	rosdep install -i --from-path src --rosdistro humble -y
 	colcon build --symlink-install
 
 ## Usage
@@ -94,5 +94,5 @@ Agent that publishes the transformation tree as nodes in the DSR.
 - [ ] Convert nodes to LifeCycleNodes.
 
 [Ubuntu]: https://ubuntu.com/
-[ROS2]: https://docs.ros.org/en/galactic/
-[tf2_msgs/TFMessage]: https://docs.ros2.org/galactic/api/tf2_msgs/msg/TFMessage.html
+[ROS2]: https://docs.ros.org/en/humble/
+[tf2_msgs/TFMessage]: https://docs.ros2.org/humble/api/tf2_msgs/msg/TFMessage.html
