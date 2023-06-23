@@ -1,0 +1,19 @@
+{
+    "DSRModel": {
+        "symbols": {
+            "0": {
+                "attribute": {
+                    "level": {
+                        "type": 1,
+                        "value": 0
+                    }
+                },
+                "id": "0",
+                "links": [
+                ],
+                "name": "world",
+                "type": "world"
+            }
+        }
+    }
+}

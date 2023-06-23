@@ -21,7 +21,7 @@ tfAgent::tfAgent(): Node("tf_agent"){
 	get_params();
 
 	// Create graph
-	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
+	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, dsr_input_file_);
 
 	// Get RT API
 	rt_ = G_->get_rt_api();
@@ -76,6 +76,13 @@ void tfAgent::get_params(){
 		));
 	this->get_parameter("agent_id", agent_id_);
 	RCLCPP_INFO(this->get_logger(), "The parameter agent_id is set to: [%d]", agent_id_);
+
+	nav2_util::declare_parameter_if_not_declared(this, "dsr_input_file", rclcpp::ParameterValue(""), 
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The name of the input file to load the DSR graph from"));
+	this->get_parameter("dsr_input_file", dsr_input_file_);
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter dsr_node is set to: [%s]", dsr_input_file_.c_str());
 }
 
 template <typename NODE_TYPE> 

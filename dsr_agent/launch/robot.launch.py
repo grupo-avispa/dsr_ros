@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-    Launches a DSR Agent node.
+    Launches the DSR agents for robot.
 '''
 import os
 
@@ -11,6 +11,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
+from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     # Getting directories and launch-files
@@ -26,6 +27,18 @@ def generate_launch_description():
         description='Full path to the ROS2 parameters file with dsr agent configuration'
     )
 
+    # Create our own temporary YAML files that include substitutions
+    param_substitutions = {
+        'dsr_input_file': os.path.join(dsr_agent_dir, 'worlds', 'default.json')
+    }
+
+    configured_params = RewrittenYaml(
+        source_file=params_file,
+        root_key='',
+        param_rewrites=param_substitutions,
+        convert_types=True
+    )
+
     declare_log_level_arg = DeclareLaunchArgument(
         name='log-level',
         default_value='info',
@@ -38,7 +51,7 @@ def generate_launch_description():
         namespace = '',
         executable = 'generic_agent',
         name = 'battery_agent',
-        parameters=[params_file],
+        parameters=[configured_params],
         emulate_tty = True,
         output='screen', 
         arguments=[
@@ -51,7 +64,7 @@ def generate_launch_description():
         namespace = '',
         executable = 'generic_agent',
         name = 'laser_agent',
-        parameters=[params_file],
+        parameters=[configured_params],
         emulate_tty = True,
         output='screen', 
         arguments=[
@@ -63,7 +76,7 @@ def generate_launch_description():
         namespace = '',
         executable = 'generic_agent',
         name = 'rgb_agent',
-        parameters=[params_file],
+        parameters=[configured_params],
         emulate_tty = True,
         output='screen', 
         arguments=[
@@ -76,7 +89,7 @@ def generate_launch_description():
         namespace = '',
         executable = 'generic_agent',
         name = 'rgbd_agent',
-        parameters=[params_file],
+        parameters=[configured_params],
         emulate_tty = True,
         output='screen', 
         arguments=[
@@ -89,7 +102,7 @@ def generate_launch_description():
         namespace = '',
         executable = 'tf_agent',
         name = 'tf_agent',
-        parameters=[params_file],
+        parameters=[configured_params],
         emulate_tty = True,
         output='screen', 
         arguments=[

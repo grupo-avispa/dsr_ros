@@ -27,7 +27,7 @@ genericAgent::genericAgent(): Node("generic_agent"){
 	get_params();
 
 	// Create graph
-	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
+	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, dsr_input_file_);
 
 	// Add connection signals
 	QObject::connect(G_.get(), 
@@ -103,6 +103,13 @@ void genericAgent::get_params(){
 	this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
+
+	nav2_util::declare_parameter_if_not_declared(this, "dsr_input_file", rclcpp::ParameterValue(""), 
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The name of the input file to load the DSR graph from"));
+	this->get_parameter("dsr_input_file", dsr_input_file_);
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter dsr_node is set to: [%s]", dsr_input_file_.c_str());
 
 	// Default DSR node name to ROS topic
 	dsr_node_name_ = dsr_node_name_.empty() ? ros_topic_ : dsr_node_name_;
@@ -275,7 +282,7 @@ void genericAgent::node_updated(std::uint64_t id, const std::string &type){
 		if (auto node = G_->get_node(id); node.has_value()){
 			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
 			if (voltage.has_value()){
-				RCLCPP_INFO(this->get_logger(), "Battery voltage is [%f]", voltage.value());
+				RCLCPP_DEBUG(this->get_logger(), "Battery voltage is [%f]", voltage.value());
 			}
 		}
 	}*/

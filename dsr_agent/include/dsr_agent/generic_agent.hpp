@@ -49,7 +49,7 @@ class genericAgent: public QObject, public rclcpp::Node{
 		std::shared_ptr<DSR::DSRGraph> G_;
 		int agent_id_;
 		std::string agent_name_;
-		std::string dsr_node_name_, dsr_parent_node_name_;
+		std::string dsr_input_file_, dsr_node_name_, dsr_parent_node_name_;
 
 		void get_params();
 		template <typename NODE_TYPE> std::optional<uint64_t> create_and_insert_node(const std::string &name);
