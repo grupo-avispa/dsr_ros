@@ -26,6 +26,12 @@ def generate_launch_description():
         description='Full path to the ROS2 parameters file with dsr agent configuration'
     )
 
+    declare_log_level_arg = DeclareLaunchArgument(
+        name='log-level',
+        default_value='info',
+        description='Logging level (info, debug, ...)'
+    )
+
     # Prepare the laser segmentation node.
     battery_agent_node = Node(
         package = 'dsr_agent',
@@ -33,10 +39,15 @@ def generate_launch_description():
         executable = 'dsr_agent',
         name = 'battery_agent',
         parameters=[params_file],
-        emulate_tty = True
+        emulate_tty = True,
+        output='screen', 
+        arguments=[
+            '--ros-args', 
+            '--log-level', ['battery_agent:=', LaunchConfiguration('log-level')]]
     )
 
     return LaunchDescription([
         declare_params_file_arg,
+        declare_log_level_arg,
         battery_agent_node
     ])
