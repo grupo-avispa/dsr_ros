@@ -9,7 +9,7 @@ laser_agent:
   ros__parameters:
     agent_name: laser_agent
     agent_id: 3
-    ros_topic: /scan_filtered
+    ros_topic: /scan/filtered
     dsr_node_name: laser
     dsr_parent_node_name: base_laser_link
 rgb_agent:

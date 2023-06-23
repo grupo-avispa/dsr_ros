@@ -30,22 +30,27 @@ genericAgent::genericAgent(): Node("generic_agent"){
 	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, "");
 
 	// Add connection signals
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_signal, this, &genericAgent::node_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &genericAgent::node_attributes_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_signal, this, &genericAgent::edge_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &genericAgent::edge_attributes_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::del_edge_signal, this, &genericAgent::edge_deleted);
-	QObject::connect(G_.get(), &DSR::DSRGraph::del_node_signal, this, &genericAgent::node_deleted);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_node_signal, this, &genericAgent::node_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_node_attr_signal, this, &genericAgent::node_attributes_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_edge_signal, this, &genericAgent::edge_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_edge_attr_signal, this, &genericAgent::edge_attributes_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::del_edge_signal, this, &genericAgent::edge_deleted);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::del_node_signal, this, &genericAgent::node_deleted);
 
 	// Subscriber to the topic with a generic subscription
 	auto data = rclcpp::Node::get_topic_names_and_types();
 	for (auto type : data[ros_topic_]){
 		generic_sub_ = create_generic_subscription(
-						ros_topic_, 
-						type, 
-						rclcpp::QoS(rclcpp::SensorDataQoS()),
-						std::bind(&genericAgent::serial_callback, this, std::placeholders::_1)
-						);
+			ros_topic_, 
+			type, 
+			rclcpp::QoS(rclcpp::SensorDataQoS()),
+			std::bind(&genericAgent::serial_callback, this, std::placeholders::_1));
 	}
 }
 
@@ -58,42 +63,46 @@ genericAgent::~genericAgent() {
 /* Initialize ROS parameters */
 void genericAgent::get_params(){
 	// Agent parameters
-	nav2_util::declare_parameter_if_not_declared(this, "agent_name", rclcpp::ParameterValue("generic_agent"), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The agent name to publish to"));
+	nav2_util::declare_parameter_if_not_declared(this, "agent_name", 
+		rclcpp::ParameterValue("generic_agent"), rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The agent name to publish to"));
 	this->get_parameter("agent_name", agent_name_);
-	RCLCPP_INFO(this->get_logger(), "The parameter agent_name is set to: [%s]", agent_name_.c_str());
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter agent_name is set to: [%s]", agent_name_.c_str());
 
 	nav2_util::declare_parameter_if_not_declared(this, "agent_id", rclcpp::ParameterValue(0), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The id of the agent")
-							.set__integer_range({rcl_interfaces::msg::IntegerRange()
-								.set__from_value(0)
-								.set__to_value(1000)
-								.set__step(1)}
-								));
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The id of the agent")
+			.set__integer_range({rcl_interfaces::msg::IntegerRange()
+				.set__from_value(0)
+				.set__to_value(1000)
+				.set__step(1)}
+			));
 	this->get_parameter("agent_id", agent_id_);
 	RCLCPP_INFO(this->get_logger(), "The parameter agent_id is set to: [%d]", agent_id_);
 
 	// ROS parameters
 	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", rclcpp::ParameterValue(""), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The ROS topic to subscribe to"));
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The ROS topic to subscribe to"));
 	this->get_parameter("ros_topic", ros_topic_);
-	RCLCPP_INFO(this->get_logger(), "The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
 
 	// DSR parameters
 	nav2_util::declare_parameter_if_not_declared(this, "dsr_node_name", rclcpp::ParameterValue(""), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The name of the node in the DSR graph"));
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The name of the node in the DSR graph"));
 	this->get_parameter("dsr_node_name", dsr_node_name_);
-	RCLCPP_INFO(this->get_logger(), "The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 
 	nav2_util::declare_parameter_if_not_declared(this, "dsr_parent_node_name", rclcpp::ParameterValue(""), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The name of the parent node in the DSR graph"));
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The name of the parent node in the DSR graph"));
 	this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
-	RCLCPP_INFO(this->get_logger(), "The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
 
 	// Default DSR node name to ROS topic
 	dsr_node_name_ = dsr_node_name_.empty() ? ros_topic_ : dsr_node_name_;
@@ -101,7 +110,6 @@ void genericAgent::get_params(){
 
 template <typename NODE_TYPE> 
 std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &name){
-	RCLCPP_ERROR(this->get_logger(), "Node [%s] not found", name.c_str());
 	// Create node
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	// Add default level attribute
@@ -109,7 +117,8 @@ std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &
 	// Insert node
 	auto id = G_->insert_node(new_dsr_node);
 	if (id.has_value()){
-		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+		RCLCPP_INFO(this->get_logger(), 
+			"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
 	}else{
 		RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 	}
@@ -118,7 +127,6 @@ std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &
 
 template <typename EDGE_TYPE> 
 void genericAgent::create_and_insert_edge(uint64_t from, uint64_t to){
-	RCLCPP_ERROR_STREAM(this->get_logger(), "Edge [" << from << "->" << to << "] not found");
 	auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
 	if (G_->insert_or_assign_edge(new_edge)){
 		RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" << from << "->" << to <<
@@ -140,9 +148,12 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 	G_->add_or_modify_attrib_local<battery_capacity_att>(node.value(), msg.capacity);
 	G_->add_or_modify_attrib_local<battery_design_capacity_att>(node.value(), msg.design_capacity);
 	G_->add_or_modify_attrib_local<battery_percentage_att>(node.value(), msg.percentage);
-	G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node.value(), static_cast<int>(msg.power_supply_status));
-	G_->add_or_modify_attrib_local<battery_power_supply_health_att>(node.value(), static_cast<int>(msg.power_supply_health));
-	G_->add_or_modify_attrib_local<battery_power_supply_technology_att>(node.value(), static_cast<int>(msg.power_supply_technology));
+	G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node.value(), 
+		static_cast<int>(msg.power_supply_status));
+	G_->add_or_modify_attrib_local<battery_power_supply_health_att>(node.value(), 
+		static_cast<int>(msg.power_supply_health));
+	G_->add_or_modify_attrib_local<battery_power_supply_technology_att>(node.value(), 
+		static_cast<int>(msg.power_supply_technology));
 	G_->add_or_modify_attrib_local<battery_present_att>(node.value(), msg.present);
 	G_->add_or_modify_attrib_local<battery_cell_voltage_att>(node.value(), msg.cell_voltage);
 	G_->add_or_modify_attrib_local<battery_cell_temperature_att>(node.value(), msg.cell_temperature);
@@ -169,7 +180,8 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 		G_->add_or_modify_attrib_local<cam_depth_width_att>(node.value(), static_cast<int>(msg.width));
 	}
 	// Print the attributes of the node
-	RCLCPP_DEBUG(this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
+	RCLCPP_DEBUG(this->get_logger(), 
+		"Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
 		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
 	}
@@ -191,15 +203,17 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
 	G_->add_or_modify_attrib_local<laser_angles_att>(node.value(), angles);
 	G_->add_or_modify_attrib_local<laser_dists_att>(node.value(), msg.ranges);
 	// Print the attributes of the node
-	RCLCPP_DEBUG(this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
+	RCLCPP_DEBUG(this->get_logger(), 
+		"Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
 		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
 	}
 }
 
 template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
-void genericAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcpp::SerializedMessage> msg, 
-										const std::string &node_name, const std::string &parent_name){
+void genericAgent::deserialize_and_update_attributes(
+	const std::shared_ptr<rclcpp::SerializedMessage> msg, 
+	const std::string &node_name, const std::string &parent_name){
 	// Deserialize a message to ROS_TYPE
 	ROS_TYPE ros_msg;
 	auto serializer = rclcpp::Serialization<ROS_TYPE>();
@@ -220,7 +234,8 @@ void genericAgent::deserialize_and_update_attributes(const std::shared_ptr<rclcp
 				if (auto edge = G_->get_edge(parent_node.value().id(), 
 											child_node.value().id(), 
 											"has"); !edge.has_value()){
-					create_and_insert_edge<EDGE_TYPE>(parent_node.value().id(), child_node.value().id());
+					create_and_insert_edge<EDGE_TYPE>(parent_node.value().id(), 
+						child_node.value().id());
 				}
 			}
 		}
@@ -249,7 +264,8 @@ void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessa
 											laser_node_type,
 											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
 	}else{
-		RCLCPP_WARN_ONCE(this->get_logger(), "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
+		RCLCPP_WARN_ONCE(this->get_logger(), 
+			"Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
 	}
 }
 
@@ -273,7 +289,8 @@ void genericAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std
 
 }
 
-void genericAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, const std::string &type, const std::vector<std::string>& att_names){
+void genericAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
+	const std::string &type, const std::vector<std::string>& att_names){
 
 }
 
@@ -283,4 +300,12 @@ void genericAgent::node_deleted(std::uint64_t id){
 
 void genericAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
 
+}
+
+int main(int argc, char** argv){
+	rclcpp::init(argc, argv);
+	auto node = std::make_shared<genericAgent>();
+	rclcpp::spin(node);
+	rclcpp::shutdown();
+	return 0;
 }

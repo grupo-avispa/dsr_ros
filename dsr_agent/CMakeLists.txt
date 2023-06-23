@@ -51,7 +51,7 @@ qt5_wrap_cpp(generic_moc include/${PROJECT_NAME}/generic_agent.hpp
 )
 
 # Executable node
-add_executable(generic_agent src/generic_agent.cpp src/generic_agent_node.cpp)
+add_executable(generic_agent src/generic_agent.cpp)
 ament_target_dependencies(generic_agent
   rclcpp
   Eigen3
@@ -73,7 +73,7 @@ qt5_wrap_cpp(tf_moc include/${PROJECT_NAME}/tf_agent.hpp
 )
 
 # Executable node
-add_executable(tf_agent src/tf_agent.cpp src/tf_agent_node.cpp)
+add_executable(tf_agent src/tf_agent.cpp)
 ament_target_dependencies(tf_agent
   rclcpp
   Eigen3

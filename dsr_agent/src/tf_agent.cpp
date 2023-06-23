@@ -27,12 +27,18 @@ tfAgent::tfAgent(): Node("tf_agent"){
 	rt_ = G_->get_rt_api();
 
 	// Add connection signals
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_signal, this, &tfAgent::node_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &tfAgent::node_attributes_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_signal, this, &tfAgent::edge_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &tfAgent::edge_attributes_updated);
-	QObject::connect(G_.get(), &DSR::DSRGraph::del_edge_signal, this, &tfAgent::edge_deleted);
-	QObject::connect(G_.get(), &DSR::DSRGraph::del_node_signal, this, &tfAgent::node_deleted);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_node_signal, this, &tfAgent::node_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_node_attr_signal, this, &tfAgent::node_attributes_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_edge_signal, this, &tfAgent::edge_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::update_edge_attr_signal, this, &tfAgent::edge_attributes_updated);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::del_edge_signal, this, &tfAgent::edge_deleted);
+	QObject::connect(G_.get(), 
+		&DSR::DSRGraph::del_node_signal, this, &tfAgent::node_deleted);
 
 	// Subscriber to the tf topics
 	tf_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
@@ -55,26 +61,25 @@ tfAgent::~tfAgent() {
 void tfAgent::get_params(){
 	// Agent parameters
 	nav2_util::declare_parameter_if_not_declared(this, "agent_name", rclcpp::ParameterValue(""), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The agent name to publish to"));
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The agent name to publish to"));
 	this->get_parameter("agent_name", agent_name_);
 	RCLCPP_INFO(this->get_logger(), "The parameter agent_name is set to: [%s]", agent_name_.c_str());
 
 	nav2_util::declare_parameter_if_not_declared(this, "agent_id", rclcpp::ParameterValue(0), 
-							rcl_interfaces::msg::ParameterDescriptor()
-							.set__description("The id of the agent")
-							.set__integer_range({rcl_interfaces::msg::IntegerRange()
-								.set__from_value(0)
-								.set__to_value(1000)
-								.set__step(1)}
-								));
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("The id of the agent")
+			.set__integer_range({rcl_interfaces::msg::IntegerRange()
+				.set__from_value(0)
+				.set__to_value(1000)
+				.set__step(1)}
+		));
 	this->get_parameter("agent_id", agent_id_);
 	RCLCPP_INFO(this->get_logger(), "The parameter agent_id is set to: [%d]", agent_id_);
 }
 
 template <typename NODE_TYPE> 
 std::optional<uint64_t> tfAgent::create_and_insert_node(const std::string &name){
-	RCLCPP_ERROR(this->get_logger(), "Node [%s] not found", name.c_str());
 	// Create node
 	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
 	// Add default level attribute
@@ -82,7 +87,8 @@ std::optional<uint64_t> tfAgent::create_and_insert_node(const std::string &name)
 	// Insert node
 	auto id = G_->insert_node(new_dsr_node);
 	if (id.has_value()){
-		RCLCPP_INFO(this->get_logger(), "Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+		RCLCPP_INFO(this->get_logger(), 
+			"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
 	}else{
 		RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 	}
@@ -153,7 +159,8 @@ void tfAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::str
 
 }
 
-void tfAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, const std::string &type, const std::vector<std::string>& att_names){
+void tfAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
+	const std::string &type, const std::vector<std::string>& att_names){
 
 }
 
@@ -163,4 +170,12 @@ void tfAgent::node_deleted(std::uint64_t id){
 
 void tfAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
 
+}
+
+int main(int argc, char** argv){
+	rclcpp::init(argc, argv);
+	auto node = std::make_shared<tfAgent>();
+	rclcpp::spin(node);
+	rclcpp::shutdown();
+	return 0;
 }
