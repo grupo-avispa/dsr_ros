@@ -40,18 +40,27 @@ include_directories(
 set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
 set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 
-###################
-## GENERIC AGENT ##
-###################
+# Set headers
+set(HEADERS
+  include/${PROJECT_NAME}/agent_node.hpp
+)
+
+# Set sources
+set(SOURCES
+  src/agent_node.cpp
+)
 
 ## Qt Moc
-qt5_wrap_cpp(generic_moc include/${PROJECT_NAME}/generic_agent.hpp
-  TARGET generic_agent
+qt5_wrap_cpp(agent_moc ${HEADERS}
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 
+#################
+## AGENT NODE  ##
+#################
+
 # Executable node
-add_executable(generic_agent src/generic_agent.cpp)
+add_executable(generic_agent ${SOURCES} src/generic_agent.cpp)
 ament_target_dependencies(generic_agent
   rclcpp
   Eigen3
@@ -60,20 +69,14 @@ ament_target_dependencies(generic_agent
   nav2_util
 )
 target_link_libraries(generic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(generic_agent PRIVATE ${generic_moc})
+target_sources(generic_agent PRIVATE ${agent_moc})
 
 ##############
 ## TF AGENT ##
 ##############
 
-## Qt Moc 
-qt5_wrap_cpp(tf_moc include/${PROJECT_NAME}/tf_agent.hpp
-  TARGET tf_agent
-  OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
-)
-
 # Executable node
-add_executable(tf_agent src/tf_agent.cpp)
+add_executable(tf_agent ${SOURCES} src/tf_agent.cpp)
 ament_target_dependencies(tf_agent
   rclcpp
   Eigen3
@@ -83,7 +86,7 @@ ament_target_dependencies(tf_agent
   tf2_geometry_msgs
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(tf_agent PRIVATE ${tf_moc})
+target_sources(tf_agent PRIVATE ${agent_moc})
 
 ############
 ## VIEWER ##

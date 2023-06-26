@@ -25,12 +25,11 @@
 
 // DSR
 #include "dsr/api/dsr_api.h"
+#include "dsr_agent/agent_node.hpp"
 
-class genericAgent: public QObject, public rclcpp::Node{
-	Q_OBJECT
+class genericAgent: public AgentNode{
 	public:
 		genericAgent();
-		~genericAgent();
 
 	public slots:
 		void node_updated(std::uint64_t id, const std::string &type);
@@ -43,19 +42,11 @@ class genericAgent: public QObject, public rclcpp::Node{
 
 	private:
 		rclcpp::GenericSubscription::SharedPtr generic_sub_;
-		std::string ros_topic_;
-
-		// DSR graph
-		std::shared_ptr<DSR::DSRGraph> G_;
-		int agent_id_;
-		std::string agent_name_;
-		std::string dsr_input_file_, dsr_node_name_, dsr_parent_node_name_;
+		std::string ros_topic_, dsr_node_name_, dsr_parent_node_name_;
 
 		void get_params();
-		template <typename NODE_TYPE> std::optional<uint64_t> create_and_insert_node(const std::string &name);
-		template <typename EDGE_TYPE> void create_and_insert_edge(uint64_t from, uint64_t to);
-		template <typename ROS_TYPE> void modify_node_attributes(std::optional<DSR::Node> &node, 
-																const ROS_TYPE &msg);
+		template <typename ROS_TYPE> void modify_node_attributes(
+			std::optional<DSR::Node> &node, const ROS_TYPE &msg);
 		template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
 			void deserialize_and_update_attributes(
 				const std::shared_ptr<rclcpp::SerializedMessage> msg, 

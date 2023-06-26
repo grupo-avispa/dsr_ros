@@ -22,12 +22,9 @@
 #include "dsr_agent/generic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-genericAgent::genericAgent(): Node("generic_agent"){
+genericAgent::genericAgent(): AgentNode("generic_agent"){
 	// Get ROS parameters
 	get_params();
-
-	// Create graph
-	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, dsr_input_file_);
 
 	// Add connection signals
 	QObject::connect(G_.get(), 
@@ -54,33 +51,8 @@ genericAgent::genericAgent(): Node("generic_agent"){
 	}
 }
 
-genericAgent::~genericAgent() {
-	// TODO: Save the log into a file
-	//G_->write_to_json_file("./"+agent_name+".json");
-	G_.reset();
-}
-
 /* Initialize ROS parameters */
 void genericAgent::get_params(){
-	// Agent parameters
-	nav2_util::declare_parameter_if_not_declared(this, "agent_name", 
-		rclcpp::ParameterValue("generic_agent"), rcl_interfaces::msg::ParameterDescriptor()
-			.set__description("The agent name to publish to"));
-	this->get_parameter("agent_name", agent_name_);
-	RCLCPP_INFO(this->get_logger(), 
-		"The parameter agent_name is set to: [%s]", agent_name_.c_str());
-
-	nav2_util::declare_parameter_if_not_declared(this, "agent_id", rclcpp::ParameterValue(0), 
-		rcl_interfaces::msg::ParameterDescriptor()
-			.set__description("The id of the agent")
-			.set__integer_range({rcl_interfaces::msg::IntegerRange()
-				.set__from_value(0)
-				.set__to_value(1000)
-				.set__step(1)}
-			));
-	this->get_parameter("agent_id", agent_id_);
-	RCLCPP_INFO(this->get_logger(), "The parameter agent_id is set to: [%d]", agent_id_);
-
 	// ROS parameters
 	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", rclcpp::ParameterValue(""), 
 		rcl_interfaces::msg::ParameterDescriptor()
@@ -104,44 +76,8 @@ void genericAgent::get_params(){
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
 
-	nav2_util::declare_parameter_if_not_declared(this, "dsr_input_file", rclcpp::ParameterValue(""), 
-		rcl_interfaces::msg::ParameterDescriptor()
-			.set__description("The name of the input file to load the DSR graph from"));
-	this->get_parameter("dsr_input_file", dsr_input_file_);
-	RCLCPP_INFO(this->get_logger(), 
-		"The parameter dsr_node is set to: [%s]", dsr_input_file_.c_str());
-
 	// Default DSR node name to ROS topic
 	dsr_node_name_ = dsr_node_name_.empty() ? ros_topic_ : dsr_node_name_;
-}
-
-template <typename NODE_TYPE> 
-std::optional<uint64_t> genericAgent::create_and_insert_node(const std::string &name){
-	// Create node
-	auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
-	// Add default level attribute
-	G_->add_or_modify_attrib_local<level_att>(new_dsr_node, 0);
-	// Insert node
-	auto id = G_->insert_node(new_dsr_node);
-	if (id.has_value()){
-		RCLCPP_INFO(this->get_logger(), 
-			"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
-	}else{
-		RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
-	}
-	return id;
-}
-
-template <typename EDGE_TYPE> 
-void genericAgent::create_and_insert_edge(uint64_t from, uint64_t to){
-	auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
-	if (G_->insert_or_assign_edge(new_edge)){
-		RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" << from << "->" << to <<
-			"] of type [" << new_edge.type().c_str() << "]");
-	}else{
-		RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" << from << "->" << to <<
-			"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
-	}
 }
 
 template <> 
@@ -169,7 +105,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 	// Print the attributes of the node
 	RCLCPP_DEBUG(this->get_logger(), "%s node updated with attributes:", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
-		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%lu]", key.c_str(), value.value());
 	}
 }
 
@@ -190,7 +126,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 	RCLCPP_DEBUG(this->get_logger(), 
 		"Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
-		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%lu]", key.c_str(), value.value());
 	}
 }
 
@@ -213,7 +149,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
 	RCLCPP_DEBUG(this->get_logger(), 
 		"Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
-		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%lu]", key.c_str(), value.value());
 	}
 }
 
