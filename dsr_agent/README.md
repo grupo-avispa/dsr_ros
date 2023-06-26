@@ -9,6 +9,8 @@ This package features two additional nodes.
 * **`Generic agent:`** which allows the user to subscribe to a sensor topic of any type and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
 * **`TF agent:`**  which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
 
+A DSR viewer is also included.
+
 **Keywords:** ROS2, cortex, dsr, deep space representation
 
 **Author: Alberto Tudela<br />**
@@ -21,8 +23,8 @@ The dsr_agent package has been tested under [ROS2] Humble on [Ubuntu] 22.04. Thi
 
 #### Dependencies
 
-- [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics),
-- [Cortex](hhttps://github.com/robocomp/cortex) (DSR library),
+- [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics)
+- [Cortex](hhttps://github.com/robocomp/cortex) (DSR library)
 - [FAST-DDS](https://github.com/eProsima/Fast-DDS) (eprosima Fast DDS)
 - [RCLCPP](https://github.com/grupo-avispa/rclcpp) (ROS Client Library for C++20)
 
@@ -67,6 +69,10 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 	A unique identifier for the agent.
 
+* **`dsr_input_file`** (string, default: "")
+
+	The path to the DSR file that will be loaded.
+
 * **`dsr_node_name`** (string, default: "")
 
 	The name of the node in the DSR where the sensor data should be published.
@@ -89,9 +95,24 @@ Agent that publishes the transformation tree as nodes in the DSR.
 
 	The static transformation tree.
 
+#### Parameters
+
+* **`agent_name`** (string, default: "generic_agent")
+
+	The name of the agent that will be used to publish the data in the DSR.
+
+* **`agent_id`** (int, default: 0)
+
+	A unique identifier for the agent.
+
+* **`dsr_input_file`** (string, default: "")
+
+	The path to the DSR file that will be loaded.
+
 
 ## Future work
 - [ ] Convert nodes to LifeCycleNodes.
+- [ ] Inherit from a generic agent class.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/

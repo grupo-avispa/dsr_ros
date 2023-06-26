@@ -105,7 +105,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 	// Print the attributes of the node
 	RCLCPP_DEBUG(this->get_logger(), "%s node updated with attributes:", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
-		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%lu]", key.c_str(), value.value());
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
 	}
 }
 
@@ -126,7 +126,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 	RCLCPP_DEBUG(this->get_logger(), 
 		"Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
-		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%lu]", key.c_str(), value.value());
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
 	}
 }
 
@@ -149,7 +149,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
 	RCLCPP_DEBUG(this->get_logger(), 
 		"Update [%s] node with attributes: ", node.value().name().c_str());
 	for (auto &[key, value] : node.value().attrs()){
-		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%lu]", key.c_str(), value.value());
+		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
 	}
 }
 

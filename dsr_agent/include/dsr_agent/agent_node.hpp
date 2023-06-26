@@ -24,6 +24,8 @@
 // DSR
 #include "dsr/api/dsr_api.h"
 
+#include "dsr_interfaces/srv/save_dsr.hpp"
+
 class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_from_this<AgentNode>{
 	Q_OBJECT
 	public:
@@ -73,10 +75,14 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 		}
 	
 	private:
+		rclcpp::Service<dsr_interfaces::srv::SaveDSR>::SharedPtr save_dsr_service_;
+
 		int agent_id_;
 		std::string agent_name_, dsr_input_file_;
 
 		void get_common_params();
+		void save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Request> request,
+			std::shared_ptr<dsr_interfaces::srv::SaveDSR::Response> response);
 };
 
 #endif  // DSR_AGENT__AGENT_NODE_HPP_

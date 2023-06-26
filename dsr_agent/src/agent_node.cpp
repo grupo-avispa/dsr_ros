@@ -21,11 +21,14 @@ AgentNode::AgentNode(std::string node_name): rclcpp::Node(node_name){
 
 	// Create graph
 	G_ = std::make_shared<DSR::DSRGraph>(0, agent_name_, agent_id_, dsr_input_file_);
+
+	// Create service
+	save_dsr_service_ = this->create_service<dsr_interfaces::srv::SaveDSR>(
+		"save_dsr", 
+		std::bind(&AgentNode::save_dsr, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 AgentNode::~AgentNode() {
-	// TODO: Save the log into a file
-	//G_->write_to_json_file("./"+agent_name+".json");
 	G_.reset();
 }
 
@@ -57,5 +60,11 @@ void AgentNode::get_common_params(){
 	this->get_parameter("dsr_input_file", dsr_input_file_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter dsr_node is set to: [%s]", dsr_input_file_.c_str());
+}
+
+void AgentNode::save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Request> request,
+	std::shared_ptr<dsr_interfaces::srv::SaveDSR::Response> response){
+	G_->write_to_json_file(request->dsr_url);
+	response->result = true;
 }
 

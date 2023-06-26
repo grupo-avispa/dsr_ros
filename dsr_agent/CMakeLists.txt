@@ -26,6 +26,7 @@ find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
+find_package(dsr_interfaces REQUIRED)
 
 ###########
 ## Build ##
@@ -67,6 +68,7 @@ ament_target_dependencies(generic_agent
   Qt5
   sensor_msgs
   nav2_util
+  dsr_interfaces
 )
 target_link_libraries(generic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(generic_agent PRIVATE ${agent_moc})
@@ -84,6 +86,7 @@ ament_target_dependencies(tf_agent
   tf2_msgs
   tf2_sensor_msgs
   tf2_geometry_msgs
+  dsr_interfaces
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(tf_agent PRIVATE ${agent_moc})
