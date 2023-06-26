@@ -85,10 +85,22 @@ ament_target_dependencies(tf_agent
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(tf_agent PRIVATE ${tf_moc})
 
+############
+## VIEWER ##
+############
+
+# Executable node
+add_executable(viewer src/viewer.cpp)
+ament_target_dependencies(viewer
+  Eigen3
+  Qt5
+)
+target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
+
 #############
 ## Install ##
 #############
-install(TARGETS generic_agent tf_agent
+install(TARGETS generic_agent tf_agent viewer
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
