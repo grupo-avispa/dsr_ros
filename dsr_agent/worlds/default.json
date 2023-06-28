@@ -3,9 +3,17 @@
         "symbols": {
             "0": {
                 "attribute": {
+                    "color": {
+                        "type": 0,
+                        "value": "Red"
+                    },
                     "level": {
                         "type": 1,
                         "value": 0
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "0"
                     }
                 },
                 "id": "0",
