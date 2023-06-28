@@ -167,7 +167,8 @@ void genericAgent::deserialize_and_update_attributes(
 		modify_node_attributes<ROS_TYPE>(dsr_node, ros_msg);
 		G_->update_node(dsr_node.value());
 	}else{
-		create_and_insert_node<NODE_TYPE>(node_name);
+		// TODO: Change this
+		create_and_insert_node<NODE_TYPE>(node_name, "robot");
 	}
 
 	// Create an edge between the node and its parent

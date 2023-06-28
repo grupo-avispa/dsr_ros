@@ -1,6 +1,5 @@
 battery_agent:
   ros__parameters:
-    agent_name: battery_agent
     agent_id: 2
     dsr_input_file: ''
     dsr_node_name: battery
@@ -8,21 +7,18 @@ battery_agent:
     ros_topic: /battery
 laser_agent:
   ros__parameters:
-    agent_name: laser_agent
     agent_id: 3
     dsr_node_name: laser
     dsr_parent_node_name: base_laser_link
     ros_topic: /scan/filtered
 rgb_agent:
   ros__parameters:
-    agent_name: rgb_agent
     agent_id: 4
     dsr_node_name: realsense
     dsr_parent_node_name: realsense_link
     ros_topic: /realsense/color/image_raw
 rgbd_agent:
   ros__parameters:
-    agent_name: rgbd_agent
     agent_id: 5
     dsr_node_name: realsense
     dsr_parent_node_name: realsense_link

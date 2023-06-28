@@ -46,20 +46,32 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 		std::shared_ptr<DSR::DSRGraph> G_;
 
 		template <typename NODE_TYPE> 
-		std::optional<uint64_t> create_and_insert_node(const std::string &name){
+		void create_and_insert_node(const std::string & name, const std::string & parent_node_name){
 			// Create node
-			auto new_dsr_node = DSR::Node::create<NODE_TYPE>(name);
-			// Add default level attribute
-			G_->add_or_modify_attrib_local<level_att>(new_dsr_node, 0);
+			auto new_node = DSR::Node::create<NODE_TYPE>(name);
+			auto parent_node = G_->get_node(parent_node_name);
+			// Add default attributes
+			G_->add_or_modify_attrib_local<parent_att>(new_node, parent_node.value().id());
+			G_->add_or_modify_attrib_local<level_att>(new_node, 
+				G_->get_node_level(parent_node.value()).value() + 1);
+			// Draw in the graph
+			std::tuple<float, float> graph_pos;
+			if (name.find("person") != std::string::npos){
+				graph_pos = get_position_by_level_in_graph(parent_node.value());
+			}else{
+				graph_pos = get_random_position_to_draw_in_graph(parent_node.value().type());
+			}
+			const auto &[random_x, random_y] = graph_pos;
+			G_->add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
+			G_->add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
 			// Insert node
-			auto id = G_->insert_node(new_dsr_node);
-			if (id.has_value()){
+			if (auto id = G_->insert_node(new_node); id.has_value()){
+				// TODO: Add edge between parent and new node
 				RCLCPP_INFO(this->get_logger(), 
 					"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
 			}else{
 				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 			}
-			return id;
 		}
 
 		template <typename EDGE_TYPE> 
@@ -78,11 +90,13 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 		rclcpp::Service<dsr_interfaces::srv::SaveDSR>::SharedPtr save_dsr_service_;
 
 		int agent_id_;
-		std::string agent_name_, dsr_input_file_;
+		std::string dsr_input_file_;
 
 		void get_common_params();
 		void save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Request> request,
 			std::shared_ptr<dsr_interfaces::srv::SaveDSR::Response> response);
+		std::tuple<float, float> get_position_by_level_in_graph(const DSR::Node & parent);
+		std::tuple<float, float> get_random_position_to_draw_in_graph(const std::string & type);
 };
 
 #endif  // DSR_AGENT__AGENT_NODE_HPP_
