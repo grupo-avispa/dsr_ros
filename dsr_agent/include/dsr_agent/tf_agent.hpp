@@ -33,9 +33,6 @@ class tfAgent: public AgentNode{
 	private:
 		rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;
 
-		// DSR graph
-		std::unique_ptr<DSR::RT_API> rt_;
-
 		void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg);
 };
 

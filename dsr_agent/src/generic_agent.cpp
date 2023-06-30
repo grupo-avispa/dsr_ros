@@ -81,7 +81,7 @@ void genericAgent::get_params(){
 }
 
 template <> 
-void genericAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
+void genericAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::BatteryState &msg){
 	// Modify the attributes of the node
 	G_->add_or_modify_attrib_local<battery_voltage_att>(node.value(), msg.voltage);
@@ -110,7 +110,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::BatteryState>(
 }
 
 template <> 
-void genericAgent::modify_node_attributes<sensor_msgs::msg::Image>(
+void genericAgent::modify_attributes<sensor_msgs::msg::Image>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::Image &msg){
 	// Modify the attributes of the node depending the type of the image
 	if (msg.encoding == sensor_msgs::image_encodings::RGB8){
@@ -131,7 +131,7 @@ void genericAgent::modify_node_attributes<sensor_msgs::msg::Image>(
 }
 
 template <> 
-void genericAgent::modify_node_attributes<sensor_msgs::msg::LaserScan>(
+void genericAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::LaserScan &msg){
 	
 	// Convert from ROS to DSR
@@ -164,25 +164,11 @@ void genericAgent::deserialize_and_update_attributes(
 
 	// Get the node from the graph, modify its attributes or create it if it does not exist
 	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
-		modify_node_attributes<ROS_TYPE>(dsr_node, ros_msg);
+		modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
 		G_->update_node(dsr_node.value());
 	}else{
-		// TODO: Change this
-		create_and_insert_node<NODE_TYPE>(node_name, "robot");
-	}
-
-	// Create an edge between the node and its parent
-	if (!parent_name.empty()){
-		if (auto parent_node = G_->get_node(parent_name); parent_node.has_value()){
-			if (auto child_node = G_->get_node(node_name); child_node.has_value()){
-				if (auto edge = G_->get_edge(parent_node.value().id(), 
-											child_node.value().id(), 
-											"has"); !edge.has_value()){
-					create_and_insert_edge<EDGE_TYPE>(parent_node.value().id(), 
-						child_node.value().id());
-				}
-			}
-		}
+		parent_name = (parent_name == "base_link") ? "robot" : parent_name;
+		add_node<NODE_TYPE, EDGE_TYPE>(node_name, parent_name);
 	}
 }
 

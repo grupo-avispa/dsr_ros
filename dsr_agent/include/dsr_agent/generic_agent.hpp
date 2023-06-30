@@ -45,8 +45,8 @@ class genericAgent: public AgentNode{
 		std::string ros_topic_, dsr_node_name_, dsr_parent_node_name_;
 
 		void get_params();
-		template <typename ROS_TYPE> void modify_node_attributes(
-			std::optional<DSR::Node> &node, const ROS_TYPE &msg);
+		template <typename ROS_TYPE> void modify_attributes(std::optional<DSR::Node> &node, 
+			const ROS_TYPE &msg);
 		template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
 			void deserialize_and_update_attributes(
 				const std::shared_ptr<rclcpp::SerializedMessage> msg, 

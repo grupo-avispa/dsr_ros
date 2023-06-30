@@ -11,6 +11,7 @@
 
 // ROS
 #include "nav2_util/node_utils.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include "dsr_agent/agent_node.hpp"
 
@@ -21,6 +22,9 @@ AgentNode::AgentNode(std::string node_name): rclcpp::Node(node_name){
 
 	// Create graph
 	G_ = std::make_shared<DSR::DSRGraph>(0, node_name, agent_id_, dsr_input_file_);
+
+	// Get RT API
+	rt_ = G_->get_rt_api();
 
 	// Create service
 	save_dsr_service_ = this->create_service<dsr_interfaces::srv::SaveDSR>(
@@ -55,6 +59,23 @@ void AgentNode::get_common_params(){
 		"The parameter dsr_input_file is set to: [%s]", dsr_input_file_.c_str());
 }
 
+void AgentNode::update_rt_attributes(DSR::Node & from, DSR::Node & to, 
+	const geometry_msgs::msg::Transform & msg){
+	// Get translation and rotation
+	std::vector<float> trans = {static_cast<float>(msg.translation.x), 
+								static_cast<float>(msg.translation.y), 
+								static_cast<float>(msg.translation.z)};
+	tf2::Quaternion q;
+	tf2::fromMsg(msg.rotation, q);
+	double roll, pitch, yaw;
+	tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+	std::vector<float> rot = {static_cast<float>(roll), 
+							static_cast<float>(pitch), 
+							static_cast<float>(yaw)};
+	// Insert or update edge
+	rt_->insert_or_assign_edge_RT(from, to.id(), trans, rot);
+}
+
 void AgentNode::save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Request> request,
 	std::shared_ptr<dsr_interfaces::srv::SaveDSR::Response> response){
 	G_->write_to_json_file(request->dsr_url);
@@ -75,17 +96,11 @@ std::tuple<float, float> AgentNode::get_position_by_level_in_graph(const DSR::No
 	return std::make_tuple(max + 150 , G_->get_attrib_by_name<pos_y_att>(parent).value() + 80);
 }
 
-std::tuple<float, float> AgentNode::get_random_position_to_draw_in_graph(const std::string & type){
+std::tuple<float, float> AgentNode::get_random_position_to_draw_in_graph(){
 	static std::random_device rd;
 	static std::mt19937 mt(rd());
 
 	float x_min_limit = -800, y_min_limit = -700, x_max_limit = 800, y_max_limit = 500;
-	if (type == "object"){
-		x_min_limit = -300;
-		x_max_limit = 0;
-		y_min_limit = 0;
-		y_max_limit = 300;
-	}
 	std::uniform_real_distribution<double> dist_x(x_min_limit, x_max_limit);
 	std::uniform_real_distribution<double> dist_y(y_min_limit, y_max_limit);
 
