@@ -14,6 +14,14 @@
                     "parent": {
                         "type": 7,
                         "value": "0"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 100.0
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -100.0
                     }
                 },
                 "id": "0",
