@@ -9,9 +9,6 @@
  *
  */
 
-#include <chrono>
-#include <thread>
-
 // ROS
 #include "nav2_util/node_utils.hpp"
 

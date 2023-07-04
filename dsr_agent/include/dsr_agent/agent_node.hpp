@@ -110,11 +110,17 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 		template <typename EDGE_TYPE> 
 		void add_edge(uint64_t from, uint64_t to){
 			auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
+			std::optional<DSR::Node> parent_node = G_->get_node(from);
+			std::optional<DSR::Node> child_node = G_->get_node(to);
 			if (G_->insert_or_assign_edge(new_edge)){
-				RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" << from << "->" << to <<
+				RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
+					<< parent_node.value().name() << "->" 
+					<< child_node.value().name()  <<
 					"] of type [" << new_edge.type().c_str() << "]");
 			}else{
-				RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" << from << "->" << to <<
+				RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+					<< parent_node.value().name() << "->" 
+					<< child_node.value().name()  <<
 					"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
 			}
 		}
