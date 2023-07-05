@@ -55,7 +55,7 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 	}
 
 	// Wait until the DSR graph is ready
-	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
 /* Initialize ROS parameters */
@@ -169,15 +169,17 @@ void genericAgent::deserialize_and_update_attributes(
 	auto serializer = rclcpp::Serialization<ROS_TYPE>();
 	serializer.deserialize_message(msg.get(), &ros_msg);
 
-	// Get the node from the graph, modify its attributes or create it if it does not exist
-	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
-		modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
-		G_->update_node(dsr_node.value());
-	}else{
-		// TODO: Use header frame_id to get the parent name
-		add_node<NODE_TYPE, EDGE_TYPE>(node_name, 
-			(parent_name == "base_link") ? "robot" : parent_name);
+	// Check if the node exists in the graph
+	auto dsr_node = G_->get_node(node_name);
+	if (!dsr_node.has_value()){
+		// If the parent name is empty, the parent is the frame_id of the ROS message
+		auto new_parent_name = parent_name.empty() ? get_frame_id<ROS_TYPE>(ros_msg) : parent_name;
+		add_node<NODE_TYPE, EDGE_TYPE>(node_name, new_parent_name);
 	}
+	// Update the attributes of the node
+	dsr_node = G_->get_node(node_name);
+	modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
+	G_->update_node(dsr_node.value());
 }
 
 void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){

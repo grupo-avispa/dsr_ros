@@ -34,15 +34,6 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 		explicit AgentNode(std::string node_name);
 		virtual ~AgentNode();
 
-	public slots:
-		/*void node_updated(std::uint64_t id, const std::string &type);
-		void node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names);
-		void edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type);
-		void edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
-			const std::string &type, const std::vector<std::string>& att_names);
-		void node_deleted(std::uint64_t id);
-		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);*/
-
 	protected:
 		// DSR graph
 		std::shared_ptr<DSR::DSRGraph> G_;
@@ -75,8 +66,6 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 					// Insert edge
 					auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
 						new_node.id());
-					// TODO: Remove this sleep when they fix the DSR
-					std::this_thread::sleep_for(std::chrono::milliseconds(50));
 					if (G_->insert_or_assign_edge(new_edge)){
 						RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
 							<< parent_node.value().name() << "->" 
@@ -127,6 +116,11 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 					<< child_node.value().name() <<
 					"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
 			}
+		}
+
+		template <typename ROS_TYPE>
+		std::string get_frame_id(ROS_TYPE msg){
+			return msg.header.frame_id;
 		}
 
 		void update_rt_attributes(DSR::Node & from, DSR::Node & to, 
