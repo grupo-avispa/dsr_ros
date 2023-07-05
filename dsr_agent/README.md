@@ -5,9 +5,9 @@
 
 This package provides a ROS2 interface for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS2 middleware.
 
-This package features two additional nodes. 
-* **`Generic agent:`** which allows the user to subscribe to a sensor topic of any type and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
-* **`TF agent:`**  which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
+This package features two types of nodes:
+* **`Generic agent:`** which allows the user to subscribe to a sensor topic of any kind and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
+* **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
 
 A DSR viewer is also included.
 
@@ -61,15 +61,11 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 #### Parameters
 
-* **`agent_name`** (string, default: "generic_agent")
-
-	The name of the agent that will be used to publish the data in the DSR.
-
 * **`agent_id`** (int, default: 0)
 
 	A unique identifier for the agent.
 
-* **`dsr_input_file`** (string, default: "")
+* **`dsr_input_file`** (string, default: "") (Optional)
 
 	The path to the DSR file that will be loaded.
 
@@ -77,9 +73,9 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 	The name of the node in the DSR where the sensor data should be published.
 
-* **`dsr_parent_node_name`** (string, default: "")
+* **`dsr_parent_node_name`** (string, default: "") (Optional)
 
-	Optional string that specifies the name of the parent node in the DSR where the `dsr_node_name should be attached to.
+	String that specifies the name of the parent node in the DSR where the `dsr_node_name` should be attached to. If left empty, the node will be attached to frame_id from the header message.
 
 ### tf_agent
 
@@ -97,22 +93,18 @@ Agent that publishes the transformation tree as nodes in the DSR.
 
 #### Parameters
 
-* **`agent_name`** (string, default: "generic_agent")
-
-	The name of the agent that will be used to publish the data in the DSR.
-
 * **`agent_id`** (int, default: 0)
 
 	A unique identifier for the agent.
 
-* **`dsr_input_file`** (string, default: "")
+* **`dsr_input_file`** (string, default: "") (Optional)
 
 	The path to the DSR file that will be loaded.
 
 
 ## Future work
 - [ ] Convert nodes to LifeCycleNodes.
-- [ ] Inherit from a generic agent class.
+- [x] Inherit from a generic agent class.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/

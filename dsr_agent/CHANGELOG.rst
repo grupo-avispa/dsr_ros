@@ -2,6 +2,21 @@
 Changelog for package dsr_agent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.0 (05-07-2023)
+------------------
+* Added logging info in launch file.
+* Added parameter for reading a world file.
+* Added viewer.
+* Generic and tf agents both inherit from agent node.
+* Added agent_node class (.h and .cpp files).
+* Added service to save dsr into a JSON file.
+* Remove redundant agent_name.
+* Added function to get random pos.
+* Improve create node.
+* Added RT update attributes to agent_node.
+* Add sleeps to prevent unsynchronization with the DSR.
+* Use frame_id from ROS message if parent_name is empty.
+
 0.2.0 (25-04-2023)
 ------------------
 * Prepare for humble release.
