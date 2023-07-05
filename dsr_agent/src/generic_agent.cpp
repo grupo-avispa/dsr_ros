@@ -9,6 +9,10 @@
  *
  */
 
+// C++
+#include <chrono>
+#include <thread>
+
 // ROS
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "nav2_util/node_utils.hpp"
@@ -49,6 +53,9 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 			rclcpp::QoS(rclcpp::SensorDataQoS()),
 			std::bind(&genericAgent::serial_callback, this, std::placeholders::_1));
 	}
+
+	// Wait until the DSR graph is ready
+	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 }
 
 /* Initialize ROS parameters */
@@ -166,8 +173,6 @@ void genericAgent::deserialize_and_update_attributes(
 	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
 		modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
 		G_->update_node(dsr_node.value());
-		// TODO: Update edge if there is a change in the parent
-		//add_edge<EDGE_TYPE>(G_->get_node(parent_name).value().id(), dsr_node.value().id());
 	}else{
 		// TODO: Use header frame_id to get the parent name
 		add_node<NODE_TYPE, EDGE_TYPE>(node_name, 

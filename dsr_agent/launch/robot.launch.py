@@ -47,18 +47,6 @@ def generate_launch_description():
     )
 
     # Prepare the nodes
-    tf_agent_node = Node(
-        package = 'dsr_agent',
-        namespace = '',
-        executable = 'tf_agent',
-        name = 'tf_agent',
-        parameters=[configured_params],
-        emulate_tty = True,
-        output='screen', 
-        arguments=[
-            '--ros-args', 
-            '--log-level', ['tf_agent:=', LaunchConfiguration('log-level')]]
-    )
 
     battery_agent_node = Node(
         package = 'dsr_agent',
@@ -112,21 +100,11 @@ def generate_launch_description():
             '--log-level', ['rgbd_agent:=', LaunchConfiguration('log-level')]]
     )
 
-    register_event_handler_for_tf_start_state = RegisterEventHandler(
-        OnProcessStart(
-            target_action = tf_agent_node,
-            on_start = [
-                battery_agent_node, 
-                laser_agent_node,
-                rgb_agent_node,
-                depth_agent_node
-            ],
-        )
-    )
-
     return LaunchDescription([
         declare_params_file_arg,
         declare_log_level_arg,
-        tf_agent_node,
-        register_event_handler_for_tf_start_state,
+        battery_agent_node, 
+        laser_agent_node,
+        rgb_agent_node,
+        depth_agent_node
     ])

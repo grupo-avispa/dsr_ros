@@ -75,14 +75,18 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 					// Insert edge
 					auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
 						new_node.id());
+					// TODO: Remove this sleep when they fix the DSR
+					std::this_thread::sleep_for(std::chrono::milliseconds(50));
 					if (G_->insert_or_assign_edge(new_edge)){
 						RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
-						<< parent_node.value().id() << "->" << new_node.id() 
-						<< "] of type [" << new_edge.type().c_str() << "]");
+							<< parent_node.value().name() << "->" 
+							<< new_node.name() <<
+							"] of type [" << new_edge.type().c_str() << "]");
 					}else{
 						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-						<< parent_node.value().id() << "->" << new_node.id() 
-						<< "] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+							<< parent_node.value().name() << "->" 
+							<< new_node.name() <<
+							"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
 					}
 				}else{
 					RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
@@ -113,14 +117,14 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 			std::optional<DSR::Node> parent_node = G_->get_node(from);
 			std::optional<DSR::Node> child_node = G_->get_node(to);
 			if (G_->insert_or_assign_edge(new_edge)){
-				RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
+				RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
 					<< parent_node.value().name() << "->" 
-					<< child_node.value().name()  <<
+					<< child_node.value().name() <<
 					"] of type [" << new_edge.type().c_str() << "]");
 			}else{
 				RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
 					<< parent_node.value().name() << "->" 
-					<< child_node.value().name()  <<
+					<< child_node.value().name() <<
 					"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
 			}
 		}
