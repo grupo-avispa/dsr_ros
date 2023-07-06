@@ -22,7 +22,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 // DSR
-#include "dsr_agent/ros_attr_name.hpp"
+#include "dsr_agent/ros_to_dsr_types.hpp"
 #include "dsr_agent/generic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
@@ -44,6 +44,9 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 	QObject::connect(G_.get(), 
 		&DSR::DSRGraph::del_node_signal, this, &genericAgent::node_deleted);
 
+	// Wait until the DSR graph is ready
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
 	// Subscriber to the topic with a generic subscription
 	auto data = rclcpp::Node::get_topic_names_and_types();
 	for (auto type : data[ros_topic_]){
@@ -53,9 +56,6 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 			rclcpp::QoS(rclcpp::SensorDataQoS()),
 			std::bind(&genericAgent::serial_callback, this, std::placeholders::_1));
 	}
-
-	// Wait until the DSR graph is ready
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
 /* Initialize ROS parameters */

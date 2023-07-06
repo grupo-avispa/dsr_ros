@@ -28,7 +28,7 @@
 
 #include "dsr_interfaces/srv/save_dsr.hpp"
 
-class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_from_this<AgentNode>{
+class AgentNode: public QObject, public rclcpp::Node{
 	Q_OBJECT
 	public:
 		explicit AgentNode(std::string node_name);
@@ -121,6 +121,21 @@ class AgentNode: public QObject, public rclcpp::Node, public std::enable_shared_
 		template <typename ROS_TYPE>
 		std::string get_frame_id(ROS_TYPE msg){
 			return msg.header.frame_id;
+		}
+
+		template <typename EDGE_TYPE>
+		bool replace_edge(uint64_t from, uint64_t to, std::string old_edge){
+			if (G_->delete_edge(
+					G_->get_node(from).value().name(), G_->get_node(to).value().name(), old_edge)){
+				auto new_edge = DSR::Edge::create<EDGE_TYPE>(
+					G_->get_node(from).value().id(), G_->get_node(to).value().id());
+				if (G_->insert_or_assign_edge(new_edge)){
+					RCLCPP_INFO(this->get_logger(), "Inserting %s edge", 
+						new_edge.type().c_str());
+					return true;
+				}
+			}
+			return false;
 		}
 
 		void update_rt_attributes(DSR::Node & from, DSR::Node & to, 

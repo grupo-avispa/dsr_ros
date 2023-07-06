@@ -21,7 +21,9 @@ find_package(Eigen3 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -56,9 +58,9 @@ qt5_wrap_cpp(agent_moc ${HEADERS}
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 
-#################
-## AGENT NODE  ##
-#################
+###################
+## GENERIC AGENT ##
+###################
 
 # Executable node
 add_executable(generic_agent ${SOURCES} src/generic_agent.cpp)
@@ -72,6 +74,24 @@ ament_target_dependencies(generic_agent
 )
 target_link_libraries(generic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(generic_agent PRIVATE ${agent_moc})
+
+######################
+## NAVIGATION AGENT ##
+######################
+
+# Executable node
+add_executable(nav_agent ${SOURCES} src/nav_agent.cpp)
+ament_target_dependencies(nav_agent
+  rclcpp
+  Eigen3
+  Qt5
+  geometry_msgs
+  nav2_util
+  tf2
+  dsr_interfaces
+)
+target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(nav_agent PRIVATE ${agent_moc})
 
 ##############
 ## TF AGENT ##

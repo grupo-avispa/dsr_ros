@@ -1,5 +1,5 @@
 /*
- * ROS ATTRIBUTES NAMES ROS NODE
+ * ROS TO DSR TYPES NAMES ROS NODE
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
@@ -9,13 +9,15 @@
  *
  */
 
-#ifndef DSR_AGENT__ROS_ATTR_NAME_HPP_
+#ifndef DSR_AGENT__ROS_TO_DSR_TYPES_HPP_
 
-#include "dsr/core/types/type_checking/dsr_attr_name.h"
+#include <dsr/core/types/type_checking/dsr_node_type.h>
+#include <dsr/core/types/type_checking/dsr_edge_type.h>
+#include <dsr/core/types/type_checking/dsr_attr_name.h>
 
 /**
  * sensor_msgs::msg::BatteryState
-*/
+ */
 REGISTER_TYPE(battery_voltage, float, false)
 REGISTER_TYPE(battery_temperature, float, false)
 REGISTER_TYPE(battery_current, float, false)
@@ -32,5 +34,32 @@ REGISTER_TYPE(battery_cell_temperature, std::reference_wrapper<const std::vector
 REGISTER_TYPE(battery_location, std::string, false)
 REGISTER_TYPE(battery_serial_number, std::string, false)
 
+/**
+ * @brief CAMPERO
+ * 
+ */
 
-#endif  // DSR_AGENT__ROS_ATTR_NAME_HPP_
+REGISTER_NODE_TYPE(planner)
+REGISTER_NODE_TYPE(navigation)
+REGISTER_NODE_TYPE(search_goal)
+REGISTER_NODE_TYPE(move)
+
+REGISTER_EDGE_TYPE(abort)
+REGISTER_EDGE_TYPE(detected)
+REGISTER_EDGE_TYPE(not_detected)
+REGISTER_EDGE_TYPE(stopped)
+REGISTER_EDGE_TYPE(start)
+REGISTER_EDGE_TYPE(is)
+REGISTER_EDGE_TYPE(finished)
+REGISTER_EDGE_TYPE(aborting)
+REGISTER_EDGE_TYPE(is_performing)
+REGISTER_EDGE_TYPE(navigating)
+
+REGISTER_TYPE(pose_x, float, false)
+REGISTER_TYPE(pose_y, float, false)
+REGISTER_TYPE(pose_angle, float, false)
+REGISTER_TYPE(goal_x, float, false)
+REGISTER_TYPE(goal_y, float, false)
+REGISTER_TYPE(goal_angle, float, false)
+
+#endif  // DSR_AGENT__ROS_TO_DSR_TYPES_HPP_
