@@ -126,7 +126,7 @@ target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
 #############
 ## Install ##
 #############
-install(TARGETS generic_agent tf_agent viewer
+install(TARGETS generic_agent tf_agent nav_agent viewer
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
