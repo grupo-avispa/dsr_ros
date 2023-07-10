@@ -17,6 +17,8 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav2_util/node_utils.hpp"
 #include "tf2/utils.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 // DSR
 #include "dsr_agent/ros_to_dsr_types.hpp"
@@ -44,9 +46,6 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"){
 	// Wait until the DSR graph is ready
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-	navigation_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(
-		this->shared_from_this(), "navigate_to_pose");
-	
 	// Add the navigation node to the DSR graph
 	add_node<navigation_node_type, stopped_edge_type>("navigation", "robot");
 }
@@ -70,51 +69,66 @@ void navigationAgent::node_attributes_updated(uint64_t id, const std::vector<std
 }
 
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+	RCLCPP_INFO(this->get_logger(), "Edge updated: %s", type.c_str());
 	// Check if the planner wants to start the navigation
-	if (from == G_->get_node("planner").value().id() 
-		&& to == G_->get_node("move").value().id() && type == "start"){
-		// Replace the 'start' edge with a 'is_performing' edge between planner and move
-		replace_edge<is_performing_edge_type>(from, to, type);
+	if (type == "start"){
+		RCLCPP_INFO(this->get_logger(), "The type is start");
+		if (auto planner_node = G_->get_node("planner"); 
+				planner_node.has_value() && from == planner_node.value().id() ){
+			RCLCPP_INFO(this->get_logger(), "The node is planner");
+			if (auto move_node = G_->get_node("move"); 
+					move_node.has_value() && from == move_node.value().id() ){
+				RCLCPP_INFO(this->get_logger(), "Navigation started");
+				// Replace the 'start' edge with a 'is_performing' edge between planner and move
+				replace_edge<is_performing_edge_type>(from, to, type);
 
-		auto robot_node = G_->get_node("robot");
-		auto navigation_node = G_->get_node("navigation");
-		auto stopped_edge = G_->get_edge(
-			robot_node.value().name(), navigation_node.value().name(), "stopped");
-		auto is_performing_edge = G_->get_edge(
-			G_->get_node("planner").value().name(),
-			G_->get_node("move").value().name(),"is_performing");
-		// Replace the 'stopped' edge with a 'navigating' edge between navigation and robot
-		if (stopped_edge.has_value() && is_performing_edge.has_value()){
-			if (replace_edge<navigating_edge_type>(
-					robot_node.value().id(), navigation_node.value().id(), "stopped")){
-				// TODO: Get the goal from the move node
-				// Send the robot to the goal
-				// TODO: Change for a real position
-				geometry_msgs::msg::Pose goal_pose;
-				goal_pose.position.x = 0.0;
-				goal_pose.position.y = 0.0;
-				goal_pose.orientation.w = 1.0;
-				send_to_goal(goal_pose);
-				// Update the navigation node with the goal
-				G_->add_or_modify_attrib_local<goal_x_att>(
-					navigation_node.value(), static_cast<float>(goal_pose.position.x));
-				G_->add_or_modify_attrib_local<goal_y_att>(
-					navigation_node.value(), static_cast<float>(goal_pose.position.y));
-				G_->add_or_modify_attrib_local<goal_angle_att>(
-					navigation_node.value(), static_cast<float>(tf2::getYaw(goal_pose.orientation)));
-				G_->update_node(navigation_node.value());
-				RCLCPP_INFO(this->get_logger(), "Navigation started with goal [%f, %f]", 
-					goal_pose.position.x, goal_pose.position.y);
+				auto robot_node = G_->get_node("robot");
+				auto navigation_node = G_->get_node("navigation");
+				auto stopped_edge = G_->get_edge(
+					robot_node.value().name(), navigation_node.value().name(), "stopped");
+				auto is_performing_edge = G_->get_edge(
+					planner_node.value().name(), move_node.value().name(),"is_performing");
+				// Replace the 'stopped' edge with a 'navigating' edge between navigation and robot
+				if (stopped_edge.has_value() && is_performing_edge.has_value()){
+					if (replace_edge<navigating_edge_type>(
+							robot_node.value().id(), navigation_node.value().id(), "stopped")){
+						// Get the goal from the move node
+						geometry_msgs::msg::Pose goal_pose;
+						goal_pose.position.x = G_->get_attrib_by_name<goal_x_att>(
+							move_node.value()).value();
+						goal_pose.position.y = G_->get_attrib_by_name<goal_y_att>(
+							move_node.value()).value();
+						goal_pose.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 
+							G_->get_attrib_by_name<goal_angle_att>(move_node.value()).value()));
+						// Send the robot to the goal
+						send_to_goal(goal_pose);
+						// Update the navigation node with the goal
+						G_->add_or_modify_attrib_local<goal_x_att>(
+							navigation_node.value(), static_cast<float>(goal_pose.position.x));
+						G_->add_or_modify_attrib_local<goal_y_att>(
+							navigation_node.value(), static_cast<float>(goal_pose.position.y));
+						G_->add_or_modify_attrib_local<goal_angle_att>(navigation_node.value(), 
+							static_cast<float>(tf2::getYaw(goal_pose.orientation)));
+						G_->update_node(navigation_node.value());
+						RCLCPP_INFO(this->get_logger(), "Navigation started with goal [%f, %f]", 
+							goal_pose.position.x, goal_pose.position.y);
+					}
+				}
 			}
 		}
 	}
 
 	// Check if the planner wants to abort the navigation
-	if (from == G_->get_node("planner").value().id() 
-		&& to == G_->get_node("navigation").value().id() && type == "abort"){
-		// Replace the 'abort' edge with a 'aborting' edge between planner and navigation
-		if (replace_edge<aborting_edge_type>(from, to, type)){
-			cancel_goal();
+	if (type == "abort"){
+		if (auto planner_node = G_->get_node("planner"); 
+				planner_node.has_value() && from == planner_node.value().id() ){
+			if (auto navigation_node = G_->get_node("navigation"); 
+					navigation_node.has_value() && from == navigation_node.value().id() ){
+				// Replace the 'abort' edge with a 'aborting' edge between planner and navigation
+				if (replace_edge<aborting_edge_type>(from, to, type)){
+					cancel_goal();
+				}
+			}
 		}
 	}
 }
@@ -206,6 +220,9 @@ void navigationAgent::result_callback(const GoalHandleNavigateToPose::WrappedRes
 }
 
 void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
+	navigation_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(
+		this->shared_from_this(), "navigate_to_pose");
+
 	if (!this->navigation_client_->wait_for_action_server(std::chrono::seconds(5))) {
 		RCLCPP_ERROR(this->get_logger(), "Navigation server not available after waiting");
 		return;
