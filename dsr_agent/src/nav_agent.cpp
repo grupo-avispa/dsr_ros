@@ -21,6 +21,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 // DSR
+#include "dsr_agent/qt_executor.hpp"
 #include "dsr_agent/ros_to_dsr_types.hpp"
 #include "dsr_agent/nav_agent.hpp"
 
@@ -65,11 +66,11 @@ void navigationAgent::get_params(){
 void navigationAgent::node_updated(std::uint64_t id, const std::string &type){
 }
 
-void navigationAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+void navigationAgent::node_attributes_updated(uint64_t id, 
+	const std::vector<std::string>& att_names){
 }
 
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
-	RCLCPP_INFO(this->get_logger(), "Edge updated: %s", type.c_str());
 	// Check if the planner wants to start the navigation
 	if (type == "start"){
 		RCLCPP_INFO(this->get_logger(), "The type is start");
@@ -77,7 +78,7 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 				planner_node.has_value() && from == planner_node.value().id() ){
 			RCLCPP_INFO(this->get_logger(), "The node is planner");
 			if (auto move_node = G_->get_node("move"); 
-					move_node.has_value() && from == move_node.value().id() ){
+					move_node.has_value() && to == move_node.value().id() ){
 				RCLCPP_INFO(this->get_logger(), "Navigation started");
 				// Replace the 'start' edge with a 'is_performing' edge between planner and move
 				replace_edge<is_performing_edge_type>(from, to, type);
@@ -127,6 +128,7 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 				// Replace the 'abort' edge with a 'aborting' edge between planner and navigation
 				if (replace_edge<aborting_edge_type>(from, to, type)){
 					cancel_goal();
+					RCLCPP_INFO(this->get_logger(), "Navigation aborted");
 				}
 			}
 		}
@@ -135,24 +137,27 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 
 void navigationAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
 	const std::string &type, const std::vector<std::string>& att_names){
-
 }
 
 void navigationAgent::node_deleted(std::uint64_t id){
-
 }
 
-void navigationAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
-
+void navigationAgent::edge_deleted(std::uint64_t from, std::uint64_t to, 
+	const std::string &edge_tag){
 }
 
-void navigationAgent::goal_response_callback(const GoalHandleNavigateToPose::SharedPtr & goal_handle){
-
+void navigationAgent::goal_response_callback(const GoalHandleNavigateToPose::SharedPtr 
+	& goal_handle){
+	goal_handle_ = goal_handle;
+	if (!goal_handle_){
+		RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+	}else{
+		RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
+	}
 }
 
 void navigationAgent::feedback_callback(GoalHandleNavigateToPose::SharedPtr, 
 	const std::shared_ptr<const NavigateToPose::Feedback> feedback){
-	
 	// Set the current pose of the robot
 	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
 		G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
@@ -220,8 +225,8 @@ void navigationAgent::result_callback(const GoalHandleNavigateToPose::WrappedRes
 }
 
 void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
-	navigation_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(
-		this->shared_from_this(), "navigate_to_pose");
+	navigation_client_ = rclcpp_action::create_client<NavigateToPose>(
+		shared_from_this(), "navigate_to_pose");
 
 	if (!this->navigation_client_->wait_for_action_server(std::chrono::seconds(5))) {
 		RCLCPP_ERROR(this->get_logger(), "Navigation server not available after waiting");
@@ -240,12 +245,14 @@ void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 	}
 
 	// Send the goal
-	auto goal_msg = nav2_msgs::action::NavigateToPose::Goal();
+	auto goal_msg = NavigateToPose::Goal();
 	goal_msg.pose.header.stamp = this->now();
 	goal_msg.pose.header.frame_id = "map";
 	goal_msg.pose.pose = goal_pose;
 
 	auto send_options = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
+	send_options.goal_response_callback =
+		std::bind(&navigationAgent::goal_response_callback, this, std::placeholders::_1);
 	send_options.feedback_callback = 
 		std::bind(&navigationAgent::feedback_callback, this, 
 			std::placeholders::_1, std::placeholders::_2);
@@ -253,18 +260,7 @@ void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 		std::bind(&navigationAgent::result_callback, this, std::placeholders::_1);
 
 	auto goal_handle_future = navigation_client_->async_send_goal(goal_msg, send_options);
-	if (rclcpp::spin_until_future_complete(shared_from_this(), goal_handle_future) !=
-		rclcpp::FutureReturnCode::SUCCESS){
-		RCLCPP_ERROR(this->get_logger(), "Send goal failed");
-		return;
-	}
-
-	goal_handle_ = goal_handle_future.get();
-	if (!goal_handle_) {
-		RCLCPP_ERROR(this->get_logger(), "Navigation server rejected request.");
-		return;
-	}
-	result_future_ = navigation_client_->async_get_result(goal_handle_);
+	RCLCPP_INFO(this->get_logger(), "Goal sent");
 }
 
 void navigationAgent::cancel_goal(){
@@ -282,9 +278,16 @@ void navigationAgent::cancel_goal(){
 }
 
 int main(int argc, char** argv){
+	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
+
 	auto node = std::make_shared<navigationAgent>();
-	rclcpp::spin(node);
+
+	QtExecutor exe;
+	exe.add_node(node);
+	exe.start();
+
+	auto res = app.exec();
 	rclcpp::shutdown();
-	return 0;
+	return res;
 }
