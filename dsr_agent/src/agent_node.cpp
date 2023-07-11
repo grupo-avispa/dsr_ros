@@ -30,6 +30,12 @@ AgentNode::AgentNode(std::string node_name): rclcpp::Node(node_name){
 	save_dsr_service_ = this->create_service<dsr_interfaces::srv::SaveDSR>(
 		"save_dsr", 
 		std::bind(&AgentNode::save_dsr, this, std::placeholders::_1, std::placeholders::_2));
+
+	// Register types
+	qRegisterMetaType<uint64_t>("uint64_t");
+	qRegisterMetaType<std::string>("std::string");
+	qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
+	qRegisterMetaType<DSR::SignalInfo>("DSR::SignalInfo");
 }
 
 AgentNode::~AgentNode() {

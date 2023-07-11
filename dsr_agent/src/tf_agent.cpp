@@ -12,6 +12,8 @@
 // ROS
 #include "nav2_util/node_utils.hpp"
 
+// DSR
+#include "dsr_agent/qt_executor.hpp"
 #include "dsr_agent/tf_agent.hpp"
 
 /* Initialize the publishers and subscribers */
@@ -68,9 +70,16 @@ void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 }
 
 int main(int argc, char** argv){
+	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
+
 	auto node = std::make_shared<tfAgent>();
-	rclcpp::spin(node);
+
+	QtExecutor exe;
+	exe.add_node(node);
+	exe.start();
+
+	auto res = app.exec();
 	rclcpp::shutdown();
-	return 0;
+	return res;
 }

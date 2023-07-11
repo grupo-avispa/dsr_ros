@@ -22,6 +22,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 // DSR
+#include "dsr_agent/qt_executor.hpp"
 #include "dsr_agent/ros_to_dsr_types.hpp"
 #include "dsr_agent/generic_agent.hpp"
 
@@ -243,9 +244,16 @@ void genericAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std:
 }
 
 int main(int argc, char** argv){
+	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
+
 	auto node = std::make_shared<genericAgent>();
-	rclcpp::spin(node);
+
+	QtExecutor exe;
+	exe.add_node(node);
+	exe.start();
+
+	auto res = app.exec();
 	rclcpp::shutdown();
-	return 0;
+	return res;
 }

@@ -31,15 +31,6 @@ class genericAgent: public AgentNode{
 	public:
 		genericAgent();
 
-	public slots:
-		void node_updated(std::uint64_t id, const std::string &type);
-		void node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names);
-		void edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type);
-		void edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
-			const std::string &type, const std::vector<std::string>& att_names);
-		void node_deleted(std::uint64_t id);
-		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
-
 	private:
 		rclcpp::GenericSubscription::SharedPtr generic_sub_;
 		std::string ros_topic_, dsr_node_name_, dsr_parent_node_name_;
@@ -53,6 +44,14 @@ class genericAgent: public AgentNode{
 				const std::string &node_name, const std::string &parent_name);
 
 		void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
+
+		void node_updated(std::uint64_t id, const std::string &type);
+		void node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names);
+		void edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type);
+		void edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
+			const std::string &type, const std::vector<std::string>& att_names);
+		void node_deleted(std::uint64_t id);
+		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 };
 
 #endif  // DSR_AGENT__GENERIC_AGENT_HPP_

@@ -46,11 +46,13 @@ set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 # Set headers
 set(HEADERS
   include/${PROJECT_NAME}/agent_node.hpp
+  include/${PROJECT_NAME}/qt_executor.hpp
 )
 
 # Set sources
 set(SOURCES
   src/agent_node.cpp
+  src/qt_executor.cpp
 )
 
 ## Qt Moc
