@@ -19,14 +19,15 @@
 /* Initialize the publishers and subscribers */
 tfAgent::tfAgent(): AgentNode("tf_agent"){
 	// Subscriber to the tf topics
+	auto latched_profile = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
 	tf_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
-						"/tf", 
-						rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
-						std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
+		"/tf", 
+		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
+		std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
 	tf_static_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
-						"/tf_static", 
-						rclcpp::QoS(1).transient_local(),
-						std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
+		"/tf_static", 
+		latched_profile,
+		std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
 }
 
 void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
