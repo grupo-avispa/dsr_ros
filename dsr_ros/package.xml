@@ -8,7 +8,8 @@
 	<license>TODO</license>
 	<author email="ajtudela@gmail.com">Alberto Tudela</author>
 	<buildtool_depend>ament_cmake</buildtool_depend>
-	<exec_depend>dsr_agent</exec_depend>
+	<exec_depend>dsr_agents</exec_depend>
+	<exec_depend>dsr_interfaces</exec_depend>
 	<exec_depend>dsr_rqt_plugin</exec_depend>
 	<export>
 		<build_type>ament_cmake</build_type>

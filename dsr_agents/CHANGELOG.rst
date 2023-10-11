@@ -5,6 +5,7 @@ Changelog for package dsr_agents
 0.4.0 (xx-07-2023)
 ------------------
 * Added QtExecutor to spin ROS events in a separate thread.
+* Rename to dsr_agents.
 
 0.3.0 (05-07-2023)
 ------------------
