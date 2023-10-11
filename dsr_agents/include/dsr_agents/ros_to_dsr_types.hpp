@@ -61,7 +61,7 @@ REGISTER_TYPE(pose_angle, float, false)
 REGISTER_TYPE(goal_x, float, false)
 REGISTER_TYPE(goal_y, float, false)
 REGISTER_TYPE(goal_angle, float, false)
-REGISTER_TYPE(text_to_say, string, false)
-REGISTER_TYPE(zone, string, false)
+REGISTER_TYPE(text_to_say, std::string, false)
+REGISTER_TYPE(zone, std::string, false)
 
 #endif  // DSR_AGENT__ROS_TO_DSR_TYPES_HPP_
