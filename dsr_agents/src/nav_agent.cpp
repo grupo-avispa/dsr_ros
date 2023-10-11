@@ -26,7 +26,7 @@
 #include "dsr_agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-navigationAgent::navigationAgent(): AgentNode("navigation_agent"){
+navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_room_(""){
 	// Get ROS parameters
 	get_params();
 
@@ -71,12 +71,12 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 }
 
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
-	// Check if the planner wants to start the navigation
+	// Check if the planner wants to start the navigation: planner ---(start)--> move
 	if (type == "start"){
-		RCLCPP_INFO(this->get_logger(), "The type is start");
+		RCLCPP_DEBUG(this->get_logger(), "The type is start");
 		if (auto planner_node = G_->get_node("planner"); 
 				planner_node.has_value() && from == planner_node.value().id() ){
-			RCLCPP_INFO(this->get_logger(), "The node is planner");
+			RCLCPP_DEBUG(this->get_logger(), "The node is planner");
 			if (auto move_node = G_->get_node("move"); 
 					move_node.has_value() && to == move_node.value().id() ){
 				RCLCPP_INFO(this->get_logger(), "Navigation started");
@@ -93,26 +93,12 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 				if (stopped_edge.has_value() && is_performing_edge.has_value()){
 					if (replace_edge<navigating_edge_type>(
 							robot_node.value().id(), navigation_node.value().id(), "stopped")){
-						// Get the goal from the move node
-						geometry_msgs::msg::Pose goal_pose;
-						goal_pose.position.x = G_->get_attrib_by_name<goal_x_att>(
+						// Get the room from the move node
+						std::string room = G_->get_attrib_by_name<zone_att>(
 							move_node.value()).value();
-						goal_pose.position.y = G_->get_attrib_by_name<goal_y_att>(
-							move_node.value()).value();
-						goal_pose.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 
-							G_->get_attrib_by_name<goal_angle_att>(move_node.value()).value()));
 						// Send the robot to the goal
-						send_to_goal(goal_pose);
-						// Update the navigation node with the goal
-						G_->add_or_modify_attrib_local<goal_x_att>(
-							navigation_node.value(), static_cast<float>(goal_pose.position.x));
-						G_->add_or_modify_attrib_local<goal_y_att>(
-							navigation_node.value(), static_cast<float>(goal_pose.position.y));
-						G_->add_or_modify_attrib_local<goal_angle_att>(navigation_node.value(), 
-							static_cast<float>(tf2::getYaw(goal_pose.orientation)));
-						G_->update_node(navigation_node.value());
-						RCLCPP_INFO(this->get_logger(), "Navigation started with goal [%f, %f]", 
-							goal_pose.position.x, goal_pose.position.y);
+						send_to_room(room);
+						RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", room);
 					}
 				}
 			}
@@ -146,17 +132,17 @@ void navigationAgent::edge_deleted(std::uint64_t from, std::uint64_t to,
 	const std::string &edge_tag){
 }
 
-void navigationAgent::goal_response_callback(const GoalHandleNavigateToPose::SharedPtr 
+void navigationAgent::nav_goal_response_callback(const GoalHandleNavigateToPose::SharedPtr 
 	& goal_handle){
 	goal_handle_ = goal_handle;
 	if (!goal_handle_){
-		RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+		RCLCPP_ERROR(this->get_logger(), "Navigation goal was rejected by server");
 	}else{
-		RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
+		RCLCPP_INFO(this->get_logger(), "Navigation goal accepted by server, waiting for result");
 	}
 }
 
-void navigationAgent::feedback_callback(GoalHandleNavigateToPose::SharedPtr, 
+void navigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr, 
 	const std::shared_ptr<const NavigateToPose::Feedback> feedback){
 	// Set the current pose of the robot
 	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
@@ -170,7 +156,7 @@ void navigationAgent::feedback_callback(GoalHandleNavigateToPose::SharedPtr,
 	}
 }
 
-void navigationAgent::result_callback(const GoalHandleNavigateToPose::WrappedResult & result){
+void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::WrappedResult & result){
 	switch (result.code) {
 		case rclcpp_action::ResultCode::SUCCEEDED:{
 			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
@@ -198,22 +184,22 @@ void navigationAgent::result_callback(const GoalHandleNavigateToPose::WrappedRes
 			break;
 		}
 		case rclcpp_action::ResultCode::CANCELED:{
-			// Delete 'aborting' edge between planner and navigation
-			auto planner_node = G_->get_node("planner");
-			auto navigation_node = G_->get_node("navigation");
-			if (auto aborting_edge = G_->get_edge(planner_node.value().name(), 
-					navigation_node.value().name(), "aborting"); aborting_edge.has_value()){
-				G_->delete_edge(
-					planner_node.value().name(), navigation_node.value().name(), "aborting");
-			}
 			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
 			auto robot_node = G_->get_node("robot");
+			auto navigation_node = G_->get_node("navigation");
 			if (auto navigating_edge = G_->get_edge(robot_node.value().name(), 
 					navigation_node.value().name(), "navigating"); navigating_edge.has_value()){
 				if (replace_edge<stopped_edge_type>(
 						robot_node.value().id(), navigation_node.value().id(), "navigating")){
 					RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
 				}
+			}
+			// Delete 'aborting' edge between planner and navigation
+			auto planner_node = G_->get_node("planner");
+			if (auto aborting_edge = G_->get_edge(planner_node.value().name(), 
+					navigation_node.value().name(), "aborting"); aborting_edge.has_value()){
+				G_->delete_edge(
+					planner_node.value().name(), navigation_node.value().name(), "aborting");
 			}
 			break;
 		}
@@ -224,7 +210,103 @@ void navigationAgent::result_callback(const GoalHandleNavigateToPose::WrappedRes
 	}
 }
 
+void navigationAgent::dock_goal_response_callback(const GoalHandleDock::SharedPtr & goal_handle){
+	if (!goal_handle){
+		RCLCPP_ERROR(this->get_logger(), "Docking goal was rejected by server");
+	}else{
+		RCLCPP_INFO(this->get_logger(), "Docking goal accepted by server, waiting for result");
+	}
+}
+
+void navigationAgent::dock_feedback_callback(GoalHandleDock::SharedPtr, 
+	const std::shared_ptr<const Dock::Feedback> feedback){
+}
+
+void navigationAgent::dock_result_callback(const GoalHandleDock::WrappedResult & result){
+	switch (result.code) {
+		case rclcpp_action::ResultCode::SUCCEEDED:{
+			RCLCPP_INFO(this->get_logger(), "Docking succeeded");
+			break;
+		}
+		case rclcpp_action::ResultCode::ABORTED:{
+			RCLCPP_ERROR(this->get_logger(), "Docking failed");
+			break;
+		}
+		case rclcpp_action::ResultCode::CANCELED:{
+			RCLCPP_ERROR(this->get_logger(), "Docking canceled");
+			break;
+		}
+		default:{
+			RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+			break;
+		}
+	}
+}
+
+void navigationAgent::undock_goal_response_callback(const GoalHandleUndock::SharedPtr & goal_handle){
+	if (!goal_handle){
+		RCLCPP_ERROR(this->get_logger(), "Undocking goal was rejected by server");
+	}else{
+		RCLCPP_INFO(this->get_logger(), "Undocking goal accepted by server, waiting for result");
+	}
+}
+
+void navigationAgent::undock_feedback_callback(GoalHandleUndock::SharedPtr, 
+	const std::shared_ptr<const Undock::Feedback> feedback){
+}
+
+void navigationAgent::undock_result_callback(const GoalHandleUndock::WrappedResult & result){
+	switch (result.code) {
+		case rclcpp_action::ResultCode::SUCCEEDED:{
+			RCLCPP_INFO(this->get_logger(), "Undocking succeeded");
+			break;
+		}
+		case rclcpp_action::ResultCode::ABORTED:{
+			RCLCPP_ERROR(this->get_logger(), "Undocking failed");
+			break;
+		}
+		case rclcpp_action::ResultCode::CANCELED:{
+			RCLCPP_ERROR(this->get_logger(), "Undocking canceled");
+			break;
+		}
+		default:{
+			RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+			break;
+		}
+	}
+}
+
+void navigationAgent::send_to_room(std::string room_name, int n_goals){
+	goals_generator_client_ = this->create_client<SemanticGoals>("semantic_goals");
+	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(1))) {
+		if (!rclcpp::ok()) {
+			RCLCPP_ERROR(this->get_logger(), 
+				"Interrupted while waiting for the service. Exiting.");
+			return;
+		}
+		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+	}
+
+	// Send the request and wait for the response
+	geometry_msgs::msg::PoseArray goals;
+	auto request = std::make_shared<SemanticGoals::Request>();
+	request->n = n_goals;
+	request->roi_name = room_name;
+	request->direction = semantic_navigation_msgs::srv::SemanticGoals::Request::INSIDE;
+	request->border = 0.1;
+	auto result = goals_generator_client_->async_send_request(request, 
+		[this](rclcpp::Client<SemanticGoals>::SharedFuture result){
+			if (result.get()->goals.poses.size() > 0){
+				// Send goals to the navigation stack
+				send_to_goal(result.get()->goals.poses[0]);
+			}else{
+				RCLCPP_ERROR(this->get_logger(), "Couldn't send the goal.");
+			}
+	});
+}
+
 void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
+	using namespace std::placeholders;
 	navigation_client_ = rclcpp_action::create_client<NavigateToPose>(
 		shared_from_this(), "navigate_to_pose");
 
@@ -244,7 +326,7 @@ void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 		return;
 	}
 
-	// Send the goal
+	// Populate a goal message
 	auto goal_msg = NavigateToPose::Goal();
 	goal_msg.pose.header.stamp = this->now();
 	goal_msg.pose.header.frame_id = "map";
@@ -252,12 +334,11 @@ void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 
 	auto send_options = rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
 	send_options.goal_response_callback =
-		std::bind(&navigationAgent::goal_response_callback, this, std::placeholders::_1);
+		std::bind(&navigationAgent::nav_goal_response_callback, this, _1);
 	send_options.feedback_callback = 
-		std::bind(&navigationAgent::feedback_callback, this, 
-			std::placeholders::_1, std::placeholders::_2);
+		std::bind(&navigationAgent::nav_feedback_callback, this, _1, _2);
 	send_options.result_callback =
-		std::bind(&navigationAgent::result_callback, this, std::placeholders::_1);
+		std::bind(&navigationAgent::nav_result_callback, this, _1);
 
 	auto goal_handle_future = navigation_client_->async_send_goal(goal_msg, send_options);
 	RCLCPP_INFO(this->get_logger(), "Goal sent");
@@ -274,6 +355,51 @@ void navigationAgent::cancel_goal(){
 		navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(5));
 	if (status != std::future_status::ready) {
 		RCLCPP_ERROR(this->get_logger(), "Timed out waiting for navigation goal to cancel.");
+	}
+}
+
+void navigationAgent::start_docking(){
+	using namespace std::placeholders;
+	dock_client_ = rclcpp_action::create_client<Dock>(shared_from_this(), "dock");
+
+	if (dock_client_->wait_for_action_server(std::chrono::seconds(1))){
+		auto goal_msg = Dock::Goal();
+		goal_msg.station_id = -1;
+		goal_msg.timeout = 120;
+
+		auto send_goal_options = rclcpp_action::Client<Dock>::SendGoalOptions();
+		send_goal_options.goal_response_callback =
+			std::bind(&navigationAgent::dock_goal_response_callback, this, _1);
+		send_goal_options.feedback_callback =
+			std::bind(&navigationAgent::dock_feedback_callback, this, _1, _2);
+		send_goal_options.result_callback =
+			std::bind(&navigationAgent::dock_result_callback, this, _1);
+		dock_client_->async_send_goal(goal_msg, send_goal_options);
+		RCLCPP_INFO(this->get_logger(), "Docking");
+	}else{
+		RCLCPP_WARN(this->get_logger(), "Action server not available after waiting");
+	}
+}
+
+void navigationAgent::start_undocking(){
+	undock_client_ = rclcpp_action::create_client<Undock>(shared_from_this(), "undock");
+	using namespace std::placeholders;
+
+	if (undock_client_->wait_for_action_server(std::chrono::seconds(1))){
+		auto goal_msg = Undock::Goal();
+		goal_msg.timeout = 120;
+
+		auto send_goal_options = rclcpp_action::Client<Undock>::SendGoalOptions();
+		send_goal_options.goal_response_callback =
+			std::bind(&navigationAgent::undock_goal_response_callback, this, _1);
+		send_goal_options.feedback_callback =
+			std::bind(&navigationAgent::undock_feedback_callback, this, _1, _2);
+		send_goal_options.result_callback =
+			std::bind(&navigationAgent::undock_result_callback, this, _1);
+		undock_client_->async_send_goal(goal_msg, send_goal_options);
+		RCLCPP_INFO(this->get_logger(), "Undocking");
+	}else{
+		RCLCPP_WARN(this->get_logger(), "Action server not available after waiting");
 	}
 }
 

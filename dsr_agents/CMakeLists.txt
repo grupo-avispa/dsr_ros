@@ -29,6 +29,8 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(dsr_interfaces REQUIRED)
+find_package(auto_docking_interfaces REQUIRED)
+find_package(semantic_navigation_msgs REQUIRED)
 
 ###########
 ## Build ##
@@ -91,6 +93,8 @@ ament_target_dependencies(nav_agent
   nav2_util
   tf2
   dsr_interfaces
+  auto_docking_interfaces
+  semantic_navigation_msgs
 )
 target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(nav_agent PRIVATE ${agent_moc})
