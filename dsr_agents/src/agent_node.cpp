@@ -13,7 +13,7 @@
 #include "nav2_util/node_utils.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#include "dsr_agent/agent_node.hpp"
+#include "dsr_agents/agent_node.hpp"
 
 /* Initialize */
 AgentNode::AgentNode(std::string node_name): rclcpp::Node(node_name){

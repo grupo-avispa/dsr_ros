@@ -25,7 +25,7 @@
 
 // DSR
 #include "dsr/api/dsr_api.h"
-#include "dsr_agent/agent_node.hpp"
+#include "dsr_agents/agent_node.hpp"
 
 class genericAgent: public AgentNode{
 	public:

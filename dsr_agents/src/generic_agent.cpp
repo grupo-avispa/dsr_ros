@@ -22,9 +22,9 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 // DSR
-#include "dsr_agent/qt_executor.hpp"
-#include "dsr_agent/ros_to_dsr_types.hpp"
-#include "dsr_agent/generic_agent.hpp"
+#include "dsr_agents/qt_executor.hpp"
+#include "dsr_agents/ros_to_dsr_types.hpp"
+#include "dsr_agents/generic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 genericAgent::genericAgent(): AgentNode("generic_agent"){

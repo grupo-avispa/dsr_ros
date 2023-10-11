@@ -19,7 +19,7 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr/gui/dsr_gui.h"
 
-#include "dsr_agent/ros_to_dsr_types.hpp"
+#include "dsr_agents/ros_to_dsr_types.hpp"
 
 int main(int argc, char** argv){
 	//QApplication app(argc, argv);

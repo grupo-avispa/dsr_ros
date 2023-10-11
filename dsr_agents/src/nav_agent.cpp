@@ -21,9 +21,9 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 // DSR
-#include "dsr_agent/qt_executor.hpp"
-#include "dsr_agent/ros_to_dsr_types.hpp"
-#include "dsr_agent/nav_agent.hpp"
+#include "dsr_agents/qt_executor.hpp"
+#include "dsr_agents/ros_to_dsr_types.hpp"
+#include "dsr_agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 navigationAgent::navigationAgent(): AgentNode("navigation_agent"){

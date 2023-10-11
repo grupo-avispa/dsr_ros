@@ -13,8 +13,8 @@
 #include "nav2_util/node_utils.hpp"
 
 // DSR
-#include "dsr_agent/qt_executor.hpp"
-#include "dsr_agent/tf_agent.hpp"
+#include "dsr_agents/qt_executor.hpp"
+#include "dsr_agents/tf_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 tfAgent::tfAgent(): AgentNode("tf_agent"){

@@ -140,15 +140,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/
-)
-
-install(DIRECTORY params
-  DESTINATION share/${PROJECT_NAME}/
-)
-
-install(DIRECTORY worlds
+install(DIRECTORY launch params worlds
   DESTINATION share/${PROJECT_NAME}/
 )
 
