@@ -1,9 +1,9 @@
-# dsr_agent
+# dsr_agents
 ![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
 
 ## Overview
 
-This package provides a ROS2 interface for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS2 middleware.
+This package provides ROS2 agents for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS2 middleware.
 
 This package features two types of nodes:
 * **`Generic agent:`** which allows the user to subscribe to a sensor topic of any kind and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
@@ -26,14 +26,13 @@ The dsr_agent package has been tested under [ROS2] Humble on [Ubuntu] 22.04. Thi
 - [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics)
 - [Cortex](hhttps://github.com/robocomp/cortex) (DSR library)
 - [FAST-DDS](https://github.com/eProsima/Fast-DDS) (eprosima Fast DDS)
-- [RCLCPP](https://github.com/grupo-avispa/rclcpp) (ROS Client Library for C++20)
 
 #### Building
 
 To build from source, clone the latest version from the main repository into your colcon workspace and compile the package using
 
 	cd colcon_workspace/src
-	git clone https://gitlab.com/grupo-avispa/ros/dsr_agents.git -b humble
+	git clone https://gitlab.com/grupo-avispa/ros/dsr_ros.git -b humble
 	cd ../
 	rosdep install -i --from-path src --rosdistro humble -y
 	colcon build --symlink-install
