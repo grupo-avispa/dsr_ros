@@ -22,7 +22,6 @@
 
 // DSR
 #include "dsr_agents/qt_executor.hpp"
-#include "dsr_agents/ros_to_dsr_types.hpp"
 #include "dsr_agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */
@@ -98,7 +97,7 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 							move_node.value()).value();
 						// Send the robot to the goal
 						send_to_room(room);
-						RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", room);
+						RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", room.c_str());
 					}
 				}
 			}

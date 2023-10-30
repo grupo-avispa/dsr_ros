@@ -6,6 +6,8 @@ Changelog for package dsr_agents
 ------------------
 * Added QtExecutor to spin ROS events in a separate thread.
 * Rename to dsr_agents.
+* Added dock and semantic to nav agent.
+* Added priority to nodes.
 
 0.3.0 (05-07-2023)
 ------------------

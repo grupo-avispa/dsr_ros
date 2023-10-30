@@ -27,6 +27,7 @@
 #include "dsr/api/dsr_api.h"
 
 #include "dsr_interfaces/srv/save_dsr.hpp"
+#include "dsr_agents/ros_to_dsr_types.hpp"
 
 class AgentNode: public QObject, public rclcpp::Node{
 	Q_OBJECT
@@ -40,9 +41,12 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::unique_ptr<DSR::RT_API> rt_;
 
 		template <typename NODE_TYPE, typename EDGE_TYPE> 
-		void add_node(const std::string & name, const std::string & parent_name){
+		void add_node(const std::string & name, const std::string & parent_name, 
+			const int & priority = 0){
 			// Create node
 			auto new_node = DSR::Node::create<NODE_TYPE>(name);
+			// By default, all nodes have a low priority
+			G_->add_or_modify_attrib_local<priority_att>(new_node, priority);
 			// Check if parent exists
 			if (auto parent_node = G_->get_node(parent_name); parent_node.has_value()){
 				// Add attributes related to the parent node

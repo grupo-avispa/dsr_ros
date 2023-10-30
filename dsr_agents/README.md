@@ -9,7 +9,9 @@ This package features two types of nodes:
 * **`Generic agent:`** which allows the user to subscribe to a sensor topic of any kind and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
 * **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
 
-A DSR viewer is also included.
+By default all nodes are created with low priority (0).
+
+A DSR viewer is also included in this package. This viewer allows the user to visualize the DSR graph in a graphical interface. 
 
 **Keywords:** ROS2, cortex, dsr, deep space representation
 
@@ -42,9 +44,14 @@ To build from source, clone the latest version from the main repository into you
 To use this package, first modify the `default_params.yaml` file located in the `params` directory to set the configuration options for the generic_agent node.
 
 Next, launch the package using the provided launch file `default.launch.py`. This file can be found in the launch directory of the package. To launch the package with default settings, use the following command:
+
 	ros2 launch dsr_agent default.launch.py
 
-The package comes with an example configuration file called `robot_params.yaml` located in the `params` directory, and an example launch file called `robot.launch.py` located in the launch directory. These files can be used as a starting point for creating custom configurations and launch files.
+The package comes with an example configuration file called `robot_params.yaml` located in the `params` directory and an example launch file called `robot.launch.py` located in the launch directory. These files can be used as a starting point for creating custom configurations and launch files.
+
+The viewer can be launched using the following command:
+
+	ros2 launch dsr_agent dsr_viewer.launch.py
 
 ## Nodes
 

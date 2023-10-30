@@ -55,6 +55,8 @@ REGISTER_EDGE_TYPE(aborting)
 REGISTER_EDGE_TYPE(is_performing)
 REGISTER_EDGE_TYPE(navigating)
 
+REGISTER_TYPE(priority, int, false)
+REGISTER_TYPE(error_code, std::string, false)
 REGISTER_TYPE(pose_x, float, false)
 REGISTER_TYPE(pose_y, float, false)
 REGISTER_TYPE(pose_angle, float, false)
