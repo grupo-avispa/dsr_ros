@@ -1,6 +1,6 @@
 battery_agent:
   ros__parameters:
-    agent_id: 23
+    agent_id: 100
     dsr_input_file: '' 
     dsr_node_name: battery
     dsr_parent_node_name: robot

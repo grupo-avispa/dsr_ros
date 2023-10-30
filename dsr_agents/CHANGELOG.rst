@@ -2,12 +2,14 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.4.0 (xx-07-2023)
+0.4.0 (30-10-2023)
 ------------------
 * Added QtExecutor to spin ROS events in a separate thread.
 * Rename to dsr_agents.
 * Added dock and semantic to nav agent.
 * Added priority to nodes.
+* Added TF agent to robot launch file.
+* Update agents_id.
 
 0.3.0 (05-07-2023)
 ------------------

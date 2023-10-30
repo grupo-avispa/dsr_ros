@@ -1,22 +1,22 @@
 battery_agent:
   ros__parameters:
-    agent_id: 2
+    agent_id: 100
     dsr_input_file: ''
     dsr_node_name: battery
     dsr_parent_node_name: robot
     ros_topic: /battery
 laser_agent:
   ros__parameters:
-    agent_id: 3
+    agent_id: 101
     dsr_node_name: laser
     ros_topic: /scan/filtered
 rgb_agent:
   ros__parameters:
-    agent_id: 4
+    agent_id: 102
     dsr_node_name: realsense
     ros_topic: /realsense/color/image_raw
 rgbd_agent:
   ros__parameters:
-    agent_id: 5
+    agent_id: 103
     dsr_node_name: realsense
     ros_topic: /realsense/depth/image_rect_raw

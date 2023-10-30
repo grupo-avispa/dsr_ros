@@ -15,7 +15,7 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     # Getting directories and launch-files
-    dsr_agent_dir = get_package_share_directory('dsr_agent')
+    dsr_agent_dir = get_package_share_directory('dsr_agents')
     default_params_file = os.path.join(dsr_agent_dir, 'params', 'default_params.yaml')
 
     # Input parameters declaration
@@ -47,7 +47,7 @@ def generate_launch_description():
 
     # Prepare the laser segmentation node.
     battery_agent_node = Node(
-        package = 'dsr_agent',
+        package = 'dsr_agents',
         namespace = '',
         executable = 'generic_agent',
         name = 'battery_agent',
