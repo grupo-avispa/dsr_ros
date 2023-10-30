@@ -70,16 +70,16 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 }
 
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
-	// Check if the planner wants to start the navigation: planner ---(start)--> move
-	if (type == "start"){
-		RCLCPP_DEBUG(this->get_logger(), "The type is start");
+	// Check if the planner wants to start the navigation: planner ---(wants_to)--> move
+	if (type == "wants_to"){
+		RCLCPP_DEBUG(this->get_logger(), "The type is wants_to");
 		if (auto planner_node = G_->get_node("planner"); 
 				planner_node.has_value() && from == planner_node.value().id() ){
 			RCLCPP_DEBUG(this->get_logger(), "The node is planner");
 			if (auto move_node = G_->get_node("move"); 
 					move_node.has_value() && to == move_node.value().id() ){
 				RCLCPP_INFO(this->get_logger(), "Navigation started");
-				// Replace the 'start' edge with a 'is_performing' edge between planner and move
+				// Replace the 'wants_to' edge with a 'is_performing' edge between planner and move
 				replace_edge<is_performing_edge_type>(from, to, type);
 
 				auto robot_node = G_->get_node("robot");
