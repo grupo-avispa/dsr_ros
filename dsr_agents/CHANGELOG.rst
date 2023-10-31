@@ -2,6 +2,10 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.X.X (XX-XX-202X)
+------------------
+* Move agents to 'agents' folder.
+
 0.4.0 (30-10-2023)
 ------------------
 * Added QtExecutor to spin ROS events in a separate thread.

@@ -67,7 +67,7 @@ qt5_wrap_cpp(agent_moc ${HEADERS}
 ###################
 
 # Executable node
-add_executable(generic_agent ${SOURCES} src/generic_agent.cpp)
+add_executable(generic_agent ${SOURCES} src/agents/generic_agent.cpp)
 ament_target_dependencies(generic_agent
   rclcpp
   Eigen3
@@ -84,7 +84,7 @@ target_sources(generic_agent PRIVATE ${agent_moc})
 ######################
 
 # Executable node
-add_executable(nav_agent ${SOURCES} src/nav_agent.cpp)
+add_executable(nav_agent ${SOURCES} src/agents/nav_agent.cpp)
 ament_target_dependencies(nav_agent
   rclcpp
   Eigen3
@@ -104,7 +104,7 @@ target_sources(nav_agent PRIVATE ${agent_moc})
 ##############
 
 # Executable node
-add_executable(tf_agent ${SOURCES} src/tf_agent.cpp)
+add_executable(tf_agent ${SOURCES} src/agents/tf_agent.cpp)
 ament_target_dependencies(tf_agent
   rclcpp
   Eigen3

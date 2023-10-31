@@ -23,7 +23,7 @@
 
 // DSR
 #include "dsr_agents/qt_executor.hpp"
-#include "dsr_agents/generic_agent.hpp"
+#include "dsr_agents/agents/generic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 genericAgent::genericAgent(): AgentNode("generic_agent"){
