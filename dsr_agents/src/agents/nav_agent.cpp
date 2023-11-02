@@ -70,24 +70,23 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 }
 
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
-	// Check if the planner wants to start the navigation: planner ---(wants_to)--> move
+	// Check if the robot wants to start the navigation: robot ---(wants_to)--> move
 	if (type == "wants_to"){
 		RCLCPP_DEBUG(this->get_logger(), "The type is wants_to");
-		if (auto planner_node = G_->get_node("planner"); 
-				planner_node.has_value() && from == planner_node.value().id() ){
-			RCLCPP_DEBUG(this->get_logger(), "The node is planner");
+		if (auto robot_node = G_->get_node("robot"); 
+				robot_node.has_value() && from == robot_node.value().id() ){
+			RCLCPP_DEBUG(this->get_logger(), "The node is robot");
 			if (auto move_node = G_->get_node("move"); 
 					move_node.has_value() && to == move_node.value().id() ){
 				RCLCPP_INFO(this->get_logger(), "Navigation started");
-				// Replace the 'wants_to' edge with a 'is_performing' edge between planner and move
+				// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
 				replace_edge<is_performing_edge_type>(from, to, type);
 
-				auto robot_node = G_->get_node("robot");
 				auto navigation_node = G_->get_node("navigation");
 				auto stopped_edge = G_->get_edge(
 					robot_node.value().name(), navigation_node.value().name(), "stopped");
 				auto is_performing_edge = G_->get_edge(
-					planner_node.value().name(), move_node.value().name(),"is_performing");
+					robot_node.value().name(), move_node.value().name(),"is_performing");
 				// Replace the 'stopped' edge with a 'navigating' edge between navigation and robot
 				if (stopped_edge.has_value() && is_performing_edge.has_value()){
 					if (replace_edge<navigating_edge_type>(
@@ -104,13 +103,13 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		}
 	}
 
-	// Check if the planner wants to abort the navigation
+	// Check if the robot wants to abort the navigation
 	if (type == "abort"){
-		if (auto planner_node = G_->get_node("planner"); 
-				planner_node.has_value() && from == planner_node.value().id() ){
+		if (auto robot_node = G_->get_node("robot"); 
+				robot_node.has_value() && from == robot_node.value().id() ){
 			if (auto navigation_node = G_->get_node("navigation"); 
 					navigation_node.has_value() && from == navigation_node.value().id() ){
-				// Replace the 'abort' edge with a 'aborting' edge between planner and navigation
+				// Replace the 'abort' edge with a 'aborting' edge between robot and navigation
 				if (replace_edge<aborting_edge_type>(from, to, type)){
 					cancel_goal();
 					RCLCPP_INFO(this->get_logger(), "Navigation aborted");
@@ -168,13 +167,12 @@ void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::Wrappe
 					RCLCPP_INFO(this->get_logger(), "Goal was reached");
 				}
 			}
-			// Replace the 'is_performing' edge with a 'finished' edge between planner and move
-			auto planner_node = G_->get_node("planner");
+			// Replace the 'is_performing' edge with a 'finished' edge between robot and move
 			auto move_node = G_->get_node("move");
-			if (auto is_performing_edge = G_->get_edge(planner_node.value().name(), 
+			if (auto is_performing_edge = G_->get_edge(robot_node.value().name(), 
 					move_node.value().name(),"is_performing"); is_performing_edge.has_value()){
 				replace_edge<finished_edge_type>(
-					planner_node.value().id(), move_node.value().id(), "is_performing");
+					robot_node.value().id(), move_node.value().id(), "is_performing");
 			}
 			break;
 		}
@@ -193,12 +191,11 @@ void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::Wrappe
 					RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
 				}
 			}
-			// Delete 'aborting' edge between planner and navigation
-			auto planner_node = G_->get_node("planner");
-			if (auto aborting_edge = G_->get_edge(planner_node.value().name(), 
+			// Delete 'aborting' edge between robot and navigation
+			if (auto aborting_edge = G_->get_edge(robot_node.value().name(), 
 					navigation_node.value().name(), "aborting"); aborting_edge.has_value()){
 				G_->delete_edge(
-					planner_node.value().name(), navigation_node.value().name(), "aborting");
+					robot_node.value().name(), navigation_node.value().name(), "aborting");
 			}
 			break;
 		}
