@@ -72,32 +72,21 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 	// Check if the robot wants to start the navigation: robot ---(wants_to)--> move
 	if (type == "wants_to"){
-		RCLCPP_DEBUG(this->get_logger(), "The type is wants_to");
-		if (auto robot_node = G_->get_node("robot"); 
-				robot_node.has_value() && from == robot_node.value().id() ){
-			RCLCPP_DEBUG(this->get_logger(), "The node is robot");
-			if (auto move_node = G_->get_node("move"); 
-					move_node.has_value() && to == move_node.value().id() ){
-				RCLCPP_INFO(this->get_logger(), "Navigation started");
-				// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
-				replace_edge<is_performing_edge_type>(from, to, type);
-
-				auto navigation_node = G_->get_node("navigation");
-				auto stopped_edge = G_->get_edge(
-					robot_node.value().name(), navigation_node.value().name(), "stopped");
-				auto is_performing_edge = G_->get_edge(
-					robot_node.value().name(), move_node.value().name(),"is_performing");
+		auto robot_node = G_->get_node("robot");
+		auto move_node = G_->get_node("move");
+		if (robot_node.has_value() && from == robot_node.value().id() 
+			&& move_node.has_value() && to == move_node.value().id()){
+			// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
+			if (replace_edge<is_performing_edge_type>(from, to, type)){
 				// Replace the 'stopped' edge with a 'navigating' edge between navigation and robot
-				if (stopped_edge.has_value() && is_performing_edge.has_value()){
-					if (replace_edge<navigating_edge_type>(
-							robot_node.value().id(), navigation_node.value().id(), "stopped")){
-						// Get the room from the move node
-						std::string room = G_->get_attrib_by_name<zone_att>(
-							move_node.value()).value();
-						// Send the robot to the goal
-						send_to_room(room);
-						RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", room.c_str());
-					}
+				if (replace_edge<navigating_edge_type>("navigation", "robot", "stopped")){
+					// Get the room from the move node
+					std::string room = G_->get_attrib_by_name<zone_att>(
+						move_node.value()).value();
+					// Send the robot to the goal
+					send_to_room(room);
+					RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
+						room.c_str());
 				}
 			}
 		}
@@ -105,15 +94,14 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 
 	// Check if the robot wants to abort the navigation
 	if (type == "abort"){
-		if (auto robot_node = G_->get_node("robot"); 
-				robot_node.has_value() && from == robot_node.value().id() ){
-			if (auto navigation_node = G_->get_node("navigation"); 
-					navigation_node.has_value() && from == navigation_node.value().id() ){
-				// Replace the 'abort' edge with a 'aborting' edge between robot and navigation
-				if (replace_edge<aborting_edge_type>(from, to, type)){
-					cancel_goal();
-					RCLCPP_INFO(this->get_logger(), "Navigation aborted");
-				}
+		auto robot_node = G_->get_node("robot");
+		auto nav_node = G_->get_node("navigation");
+		if (robot_node.has_value() && from == robot_node.value().id()
+			&& nav_node.has_value() && to == navigation_node.value().id()){
+			// Replace the 'abort' edge with a 'aborting' edge between robot and navigation
+			if (replace_edge<aborting_edge_type>(from, to, type)){
+				cancel_goal();
+				RCLCPP_INFO(this->get_logger(), "Navigation aborted");
 			}
 		}
 	}
@@ -158,44 +146,31 @@ void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::Wrappe
 	switch (result.code) {
 		case rclcpp_action::ResultCode::SUCCEEDED:{
 			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			auto robot_node = G_->get_node("robot");
-			auto navigation_node = G_->get_node("navigation");
-			if (auto navigating_edge = G_->get_edge(robot_node.value().name(), 
-					navigation_node.value().name(), "navigating"); navigating_edge.has_value()){
-				if (replace_edge<stopped_edge_type>(
-						robot_node.value().id(), navigation_node.value().id(), "navigating")){
+			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				// Replace the 'is_performing' edge with a 'finished' edge between robot and move
+				if (replace_edge<finished_edge_type>("robot", "move", "is_performing")){
 					RCLCPP_INFO(this->get_logger(), "Goal was reached");
 				}
-			}
-			// Replace the 'is_performing' edge with a 'finished' edge between robot and move
-			auto move_node = G_->get_node("move");
-			if (auto is_performing_edge = G_->get_edge(robot_node.value().name(), 
-					move_node.value().name(),"is_performing"); is_performing_edge.has_value()){
-				replace_edge<finished_edge_type>(
-					robot_node.value().id(), move_node.value().id(), "is_performing");
 			}
 			break;
 		}
 		case rclcpp_action::ResultCode::ABORTED:{
-			RCLCPP_ERROR(this->get_logger(), "Goal was failed");
+			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
+			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				// Replace the 'is_performing' edge with a 'wants_to' edge between robot and move
+				if (replace_edge<wants_to_edge_type>("robot", "move", "is_performing")){
+					RCLCPP_ERROR(this->get_logger(), "Goal was failed");
+				}
+			}
 			break;
 		}
 		case rclcpp_action::ResultCode::CANCELED:{
 			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			auto robot_node = G_->get_node("robot");
-			auto navigation_node = G_->get_node("navigation");
-			if (auto navigating_edge = G_->get_edge(robot_node.value().name(), 
-					navigation_node.value().name(), "navigating"); navigating_edge.has_value()){
-				if (replace_edge<stopped_edge_type>(
-						robot_node.value().id(), navigation_node.value().id(), "navigating")){
+			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				// Delete 'aborting' edge between robot and navigation
+				if (delete_edge("robot", "navigation", "aborting")){
 					RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
 				}
-			}
-			// Delete 'aborting' edge between robot and navigation
-			if (auto aborting_edge = G_->get_edge(robot_node.value().name(), 
-					navigation_node.value().name(), "aborting"); aborting_edge.has_value()){
-				G_->delete_edge(
-					robot_node.value().name(), navigation_node.value().name(), "aborting");
 			}
 			break;
 		}

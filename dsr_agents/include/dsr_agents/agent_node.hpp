@@ -165,8 +165,61 @@ class AgentNode: public QObject, public rclcpp::Node{
 		}
 
 		/**
+		 * @brief Delete an edge into the DSR graph with the given parent and child nodes id and
+		 * the edge type. This method previously checks if the parent and child nodes exist.
+		 * 
+		 * @param from Id of the parent DSR node.
+		 * @param to Id of the child DSR node.
+		 * @param edge_type Name of the DSR edge.
+		 * @return true If the edge was replaced successfully.
+		 * @return false If the edge couldn't be replaced.
+		 */
+		bool delete_edge(uint64_t from, uint64_t to, std::string edge_type){
+			// Check if the parent and child nodes exist and if the edge exists
+			auto parent_node = G_->get_node(from);
+			auto child_node = G_->get_node(to);
+			if (parent_node.has_value() && child_node.has_value()){
+				if (auto edge = G_->get_edge(from, to, edge_type); edge.has_value()){
+					// Delete the edge
+					if (G_->delete_edge(from, to, edge_type)){
+						RCLCPP_INFO(this->get_logger(), "Deleting %s edge", edge_type.c_str());
+						return true;
+					}else{
+						RCLCPP_ERROR(this->get_logger(), "Error deleting %s edge", 
+							edge_type.c_str());
+					}
+				}else{
+					RCLCPP_ERROR(this->get_logger(), "Edge %s doesn't exist", 
+						edge_type.c_str());
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * @brief Delete an edge into the DSR graph with the given parent and child nodes names and
+		 * the edge type. This method previously checks if the parent and child nodes exist.
+		 * 
+		 * @param from Name of the parent DSR node.
+		 * @param to Name of the child DSR node.
+		 * @param edge_type Name of the DSR edge.
+		 * @return true If the edge was replaced successfully.
+		 * @return false If the edge couldn't be replaced.
+		 */
+		bool delete_edge(const std::string& from, const std::string& to, std::string edge_type){
+			// Check if the parent and child nodes exist
+			auto parent_node = G_->get_node(from);
+			auto child_node = G_->get_node(to);
+				if (parent_node.has_value() && child_node.has_value()){
+					return delete_edge(parent_node.value().id(), 
+						child_node.value().id(), edge_type);
+				}
+			return false;
+		}
+
+		/**
 		 * @brief Replace an edge into the DSR graph with the given parent and child nodes id and
-		 * the old edge type.
+		 * the old edge type. This method previously checks if the parent and child nodes exist.
 		 * 
 		 * @tparam EDGE_TYPE The type of the new DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param from Id of the parent DSR node.
@@ -177,19 +230,53 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 */
 		template <typename EDGE_TYPE>
 		bool replace_edge(uint64_t from, uint64_t to, std::string old_edge){
-			// Delete the old edge
-			if (G_->delete_edge(
-					G_->get_node(from).value().name(), G_->get_node(to).value().name(), old_edge)){
-				// Create the new edge
-				auto new_edge = DSR::Edge::create<EDGE_TYPE>(
-					G_->get_node(from).value().id(), G_->get_node(to).value().id());
-				// Insert the new edge into the DSR graph
-				if (G_->insert_or_assign_edge(new_edge)){
-					RCLCPP_INFO(this->get_logger(), "Inserting %s edge", 
-						new_edge.type().c_str());
-					return true;
+			// Check if the parent and child nodes exist and if the old edge exists
+			auto parent_node = G_->get_node(from);
+			auto child_node = G_->get_node(to);
+			if (parent_node.has_value() && child_node.has_value()){
+				if (auto edge = G_->get_edge(from, to, old_edge); edge.has_value()){
+					// Delete the old edge
+					if (G_->delete_edge(from, to, old_edge)){
+						// Create the new edge
+						auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
+						// Insert the new edge into the DSR graph
+						if (G_->insert_or_assign_edge(new_edge)){
+							RCLCPP_INFO(this->get_logger(), "Inserting %s edge", 
+								new_edge.type().c_str());
+							return true;
+						}
+					}else{
+						RCLCPP_ERROR(this->get_logger(), "Error deleting %s edge", 
+							old_edge.c_str());
+					}
+				}else{
+					RCLCPP_ERROR(this->get_logger(), "Edge %s doesn't exist", 
+						old_edge.c_str());
 				}
 			}
+			return false;
+		}
+
+		/**
+		 * @brief Replace an edge into the DSR graph with the given parent and child nodes names and
+		 * the old edge type. This method previously checks if the parent and child nodes exist.
+		 * 
+		 * @tparam EDGE_TYPE The type of the new DSR edge. Defined in ros_to_dsr_types.hpp.
+		 * @param from Name of the parent DSR node.
+		 * @param to Name of the child DSR node.
+		 * @param old_edge Name of the old DSR edge.
+		 * @return true If the edge was replaced successfully.
+		 * @return false If the edge couldn't be replaced.
+		 */
+		template <typename EDGE_TYPE>
+		bool replace_edge(const std::string& from, const std::string& to, std::string old_edge){
+			// Check if the parent and child nodes exist
+			auto parent_node = G_->get_node(from);
+			auto child_node = G_->get_node(to);
+				if (parent_node.has_value() && child_node.has_value()){
+					return replace_edge<EDGE_TYPE>(parent_node.value().id(), 
+						child_node.value().id(), old_edge);
+				}
 			return false;
 		}
 

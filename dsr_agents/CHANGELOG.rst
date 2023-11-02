@@ -5,6 +5,7 @@ Changelog for package dsr_agents
 0.X.X (XX-XX-202X)
 ------------------
 * Move agents to 'agents' folder.
+* Added new functions to delete and replace edges.
 
 0.4.0 (30-10-2023)
 ------------------
