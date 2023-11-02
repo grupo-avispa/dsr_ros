@@ -16,12 +16,12 @@
 #include "dsr_agents/agent_node.hpp"
 
 /* Initialize */
-AgentNode::AgentNode(std::string node_name): rclcpp::Node(node_name){
+AgentNode::AgentNode(std::string ros_node_name): rclcpp::Node(ros_node_name){
 	// Get ROS parameters
 	get_common_params();
 
 	// Create graph
-	G_ = std::make_shared<DSR::DSRGraph>(0, node_name, agent_id_, dsr_input_file_);
+	G_ = std::make_shared<DSR::DSRGraph>(ros_node_name, agent_id_, dsr_input_file_);
 
 	// Get RT API
 	rt_ = G_->get_rt_api();

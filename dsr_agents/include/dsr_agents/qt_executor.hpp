@@ -57,7 +57,18 @@ class QtExecutor : public QObject, public rclcpp::Executor{
 		void start();
 
 	private:
+		/**
+		 * @brief Call spin_some() from the QT thread.
+		 * 
+		 * @return Q_INVOKABLE 
+		 */
 		Q_INVOKABLE void spin_work();
+
+		/**
+		 * @brief Signal emitted when new work comes in.
+		 * 
+		 * @return Q_SIGNAL 
+		 */
 		Q_SIGNAL void on_new_work();
 	
 	private:

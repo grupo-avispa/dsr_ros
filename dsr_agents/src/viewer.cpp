@@ -24,7 +24,7 @@
 int main(int argc, char** argv){
 	QApplication app(argc, argv);
 	// DSR graph
-	std::shared_ptr<DSR::DSRGraph> G = std::make_shared<DSR::DSRGraph>(0, "dsr_viewer", 51, "");
+	std::shared_ptr<DSR::DSRGraph> G = std::make_shared<DSR::DSRGraph>("dsr_viewer", 801, "");
 
 	// Create viewer
 	QMainWindow *window = new QMainWindow();
