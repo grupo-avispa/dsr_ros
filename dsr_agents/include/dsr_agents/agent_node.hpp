@@ -76,30 +76,33 @@ class AgentNode: public QObject, public rclcpp::Node{
 		template <typename NODE_TYPE, typename EDGE_TYPE> 
 		void add_node(const std::string & name, const std::string & parent_name, 
 			const int & priority = 0){
+			// Get the parent node
+			auto parent_node = G_->get_node(parent_name);
 			// Create the node
 			auto new_node = DSR::Node::create<NODE_TYPE>(name);
-			// By default, all nodes have a low priority
+			// Add default values
+			uint64_t parent_attribute_value = parent_node.has_value() ? parent_node.value().id() : 0;
+			int level_attribute_value = parent_node.has_value() ? 
+				G_->get_node_level(parent_node.value()).value() + 1 : 0;
 			G_->add_or_modify_attrib_local<priority_att>(new_node, priority);
-			// Check if the parent exists
-			if (auto parent_node = G_->get_node(parent_name); parent_node.has_value()){
-				// Add default parent and level attributes
-				G_->add_or_modify_attrib_local<parent_att>(new_node, parent_node.value().id());
-				G_->add_or_modify_attrib_local<level_att>(new_node, 
-					G_->get_node_level(parent_node.value()).value() + 1);
-				// Draw the node in the graph: by level if RT edge, random if not
-				std::tuple<float, float> graph_pos;
-				if (std::is_same<EDGE_TYPE, RT_edge_type>::value){
-					graph_pos = get_position_by_level_in_graph(parent_node.value());
-				}else{
-					graph_pos = get_random_position_to_draw_in_graph();
-				}
-				const auto &[random_x, random_y] = graph_pos;
-				G_->add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
-				G_->add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
-				// Insert the node into the DSR graph
-				if (auto id = G_->insert_node(new_node); id.has_value()){
-					RCLCPP_INFO(this->get_logger(), 
-						"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+			G_->add_or_modify_attrib_local<parent_att>(new_node, parent_attribute_value);
+			G_->add_or_modify_attrib_local<level_att>(new_node, level_attribute_value);
+			// Draw the node in the graph: by level if RT edge and parent, random if not
+			std::tuple<float, float> graph_pos;
+			if (parent_node.has_value() && std::is_same<EDGE_TYPE, RT_edge_type>::value){
+				graph_pos = get_position_by_level_in_graph(parent_node.value());
+			}else{
+				graph_pos = get_random_position_to_draw_in_graph();
+			}
+			const auto &[random_x, random_y] = graph_pos;
+			G_->add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
+			G_->add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
+			// Insert the node into the DSR graph
+			if (auto id = G_->insert_node(new_node); id.has_value()){
+				RCLCPP_INFO(this->get_logger(), 
+					"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+				// Check if the parent exists
+				if (parent_node.has_value()){
 					// Insert the edge into the DSR graph
 					auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
 						new_node.id());
@@ -114,26 +117,9 @@ class AgentNode: public QObject, public rclcpp::Node{
 							<< new_node.name() <<
 							"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
 					}
-				}else{
-					RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 				}
 			}else{
-				RCLCPP_WARN(this->get_logger(), "Parent node [%s] doesn't exist", 
-					parent_name.c_str());
-				// Add default parent and level attributes
-				G_->add_or_modify_attrib_local<parent_att>(new_node, static_cast<uint64_t>(0));
-				G_->add_or_modify_attrib_local<level_att>(new_node, 0);
-				// Draw a random position in the graph
-				const auto &[random_x, random_y] = get_random_position_to_draw_in_graph();
-				G_->add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
-				G_->add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
-				// Insert the node into the DSR graph
-				if (auto id = G_->insert_node(new_node); id.has_value()){
-					RCLCPP_INFO(this->get_logger(), 
-						"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
-				}else{
-					RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
-				}
+				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 			}
 		}
 

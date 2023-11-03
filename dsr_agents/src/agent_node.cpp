@@ -91,7 +91,7 @@ void AgentNode::save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Req
 std::tuple<float, float> AgentNode::get_position_by_level_in_graph(const DSR::Node &parent){
 	auto children = G_->get_node_edges_by_type(parent, "RT");
 	std::vector<float> x_values;
-	for (const auto child : children){
+	for (const auto & child : children){
 		x_values.push_back(G_->get_attrib_by_name<pos_x_att>(
 			G_->get_node(child.to()).value()).value());
 	}
@@ -99,7 +99,7 @@ std::tuple<float, float> AgentNode::get_position_by_level_in_graph(const DSR::No
 	if (!x_values.empty()){
 		max = std::ranges::max(x_values);
 	}
-	return std::make_tuple(max + 150 , G_->get_attrib_by_name<pos_y_att>(parent).value() + 80);
+	return std::make_tuple(max + 200 , G_->get_attrib_by_name<pos_y_att>(parent).value() + 80);
 }
 
 std::tuple<float, float> AgentNode::get_random_position_to_draw_in_graph(){

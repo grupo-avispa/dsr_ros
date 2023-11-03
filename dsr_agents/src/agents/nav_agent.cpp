@@ -97,7 +97,7 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		auto robot_node = G_->get_node("robot");
 		auto nav_node = G_->get_node("navigation");
 		if (robot_node.has_value() && from == robot_node.value().id()
-			&& nav_node.has_value() && to == navigation_node.value().id()){
+			&& nav_node.has_value() && to == nav_node.value().id()){
 			// Replace the 'abort' edge with a 'aborting' edge between robot and navigation
 			if (replace_edge<aborting_edge_type>(from, to, type)){
 				cancel_goal();

@@ -51,9 +51,7 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 	auto data = rclcpp::Node::get_topic_names_and_types();
 	for (auto type : data[ros_topic_]){
 		generic_sub_ = create_generic_subscription(
-			ros_topic_, 
-			type, 
-			rclcpp::QoS(rclcpp::SensorDataQoS()),
+			ros_topic_, type, rclcpp::QoS(rclcpp::SensorDataQoS()),
 			std::bind(&genericAgent::serial_callback, this, std::placeholders::_1));
 	}
 }
@@ -61,23 +59,23 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 /* Initialize ROS parameters */
 void genericAgent::get_params(){
 	// ROS parameters
-	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", rclcpp::ParameterValue(""), 
-		rcl_interfaces::msg::ParameterDescriptor()
+	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", 
+		rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
 			.set__description("The ROS topic to subscribe to"));
 	this->get_parameter("ros_topic", ros_topic_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
 
 	// DSR parameters
-	nav2_util::declare_parameter_if_not_declared(this, "dsr_node_name", rclcpp::ParameterValue(""), 
-		rcl_interfaces::msg::ParameterDescriptor()
+	nav2_util::declare_parameter_if_not_declared(this, "dsr_node_name", 
+		rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
 			.set__description("The name of the node in the DSR graph"));
 	this->get_parameter("dsr_node_name", dsr_node_name_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 
-	nav2_util::declare_parameter_if_not_declared(this, "dsr_parent_node_name", rclcpp::ParameterValue(""), 
-		rcl_interfaces::msg::ParameterDescriptor()
+	nav2_util::declare_parameter_if_not_declared(this, "dsr_parent_node_name", 
+		rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
 			.set__description("The name of the parent node in the DSR graph"));
 	this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
 	RCLCPP_INFO(this->get_logger(), 
