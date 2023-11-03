@@ -30,7 +30,7 @@ def generate_launch_description():
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
-        'dsr_input_file': os.path.join(dsr_agent_dir, 'worlds', 'default.json')
+        'dsr_input_file': os.path.join(dsr_agent_dir, 'worlds', 'empty.json')
     }
 
     configured_params = RewrittenYaml(
