@@ -81,7 +81,7 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 * **`dsr_parent_node_name`** (string, default: "") (Optional)
 
-	String that specifies the name of the parent node in the DSR where the `dsr_node_name` should be attached to. If left empty, the node will be attached to frame_id from the header message.
+	String that specifies the name of the parent node in the DSR where the `dsr_node_name` should be attached to. If left empty, the node will be attached to frame_id from the ROS header message.
 
 ### tf_agent
 

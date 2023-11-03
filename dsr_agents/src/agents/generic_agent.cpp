@@ -122,17 +122,17 @@ void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessa
 
 	// TODO: Replace 'has_edge_type' to a type according to (sensor, actuator, navigation, etc)
 	if (topic_type == "sensor_msgs/msg/BatteryState"){
-		deserialize_and_update_attributes<sensor_msgs::msg::BatteryState, 
-											battery_node_type,
-											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+		deserialize_and_update_attributes
+			<sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>
+			(msg, dsr_node_name_, dsr_parent_node_name_);
 	}else if (topic_type == "sensor_msgs/msg/Image"){
-		deserialize_and_update_attributes<sensor_msgs::msg::Image, 
-											rgbd_node_type,
-											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+		deserialize_and_update_attributes
+			<sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>
+			(msg, dsr_node_name_, dsr_parent_node_name_);
 	}else if (topic_type == "sensor_msgs/msg/LaserScan"){
-		deserialize_and_update_attributes<sensor_msgs::msg::LaserScan, 
-											laser_node_type,
-											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+		deserialize_and_update_attributes
+			<sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>
+			(msg, dsr_node_name_, dsr_parent_node_name_);
 	}else{
 		RCLCPP_WARN_ONCE(this->get_logger(), 
 			"Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
@@ -225,7 +225,7 @@ void genericAgent::modify_attributes<sensor_msgs::msg::Image>(
 template <> 
 void genericAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::LaserScan &msg){
-	
+
 	// Convert from ROS to DSR
 	std::vector<float> angles(msg.ranges.size());
 	angles[0] = msg.angle_min;
@@ -233,7 +233,7 @@ void genericAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
 		angles[i] = angles[i-1] + msg.angle_increment;
 	}
 	angles[msg.ranges.size()-1] = msg.angle_max;
-	
+
 	// Modify the attributes of the node
 	G_->add_or_modify_attrib_local<laser_angles_att>(node.value(), angles);
 	G_->add_or_modify_attrib_local<laser_dists_att>(node.value(), msg.ranges);
