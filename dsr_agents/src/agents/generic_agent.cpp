@@ -85,6 +85,93 @@ void genericAgent::get_params(){
 	dsr_node_name_ = dsr_node_name_.empty() ? ros_topic_ : dsr_node_name_;
 }
 
+template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
+void genericAgent::deserialize_and_update_attributes(
+	const std::shared_ptr<rclcpp::SerializedMessage> msg, 
+	const std::string &node_name, const std::string &parent_name){
+	// Deserialize a message to ROS_TYPE
+	ROS_TYPE ros_msg;
+	auto serializer = rclcpp::Serialization<ROS_TYPE>();
+	serializer.deserialize_message(msg.get(), &ros_msg);
+
+	// If the parent name is empty, the parent is the frame_id of the ROS message
+	auto new_parent_name = parent_name.empty() ? ros_msg.header.frame_id : parent_name;
+
+	// Add the node with the edge if the node does not exist
+	if (auto dsr_node = G_->get_node(node_name); !dsr_node.has_value()){
+		add_node_with_edge<NODE_TYPE, EDGE_TYPE>(node_name, new_parent_name);
+	}
+
+	// Add the edge if it does not exist
+	add_edge<EDGE_TYPE>(new_parent_name, node_name);
+
+	// Update the attributes of the node
+	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
+		modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
+		G_->update_node(dsr_node.value());
+	}
+}
+
+void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){
+	// In order to deserialize the message we have to manually create a ROS2
+	// message in which we want to convert the serialized data.
+	auto data = rclcpp::Node::get_topic_names_and_types();
+	const std::string topic_type = data[ros_topic_][0];
+	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to topic [%s] of type [%s]", 
+						ros_topic_.c_str(), topic_type.c_str());
+
+	// TODO: Replace 'has_edge_type' to a type according to (sensor, actuator, navigation, etc)
+	if (topic_type == "sensor_msgs/msg/BatteryState"){
+		deserialize_and_update_attributes<sensor_msgs::msg::BatteryState, 
+											battery_node_type,
+											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+	}else if (topic_type == "sensor_msgs/msg/Image"){
+		deserialize_and_update_attributes<sensor_msgs::msg::Image, 
+											rgbd_node_type,
+											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+	}else if (topic_type == "sensor_msgs/msg/LaserScan"){
+		deserialize_and_update_attributes<sensor_msgs::msg::LaserScan, 
+											laser_node_type,
+											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
+	}else{
+		RCLCPP_WARN_ONCE(this->get_logger(), 
+			"Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
+	}
+}
+
+void genericAgent::node_updated(std::uint64_t id, const std::string &type){
+	// Only for debugging
+	/*if (type == "battery"){
+		if (auto node = G_->get_node(id); node.has_value()){
+			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
+			if (voltage.has_value()){
+				RCLCPP_DEBUG(this->get_logger(), "Battery voltage is [%f]", voltage.value());
+			}
+		}
+	}*/
+}
+
+void genericAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+
+}
+
+void genericAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+
+}
+
+void genericAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
+	const std::string &type, const std::vector<std::string>& att_names){
+
+}
+
+void genericAgent::node_deleted(std::uint64_t id){
+
+}
+
+void genericAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
+
+}
+
 template <> 
 void genericAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::BatteryState &msg){
@@ -156,88 +243,6 @@ void genericAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
 	for (auto &[key, value] : node.value().attrs()){
 		RCLCPP_DEBUG(this->get_logger(), "Attribute [%s] = [%s]", key.c_str(), value.value());
 	}
-}
-
-template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
-void genericAgent::deserialize_and_update_attributes(
-	const std::shared_ptr<rclcpp::SerializedMessage> msg, 
-	const std::string &node_name, const std::string &parent_name){
-	// Deserialize a message to ROS_TYPE
-	ROS_TYPE ros_msg;
-	auto serializer = rclcpp::Serialization<ROS_TYPE>();
-	serializer.deserialize_message(msg.get(), &ros_msg);
-
-	// Check if the node exists in the graph
-	auto dsr_node = G_->get_node(node_name);
-	if (!dsr_node.has_value()){
-		// If the parent name is empty, the parent is the frame_id of the ROS message
-		auto new_parent_name = parent_name.empty() ? get_frame_id<ROS_TYPE>(ros_msg) : parent_name;
-		add_node<NODE_TYPE, EDGE_TYPE>(node_name, new_parent_name);
-	}
-	// Update the attributes of the node
-	dsr_node = G_->get_node(node_name);
-	modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
-	G_->update_node(dsr_node.value());
-}
-
-void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){
-	// In order to deserialize the message we have to manually create a ROS2
-	// message in which we want to convert the serialized data.
-	auto data = rclcpp::Node::get_topic_names_and_types();
-	const std::string topic_type = data[ros_topic_][0];
-	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to topic [%s] of type [%s]", 
-						ros_topic_.c_str(), topic_type.c_str());
-
-	// TODO: Replace 'has_edge_type' to a type according to (sensor, actuator, navigation, etc)
-	if (topic_type == "sensor_msgs/msg/BatteryState"){
-		deserialize_and_update_attributes<sensor_msgs::msg::BatteryState, 
-											battery_node_type,
-											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
-	}else if (topic_type == "sensor_msgs/msg/Image"){
-		deserialize_and_update_attributes<sensor_msgs::msg::Image, 
-											rgbd_node_type,
-											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
-	}else if (topic_type == "sensor_msgs/msg/LaserScan"){
-		deserialize_and_update_attributes<sensor_msgs::msg::LaserScan, 
-											laser_node_type,
-											has_edge_type>(msg, dsr_node_name_, dsr_parent_node_name_);
-	}else{
-		RCLCPP_WARN_ONCE(this->get_logger(), 
-			"Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
-	}
-}
-
-void genericAgent::node_updated(std::uint64_t id, const std::string &type){
-	// Only for debugging
-	/*if (type == "battery"){
-		if (auto node = G_->get_node(id); node.has_value()){
-			auto voltage = G_->get_attrib_by_name<battery_voltage_att>(node.value());
-			if (voltage.has_value()){
-				RCLCPP_DEBUG(this->get_logger(), "Battery voltage is [%f]", voltage.value());
-			}
-		}
-	}*/
-}
-
-void genericAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
-
-}
-
-void genericAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
-
-}
-
-void genericAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
-	const std::string &type, const std::vector<std::string>& att_names){
-
-}
-
-void genericAgent::node_deleted(std::uint64_t id){
-
-}
-
-void genericAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
-
 }
 
 int main(int argc, char** argv){

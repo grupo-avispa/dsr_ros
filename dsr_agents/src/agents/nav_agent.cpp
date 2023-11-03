@@ -47,7 +47,7 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_room_
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	// Add the navigation node to the DSR graph
-	add_node<navigation_node_type, stopped_edge_type>("navigation", "robot");
+	add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
 }
 
 /* Initialize ROS parameters */

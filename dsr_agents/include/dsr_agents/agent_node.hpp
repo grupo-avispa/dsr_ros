@@ -64,7 +64,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::unique_ptr<DSR::RT_API> rt_;
 
 		/**
-		 * @brief Add a node into the DSR graph with the given name, parent and priority.
+		 * @brief Add a node with an edge into the DSR graph with the given name, parent and priority.
 		 * By default, all nodes have a low priority (0).
 		 * 
 		 * @tparam NODE_TYPE The type of the DSR node. Defined in ros_to_dsr_types.hpp.
@@ -74,7 +74,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param priority Priority of the DSR node.
 		 */
 		template <typename NODE_TYPE, typename EDGE_TYPE> 
-		void add_node(const std::string & name, const std::string & parent_name, 
+		void add_node_with_edge(const std::string & name, const std::string & parent_name, 
 			const int & priority = 0){
 			// Get the parent node
 			auto parent_node = G_->get_node(parent_name);
@@ -124,6 +124,37 @@ class AgentNode: public QObject, public rclcpp::Node{
 		}
 
 		/**
+		 * @brief Add an edge into the DSR graph with the given parent and child nodes names.
+		 * 
+		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
+		 * @param from Name of the parent DSR node.
+		 * @param to  Name of the child DSR node.
+		 */
+		template <typename EDGE_TYPE> 
+		void add_edge(const std::string & from, const std::string & to){
+			auto parent_node = G_->get_node(from);
+			auto child_node = G_->get_node(to);
+			// Insert the edge into the DSR graph
+			if (parent_node.has_value() && child_node.has_value()){
+				// Create the edge
+				auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
+					child_node.value().id());
+				// Insert the edge into the DSR graph
+				if (G_->insert_or_assign_edge(new_edge)){
+					RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
+						<< parent_node.value().name() << "->" 
+						<< child_node.value().name() <<
+						"] of type [" << new_edge.type().c_str() << "]");
+				}else{
+					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+						<< parent_node.value().name() << "->" 
+						<< child_node.value().name() <<
+						"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+				}
+			}
+		}
+
+		/**
 		 * @brief Add an edge into the DSR graph with the given parent and child nodes id.
 		 * 
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
@@ -132,21 +163,24 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 */
 		template <typename EDGE_TYPE> 
 		void add_edge(uint64_t from, uint64_t to){
-			// Create the edge
-			auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
-			std::optional<DSR::Node> parent_node = G_->get_node(from);
-			std::optional<DSR::Node> child_node = G_->get_node(to);
+			auto parent_node = G_->get_node(from);
+			auto child_node = G_->get_node(to);
 			// Insert the edge into the DSR graph
-			if (G_->insert_or_assign_edge(new_edge)){
-				RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
-					<< parent_node.value().name() << "->" 
-					<< child_node.value().name() <<
-					"] of type [" << new_edge.type().c_str() << "]");
-			}else{
-				RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-					<< parent_node.value().name() << "->" 
-					<< child_node.value().name() <<
-					"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+			if (parent_node.has_value() && child_node.has_value()){
+				// Create the edge
+				auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
+				// Insert the edge into the DSR graph
+				if (G_->insert_or_assign_edge(new_edge)){
+					RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
+						<< parent_node.value().name() << "->" 
+						<< child_node.value().name() <<
+						"] of type [" << new_edge.type().c_str() << "]");
+				}else{
+					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+						<< parent_node.value().name() << "->" 
+						<< child_node.value().name() <<
+						"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+				}
 			}
 		}
 
@@ -276,18 +310,6 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 */
 		void update_rt_attributes(DSR::Node & from, DSR::Node & to, 
 			const geometry_msgs::msg::Transform & msg);
-
-		/**
-		 * @brief Get the frame id object.
-		 * 
-		 * @tparam ROS_TYPE The type of the ROS message.
-		 * @param msg ROS message.
-		 * @return std::string The frame id of the ROS message.
-		 */
-		template <typename ROS_TYPE>
-		std::string get_frame_id(ROS_TYPE msg){
-			return msg.header.frame_id;
-		}
 
 	private:
 		/**

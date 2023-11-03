@@ -6,6 +6,9 @@ Changelog for package dsr_agents
 ------------------
 * Move agents to 'agents' folder.
 * Added new functions to delete and replace edges.
+* Added new functions to add nodes and edges.
+* Sort TF tree before publishing.
+* Rename 'default' world to 'empty' world.
 
 0.4.0 (30-10-2023)
 ------------------
