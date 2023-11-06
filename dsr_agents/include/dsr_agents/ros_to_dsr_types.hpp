@@ -60,6 +60,7 @@ REGISTER_EDGE_TYPE(aborting)
 REGISTER_EDGE_TYPE(wants_to)
 REGISTER_EDGE_TYPE(is_performing)
 REGISTER_EDGE_TYPE(navigating)
+REGISTER_EDGE_TYPE(failed)
 
 REGISTER_TYPE(priority, int, false)
 REGISTER_TYPE(error_code, std::string, false)
@@ -73,6 +74,7 @@ REGISTER_TYPE(goal_y, float, false)
 REGISTER_TYPE(goal_z, float, false)
 REGISTER_TYPE(goal_angle, float, false)
 REGISTER_TYPE(zone, std::string, false)
+REGISTER_TYPE(zones, std::string, false)
 REGISTER_TYPE(use_case_id, std::string, false)
 
 #endif  // DSR_AGENT__ROS_TO_DSR_TYPES_HPP_

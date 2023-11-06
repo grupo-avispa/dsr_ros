@@ -12,6 +12,10 @@
 // C++
 #include <chrono>
 #include <thread>
+#include <random>
+
+// BOOST
+#include <boost/algorithm/string/join.hpp>
 
 // ROS
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -25,7 +29,7 @@
 #include "dsr_agents/agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_room_(""){
+navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_(""){
 	// Get ROS parameters
 	get_params();
 
@@ -48,6 +52,14 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_room_
 
 	// Add the navigation node to the DSR graph
 	add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
+
+	// Get the zone list and add them to the DSR graph
+	if (auto world_node = G_->get_node("world"); world_node.has_value()){
+		get_zones();
+		std::string zones_joined = boost::algorithm::join(zones_, ",");
+		G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
+		G_->update_node(world_node.value());
+	}
 }
 
 /* Initialize ROS parameters */
@@ -84,7 +96,18 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 					std::string room = G_->get_attrib_by_name<zone_att>(
 						move_node.value()).value();
 					// Send the robot to the goal
-					send_to_room(room);
+					if (room == "dock"){
+						start_docking();
+					}else if (room == "all"){
+						std::random_device rd;
+						std::mt19937 gen(rd());
+						std::uniform_int_distribution<int> distr(0, zones_.size() - 1);
+						room = zones_[distr(gen)];
+						send_to_room(room);
+					}else{
+						send_to_room(room);
+					}
+					current_zone_ = room;
 					RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
 						room.c_str());
 				}
@@ -157,8 +180,8 @@ void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::Wrappe
 		case rclcpp_action::ResultCode::ABORTED:{
 			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
 			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
-				// Replace the 'is_performing' edge with a 'wants_to' edge between robot and move
-				if (replace_edge<wants_to_edge_type>("robot", "move", "is_performing")){
+				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
+				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
 					RCLCPP_ERROR(this->get_logger(), "Goal was failed");
 				}
 			}
@@ -248,6 +271,7 @@ void navigationAgent::undock_result_callback(const GoalHandleUndock::WrappedResu
 }
 
 void navigationAgent::send_to_room(std::string room_name, int n_goals){
+	// Create the clients for the semantic navigation services
 	goals_generator_client_ = this->create_client<SemanticGoals>("semantic_goals");
 	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(1))) {
 		if (!rclcpp::ok()) {
@@ -327,6 +351,27 @@ void navigationAgent::cancel_goal(){
 	if (status != std::future_status::ready) {
 		RCLCPP_ERROR(this->get_logger(), "Timed out waiting for navigation goal to cancel.");
 	}
+}
+
+void navigationAgent::get_zones(){
+	// Create the clients for the semantic navigation services
+	semantic_regions_client_ = this->create_client<SemanticRegions>("semantic_regions");
+	while (!semantic_regions_client_->wait_for_service(std::chrono::seconds(1))) {
+		if (!rclcpp::ok()) {
+			RCLCPP_ERROR(this->get_logger(), 
+				"Interrupted while waiting for the service. Exiting.");
+			return;
+		}
+		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+	}
+
+	// Send the request to get the list of the zones
+	auto request = std::make_shared<SemanticRegions::Request>();
+	auto result = semantic_regions_client_->async_send_request(request, 
+		[this](rclcpp::Client<SemanticRegions>::SharedFuture result){
+			zones_ = result.get()->regions;
+			zones_.push_back("dock");
+	});
 }
 
 void navigationAgent::start_docking(){

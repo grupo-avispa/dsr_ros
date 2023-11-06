@@ -26,6 +26,7 @@
 #include "auto_docking_interfaces/action/dock.hpp"
 #include "auto_docking_interfaces/action/undock.hpp"
 #include "semantic_navigation_msgs/srv/semantic_goals.hpp"
+#include "semantic_navigation_msgs/srv/semantic_regions.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
@@ -40,6 +41,7 @@ class navigationAgent: public AgentNode{
 		using Dock = auto_docking_interfaces::action::Dock;
 		using Undock = auto_docking_interfaces::action::Undock;
 		using SemanticGoals = semantic_navigation_msgs::srv::SemanticGoals;
+		using SemanticRegions = semantic_navigation_msgs::srv::SemanticRegions;
 		using GoalHandleNavigateToPose = rclcpp_action::ClientGoalHandle<NavigateToPose>;
 		using GoalHandleDock = rclcpp_action::ClientGoalHandle<Dock>;
 		using GoalHandleUndock = rclcpp_action::ClientGoalHandle<Undock>;
@@ -49,25 +51,32 @@ class navigationAgent: public AgentNode{
 		rclcpp_action::Client<Dock>::SharedPtr dock_client_;
 		rclcpp_action::Client<Undock>::SharedPtr undock_client_;
 		rclcpp::Client<SemanticGoals>::SharedPtr goals_generator_client_;
+		rclcpp::Client<SemanticRegions>::SharedPtr semantic_regions_client_;
 		std::shared_ptr<GoalHandleNavigateToPose> goal_handle_;
-		std::string current_room_;
+		std::vector<std::string> zones_;
+		std::string current_zone_;
 
 		void get_params();
 		void send_to_room(std::string room_name, int n_goals = 1);
 		void send_to_goal(geometry_msgs::msg::Pose goal_pose);
+		void get_zones();
 		void cancel_goal();
 		void start_docking();
 		void start_undocking();
 
-		// Action callbacks
+		// Navigation action callbacks
 		void nav_goal_response_callback(const GoalHandleNavigateToPose::SharedPtr & goal_handle);
 		void nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr, 
 			const std::shared_ptr<const NavigateToPose::Feedback> feedback);
 		void nav_result_callback(const GoalHandleNavigateToPose::WrappedResult & result);
+
+		// Docking action callbacks
 		void dock_goal_response_callback(const GoalHandleDock::SharedPtr & goal_handle);
 		void dock_feedback_callback(GoalHandleDock::SharedPtr, 
 							const std::shared_ptr<const Dock::Feedback> feedback);
 		void dock_result_callback(const GoalHandleDock::WrappedResult & result);
+
+		// Undocking action callbacks
 		void undock_goal_response_callback(const GoalHandleUndock::SharedPtr & goal_handle);
 		void undock_feedback_callback(GoalHandleUndock::SharedPtr, 
 							const std::shared_ptr<const Undock::Feedback> feedback);
