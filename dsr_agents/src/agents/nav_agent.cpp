@@ -50,7 +50,7 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_
 	// Wait until the DSR graph is ready
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-	// Add the navigation node to the DSR graph
+	// Add the 'navigation' node with and edge 'stopped' hanging from the 'robot' node into the DSR graph
 	add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
 
 	// Get the zone list and add them to the DSR graph
@@ -84,14 +84,14 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 	// Check if the robot wants to start the navigation: robot ---(wants_to)--> move
 	if (type == "wants_to"){
-		auto robot_node = G_->get_node("robot");
-		auto move_node = G_->get_node("move");
-		if (robot_node.has_value() && from == robot_node.value().id() 
-			&& move_node.has_value() && to == move_node.value().id()){
+		auto robot_node = G_->get_node(from);
+		auto move_node = G_->get_node(to);
+		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
+			&& move_node.has_value() && move_node.value().name() == "move"){
 			// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
 			if (replace_edge<is_performing_edge_type>(from, to, type)){
-				// Replace the 'stopped' edge with a 'navigating' edge between navigation and robot
-				if (replace_edge<navigating_edge_type>("navigation", "robot", "stopped")){
+				// Replace the 'stopped' edge with a 'navigating' edge between robot and navigation
+				if (replace_edge<navigating_edge_type>("robot", "navigation", "stopped")){
 					// Get the room from the move node
 					std::string room = G_->get_attrib_by_name<zone_att>(
 						move_node.value()).value();
@@ -115,12 +115,12 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		}
 	}
 
-	// Check if the robot wants to abort the navigation
+	// Check if the robot wants to abort the navigation: robot ---(abort)--> navigation
 	if (type == "abort"){
-		auto robot_node = G_->get_node("robot");
-		auto nav_node = G_->get_node("navigation");
-		if (robot_node.has_value() && from == robot_node.value().id()
-			&& nav_node.has_value() && to == nav_node.value().id()){
+		auto robot_node = G_->get_node(from);
+		auto nav_node = G_->get_node(to);
+		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
+			&& nav_node.has_value() && nav_node.value().name() == "navigation"){
 			// Replace the 'abort' edge with a 'aborting' edge between robot and navigation
 			if (replace_edge<aborting_edge_type>(from, to, type)){
 				cancel_goal();
@@ -219,15 +219,33 @@ void navigationAgent::dock_feedback_callback(GoalHandleDock::SharedPtr,
 void navigationAgent::dock_result_callback(const GoalHandleDock::WrappedResult & result){
 	switch (result.code) {
 		case rclcpp_action::ResultCode::SUCCEEDED:{
-			RCLCPP_INFO(this->get_logger(), "Docking succeeded");
+			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
+			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				// Replace the 'is_performing' edge with a 'finished' edge between robot and move
+				if (replace_edge<finished_edge_type>("robot", "move", "is_performing")){
+					RCLCPP_INFO(this->get_logger(), "Docking succeeded");
+				}
+			}
 			break;
 		}
 		case rclcpp_action::ResultCode::ABORTED:{
-			RCLCPP_ERROR(this->get_logger(), "Docking failed");
+			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
+			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
+				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
+					RCLCPP_ERROR(this->get_logger(), "Docking failed");
+				}
+			}
 			break;
 		}
 		case rclcpp_action::ResultCode::CANCELED:{
-			RCLCPP_ERROR(this->get_logger(), "Docking canceled");
+			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
+			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
+				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
+					RCLCPP_ERROR(this->get_logger(), "Docking canceled");
+				}
+			}
 			break;
 		}
 		default:{
