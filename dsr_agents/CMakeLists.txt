@@ -63,12 +63,12 @@ qt5_wrap_cpp(agent_moc ${HEADERS}
 )
 
 ###################
-## GENERIC AGENT ##
+## TOPIC AGENT ##
 ###################
 
 # Executable node
-add_executable(generic_agent ${SOURCES} src/agents/generic_agent.cpp)
-ament_target_dependencies(generic_agent
+add_executable(topic_agent ${SOURCES} src/agents/topic_agent.cpp)
+ament_target_dependencies(topic_agent
   rclcpp
   Eigen3
   Qt5
@@ -76,8 +76,8 @@ ament_target_dependencies(generic_agent
   nav2_util
   dsr_interfaces
 )
-target_link_libraries(generic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(generic_agent PRIVATE ${agent_moc})
+target_link_libraries(topic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(topic_agent PRIVATE ${agent_moc})
 
 ######################
 ## NAVIGATION AGENT ##
@@ -132,7 +132,7 @@ target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
 #############
 ## Install ##
 #############
-install(TARGETS generic_agent tf_agent nav_agent viewer
+install(TARGETS topic_agent tf_agent nav_agent viewer
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

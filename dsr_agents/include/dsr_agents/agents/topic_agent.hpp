@@ -1,5 +1,5 @@
 /*
- * GENERIC AGENT ROS NODE
+ * TOPIC AGENT ROS NODE
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef DSR_AGENT__GENERIC_AGENT_HPP_
-#define DSR_AGENT__GENERIC_AGENT_HPP_
+#ifndef DSR_AGENT__TOPIC_AGENT_HPP_
+#define DSR_AGENT__TOPIC_AGENT_HPP_
 
 // C++
 #include <string>
@@ -27,9 +27,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_agents/agent_node.hpp"
 
-class genericAgent: public AgentNode{
+class topicAgent: public AgentNode{
 	public:
-		genericAgent();
+		topicAgent();
 
 	private:
 		rclcpp::GenericSubscription::SharedPtr generic_sub_;
@@ -54,4 +54,4 @@ class genericAgent: public AgentNode{
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 };
 
-#endif  // DSR_AGENT__GENERIC_AGENT_HPP_
+#endif  // DSR_AGENT__TOPIC_AGENT_HPP_

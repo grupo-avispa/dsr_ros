@@ -24,8 +24,8 @@ def generate_launch_description():
 
     declare_params_file_arg = DeclareLaunchArgument(
         'params_file',
-        default_value=default_params_file,
-        description='Full path to the ROS2 parameters file with dsr agent configuration'
+        default_value = default_params_file,
+        description = 'Full path to the ROS2 parameters file with dsr agent configuration'
     )
 
     # Create our own temporary YAML files that include substitutions
@@ -34,16 +34,16 @@ def generate_launch_description():
     }
 
     configured_params = RewrittenYaml(
-        source_file=params_file,
-        root_key='',
-        param_rewrites=param_substitutions,
-        convert_types=True
+        source_file = params_file,
+        root_key = '',
+        param_rewrites = param_substitutions,
+        convert_types = True
     )
 
     declare_log_level_arg = DeclareLaunchArgument(
-        name='log-level',
-        default_value='info',
-        description='Logging level (info, debug, ...)'
+        name = 'log-level',
+        default_value = 'info',
+        description = 'Logging level (info, debug, ...)'
     )
 
     # Prepare the nodes
@@ -52,10 +52,10 @@ def generate_launch_description():
         namespace = '',
         executable = 'tf_agent',
         name = 'tf_agent',
-        parameters=[configured_params],
+        parameters = [configured_params],
         emulate_tty = True,
-        output='screen', 
-        arguments=[
+        output = 'screen', 
+        arguments = [
             '--ros-args', 
             '--log-level', ['tf_agent:=', LaunchConfiguration('log-level')]]
     )
@@ -63,12 +63,12 @@ def generate_launch_description():
     battery_agent_node = Node(
         package = 'dsr_agents',
         namespace = '',
-        executable = 'generic_agent',
+        executable = 'topic_agent',
         name = 'battery_agent',
-        parameters=[configured_params],
+        parameters = [configured_params],
         emulate_tty = True,
-        output='screen', 
-        arguments=[
+        output = 'screen', 
+        arguments = [
             '--ros-args', 
             '--log-level', ['battery_agent:=', LaunchConfiguration('log-level')]]
     )
@@ -76,12 +76,12 @@ def generate_launch_description():
     laser_agent_node = Node(
         package = 'dsr_agents',
         namespace = '',
-        executable = 'generic_agent',
+        executable = 'topic_agent',
         name = 'laser_agent',
-        parameters=[configured_params],
+        parameters = [configured_params],
         emulate_tty = True,
-        output='screen', 
-        arguments=[
+        output = 'screen', 
+        arguments = [
             '--ros-args', 
             '--log-level', ['laser_agent:=', LaunchConfiguration('log-level')]]
     )
@@ -89,12 +89,12 @@ def generate_launch_description():
     rgb_agent_node = Node(
         package = 'dsr_agents',
         namespace = '',
-        executable = 'generic_agent',
+        executable = 'topic_agent',
         name = 'rgb_agent',
-        parameters=[configured_params],
+        parameters = [configured_params],
         emulate_tty = True,
-        output='screen', 
-        arguments=[
+        output = 'screen', 
+        arguments = [
             '--ros-args', 
             '--log-level', ['rgb_agent:=', LaunchConfiguration('log-level')]]
     )
@@ -102,12 +102,12 @@ def generate_launch_description():
     depth_agent_node = Node(
         package = 'dsr_agents',
         namespace = '',
-        executable = 'generic_agent',
+        executable = 'topic_agent',
         name = 'rgbd_agent',
-        parameters=[configured_params],
+        parameters = [configured_params],
         emulate_tty = True,
-        output='screen', 
-        arguments=[
+        output = 'screen', 
+        arguments = [
             '--ros-args', 
             '--log-level', ['rgbd_agent:=', LaunchConfiguration('log-level')]]
     )

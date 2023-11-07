@@ -1,5 +1,5 @@
 /*
- * GENERIC AGENT ROS NODE
+ * TOPIC AGENT ROS NODE
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
@@ -23,26 +23,26 @@
 
 // DSR
 #include "dsr_agents/qt_executor.hpp"
-#include "dsr_agents/agents/generic_agent.hpp"
+#include "dsr_agents/agents/topic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-genericAgent::genericAgent(): AgentNode("generic_agent"){
+topicAgent::topicAgent(): AgentNode("generic_agent"){
 	// Get ROS parameters
 	get_params();
 
 	// Add connection signals
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_node_signal, this, &genericAgent::node_updated);
+		&DSR::DSRGraph::update_node_signal, this, &topicAgent::node_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_node_attr_signal, this, &genericAgent::node_attributes_updated);
+		&DSR::DSRGraph::update_node_attr_signal, this, &topicAgent::node_attributes_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_edge_signal, this, &genericAgent::edge_updated);
+		&DSR::DSRGraph::update_edge_signal, this, &topicAgent::edge_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_edge_attr_signal, this, &genericAgent::edge_attributes_updated);
+		&DSR::DSRGraph::update_edge_attr_signal, this, &topicAgent::edge_attributes_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::del_edge_signal, this, &genericAgent::edge_deleted);
+		&DSR::DSRGraph::del_edge_signal, this, &topicAgent::edge_deleted);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::del_node_signal, this, &genericAgent::node_deleted);
+		&DSR::DSRGraph::del_node_signal, this, &topicAgent::node_deleted);
 
 	// Wait until the DSR graph is ready
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -52,12 +52,12 @@ genericAgent::genericAgent(): AgentNode("generic_agent"){
 	for (auto type : data[ros_topic_]){
 		generic_sub_ = create_generic_subscription(
 			ros_topic_, type, rclcpp::QoS(rclcpp::SensorDataQoS()),
-			std::bind(&genericAgent::serial_callback, this, std::placeholders::_1));
+			std::bind(&topicAgent::serial_callback, this, std::placeholders::_1));
 	}
 }
 
 /* Initialize ROS parameters */
-void genericAgent::get_params(){
+void topicAgent::get_params(){
 	// ROS parameters
 	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", 
 		rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
@@ -86,7 +86,7 @@ void genericAgent::get_params(){
 }
 
 template <typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE> 
-void genericAgent::deserialize_and_update_attributes(
+void topicAgent::deserialize_and_update_attributes(
 	const std::shared_ptr<rclcpp::SerializedMessage> msg, 
 	const std::string &node_name, const std::string &parent_name){
 	// Deserialize a message to ROS_TYPE
@@ -112,7 +112,7 @@ void genericAgent::deserialize_and_update_attributes(
 	}
 }
 
-void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){
+void topicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg){
 	// In order to deserialize the message we have to manually create a ROS2
 	// message in which we want to convert the serialized data.
 	auto data = rclcpp::Node::get_topic_names_and_types();
@@ -139,7 +139,7 @@ void genericAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessa
 	}
 }
 
-void genericAgent::node_updated(std::uint64_t id, const std::string &type){
+void topicAgent::node_updated(std::uint64_t id, const std::string &type){
 	// Only for debugging
 	/*if (type == "battery"){
 		if (auto node = G_->get_node(id); node.has_value()){
@@ -151,29 +151,29 @@ void genericAgent::node_updated(std::uint64_t id, const std::string &type){
 	}*/
 }
 
-void genericAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+void topicAgent::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
 
 }
 
-void genericAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+void topicAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 
 }
 
-void genericAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
+void topicAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
 	const std::string &type, const std::vector<std::string>& att_names){
 
 }
 
-void genericAgent::node_deleted(std::uint64_t id){
+void topicAgent::node_deleted(std::uint64_t id){
 
 }
 
-void genericAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
+void topicAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
 
 }
 
 template <> 
-void genericAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
+void topicAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::BatteryState &msg){
 	// Modify the attributes of the node
 	G_->add_or_modify_attrib_local<battery_voltage_att>(node.value(), msg.voltage);
@@ -202,7 +202,7 @@ void genericAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
 }
 
 template <> 
-void genericAgent::modify_attributes<sensor_msgs::msg::Image>(
+void topicAgent::modify_attributes<sensor_msgs::msg::Image>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::Image &msg){
 	// Modify the attributes of the node depending the type of the image
 	if (msg.encoding == sensor_msgs::image_encodings::RGB8){
@@ -223,7 +223,7 @@ void genericAgent::modify_attributes<sensor_msgs::msg::Image>(
 }
 
 template <> 
-void genericAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
+void topicAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
 	std::optional<DSR::Node> &node, const sensor_msgs::msg::LaserScan &msg){
 
 	// Convert from ROS to DSR
@@ -249,7 +249,7 @@ int main(int argc, char** argv){
 	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
 
-	auto node = std::make_shared<genericAgent>();
+	auto node = std::make_shared<topicAgent>();
 
 	QtExecutor exe;
 	exe.add_node(node);
