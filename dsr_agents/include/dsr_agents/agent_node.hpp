@@ -107,15 +107,15 @@ class AgentNode: public QObject, public rclcpp::Node{
 					auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
 						new_node.id());
 					if (G_->insert_or_assign_edge(new_edge)){
-						RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
+						RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
 							<< parent_node.value().name() << "->" 
-							<< new_node.name() <<
-							"] of type [" << new_edge.type().c_str() << "]");
+							<< new_node.name() << "] of type ["
+							<< new_edge.type().c_str() << "]");
 					}else{
 						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
 							<< parent_node.value().name() << "->" 
-							<< new_node.name() <<
-							"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+							<< new_node.name() << "] of type ["
+							<< new_edge.type().c_str() << "] couldn't be inserted");
 					}
 				}
 			}else{
@@ -143,13 +143,13 @@ class AgentNode: public QObject, public rclcpp::Node{
 				if (G_->insert_or_assign_edge(new_edge)){
 					RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
 						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() <<
-						"] of type [" << new_edge.type().c_str() << "]");
+						<< child_node.value().name() << "] of type ["
+						<< new_edge.type().c_str() << "]");
 				}else{
 					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
 						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() <<
-						"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+						<< child_node.value().name() << "] of type ["
+						<< new_edge.type().c_str() << "] couldn't be inserted");
 				}
 			}
 		}
@@ -171,15 +171,15 @@ class AgentNode: public QObject, public rclcpp::Node{
 				auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
 				// Insert the edge into the DSR graph
 				if (G_->insert_or_assign_edge(new_edge)){
-					RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
+					RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
 						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() <<
-						"] of type [" << new_edge.type().c_str() << "]");
+						<< child_node.value().name() << "] of type ["
+						<< new_edge.type().c_str() << "]");
 				}else{
 					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
 						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() <<
-						"] of type [" << new_edge.type().c_str() << "] couldn't be inserted");
+						<< child_node.value().name() << "] of type ["
+						<< new_edge.type().c_str() << "] couldn't be inserted");
 				}
 			}
 		}
@@ -202,15 +202,21 @@ class AgentNode: public QObject, public rclcpp::Node{
 				if (auto edge = G_->get_edge(from, to, edge_type); edge.has_value()){
 					// Delete the edge
 					if (G_->delete_edge(from, to, edge_type)){
-						RCLCPP_INFO(this->get_logger(), "Deleting %s edge", edge_type.c_str());
+						RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" 
+							<< parent_node.value().name() << "->" 
+							<< child_node.value().name() << "] of type ["
+							<< edge_type.c_str() << "] has been deleted");
 						return true;
 					}else{
-						RCLCPP_ERROR(this->get_logger(), "Error deleting %s edge", 
-							edge_type.c_str());
+						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+							<< parent_node.value().name() << "->" 
+							<< child_node.value().name() << "] of type ["
+							<< edge_type.c_str() << "] couldn't be deleted");
 					}
 				}else{
-					RCLCPP_ERROR(this->get_logger(), "Edge %s doesn't exist", 
-						edge_type.c_str());
+					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+						<< from << "->" << to << "] of type [" <<
+						edge_type.c_str() << "] doesn't exists");
 				}
 			}
 			return false;
@@ -233,6 +239,9 @@ class AgentNode: public QObject, public rclcpp::Node{
 				if (parent_node.has_value() && child_node.has_value()){
 					return delete_edge(parent_node.value().id(), 
 						child_node.value().id(), edge_type);
+				}else{
+					RCLCPP_ERROR_STREAM(this->get_logger(), "The parent node [" 
+						<< from << "] or the child node [" << to << "] doesn't exists");
 				}
 			return false;
 		}
@@ -261,18 +270,27 @@ class AgentNode: public QObject, public rclcpp::Node{
 						auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
 						// Insert the new edge into the DSR graph
 						if (G_->insert_or_assign_edge(new_edge)){
-							RCLCPP_INFO(this->get_logger(), "Inserting %s edge", 
-								new_edge.type().c_str());
+							RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" 
+								<< parent_node.value().name() << "->" 
+								<< child_node.value().name() << "] of type [" 
+								<< old_edge.c_str() << "] has been replaced by ["
+								<< new_edge.type().c_str() << "]");
 							return true;
 						}
 					}else{
-						RCLCPP_ERROR(this->get_logger(), "Error deleting %s edge", 
-							old_edge.c_str());
+						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+							<< parent_node.value().name() << "->" 
+							<< child_node.value().name() << "] of type ["
+							<< old_edge.c_str() << "] couldn't be deleted");
 					}
 				}else{
-					RCLCPP_ERROR(this->get_logger(), "Edge %s doesn't exist", 
-						old_edge.c_str());
+					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
+						<< from << "->" << to << "] of type ["
+						<< old_edge.c_str() << "] doesn't exists");
 				}
+			}else{
+				RCLCPP_ERROR_STREAM(this->get_logger(), "The parent node [" 
+					<< from << "] or the child node [" << to << "] doesn't exists");
 			}
 			return false;
 		}

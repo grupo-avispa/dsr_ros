@@ -117,7 +117,7 @@ def generate_launch_description():
         declare_log_level_arg,
         tf_agent_node,
         battery_agent_node, 
-        laser_agent_node,
-        rgb_agent_node,
-        depth_agent_node
+        #laser_agent_node,
+        #rgb_agent_node,
+        #depth_agent_node
     ])
