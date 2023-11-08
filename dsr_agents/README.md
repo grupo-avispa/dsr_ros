@@ -13,7 +13,7 @@ Along with the templates mentioned above, this package also provides two agents 
 * **`Navigation agent:`**  which allows the user to publish the navigation data in the DSR.
 * **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
 
-By default all nodes are created with low priority (0).
+By default all nodes are created with low priority (0) and they'll only publish with this priority.
 
 Besides the agents, this package also provides a DSR viewer. This viewer allows the user to visualize the DSR graph in a graphical interface.
 

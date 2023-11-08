@@ -2,6 +2,11 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.X (UNRELEASED)
+------------------
+* Added function to get priorityof nodes.
+* Fix get_zones in navigation node.
+
 0.5.0 (07-11-2023)
 ------------------
 * Move agents to 'agents' folder.
