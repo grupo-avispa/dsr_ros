@@ -88,6 +88,13 @@ void AgentNode::save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Req
 	response->result = true;
 }
 
+int AgentNode::get_priority(const DSR::Node & node){
+	if (auto priority = G_->get_attrib_by_name<priority_att>(node); priority.has_value()){
+		return priority.value();
+	}
+	return std::numeric_limits<int>::quiet_NaN();
+}
+
 std::tuple<float, float> AgentNode::get_position_by_level_in_graph(const DSR::Node &parent){
 	auto children = G_->get_node_edges_by_type(parent, "RT");
 	std::vector<float> x_values;

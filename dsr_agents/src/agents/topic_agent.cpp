@@ -105,10 +105,12 @@ void topicAgent::deserialize_and_update_attributes(
 	// Add the edge if it does not exist
 	add_edge<EDGE_TYPE>(new_parent_name, node_name);
 
-	// Update the attributes of the node
+	// Update the attributes of the node only if its priority is 0
 	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
-		modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
-		G_->update_node(dsr_node.value());
+		if (get_priority(dsr_node.value()) == 0){
+			modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
+			G_->update_node(dsr_node.value());
+		}
 	}
 }
 

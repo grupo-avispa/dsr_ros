@@ -328,6 +328,15 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 */
 		void update_rt_attributes(DSR::Node & from, DSR::Node & to, 
 			const geometry_msgs::msg::Transform & msg);
+		
+		/**
+		 * @brief Get the priority of the given node in the DSR graph.
+		 * 
+		 * @param node DSR node.
+		 * 
+		 * @return int Priority of the DSR node.
+		*/
+		int get_priority(const DSR::Node & node);
 
 	private:
 		/**
