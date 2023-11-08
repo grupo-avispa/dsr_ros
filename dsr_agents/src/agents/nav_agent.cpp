@@ -53,13 +53,8 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_
 	// Add the 'navigation' node with and edge 'stopped' hanging from the 'robot' node into the DSR graph
 	add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
 
-	// Get the zone list and add them to the DSR graph
-	if (auto world_node = G_->get_node("world"); world_node.has_value()){
-		get_zones();
-		std::string zones_joined = boost::algorithm::join(zones_, ",");
-		G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
-		G_->update_node(world_node.value());
-	}
+	// Get the list of the zones
+	get_zones();
 }
 
 /* Initialize ROS parameters */
@@ -108,6 +103,11 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 						send_to_room(room);
 					}
 					current_zone_ = room;
+					// Update the zone into the DSR graph
+					if (auto nav_node = G_->get_node("navigation"); nav_node.has_value()){
+						G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), current_zone_);
+						G_->update_node(nav_node.value());
+					}
 					RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
 						room.c_str());
 				}
@@ -388,7 +388,16 @@ void navigationAgent::get_zones(){
 	auto result = semantic_regions_client_->async_send_request(request, 
 		[this](rclcpp::Client<SemanticRegions>::SharedFuture result){
 			zones_ = result.get()->regions;
-			zones_.push_back("dock");
+
+			// Add the list of the zones to the DSR graph
+			if (auto world_node = G_->get_node("world"); world_node.has_value()){
+				std::vector<std::string> zones_expanded(zones_);
+				zones_expanded.push_back("all");
+				zones_expanded.push_back("dock");
+				std::string zones_joined = boost::algorithm::join(zones_expanded, ",");
+				G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
+				G_->update_node(world_node.value());
+			}
 	});
 }
 
