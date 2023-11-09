@@ -105,8 +105,10 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 					current_zone_ = room;
 					// Update the zone into the DSR graph
 					if (auto nav_node = G_->get_node("navigation"); nav_node.has_value()){
-						G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), current_zone_);
-						G_->update_node(nav_node.value());
+						if (get_priority(nav_node.value()) == 0){
+							G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), current_zone_);
+							G_->update_node(nav_node.value());
+						}
 					}
 					RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
 						room.c_str());
@@ -155,13 +157,15 @@ void navigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr,
 	const std::shared_ptr<const NavigateToPose::Feedback> feedback){
 	// Set the current pose of the robot
 	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
-		G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
-			static_cast<float>(feedback->current_pose.pose.position.x));
-		G_->add_or_modify_attrib_local<pose_y_att>(robot_node.value(), 
-			static_cast<float>(feedback->current_pose.pose.position.y));
-		G_->add_or_modify_attrib_local<pose_angle_att>(robot_node.value(), 
-			static_cast<float>(tf2::getYaw(feedback->current_pose.pose.orientation)));
-		G_->update_node(robot_node.value());
+		if (get_priority(robot_node.value()) == 0){
+			G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
+				static_cast<float>(feedback->current_pose.pose.position.x));
+			G_->add_or_modify_attrib_local<pose_y_att>(robot_node.value(), 
+				static_cast<float>(feedback->current_pose.pose.position.y));
+			G_->add_or_modify_attrib_local<pose_angle_att>(robot_node.value(), 
+				static_cast<float>(tf2::getYaw(feedback->current_pose.pose.orientation)));
+			G_->update_node(robot_node.value());
+		}
 	}
 }
 
@@ -334,9 +338,8 @@ void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 		|| goal_handle_->get_status() == rclcpp_action::GoalStatus::STATUS_EXECUTING))
 	{
 		RCLCPP_ERROR(this->get_logger(),
-			"Navigator already working towards a goal. You need to cancel or wait for the "
-			"previous goal.");
-		return;
+			"Navigator already working towards a goal. Cancelling the previous goal.");
+		cancel_goal();
 	}
 
 	// Populate a goal message
@@ -391,12 +394,14 @@ void navigationAgent::get_zones(){
 
 			// Add the list of the zones to the DSR graph
 			if (auto world_node = G_->get_node("world"); world_node.has_value()){
-				std::vector<std::string> zones_expanded(zones_);
-				zones_expanded.push_back("all");
-				zones_expanded.push_back("dock");
-				std::string zones_joined = boost::algorithm::join(zones_expanded, ",");
-				G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
-				G_->update_node(world_node.value());
+				if (get_priority(world_node.value()) == 0){
+					std::vector<std::string> zones_expanded(zones_);
+					zones_expanded.push_back("all");
+					zones_expanded.push_back("dock");
+					std::string zones_joined = boost::algorithm::join(zones_expanded, ",");
+					G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
+					G_->update_node(world_node.value());
+				}
 			}
 	});
 }

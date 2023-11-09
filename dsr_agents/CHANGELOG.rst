@@ -7,6 +7,7 @@ Changelog for package dsr_agents
 * Added function to get priority of nodes.
 * Fix get_zones in navigation node.
 * Battery agent will publish battery_percentage between 0 and 100.
+* Cancel goal before sending a new one.
 
 0.5.0 (07-11-2023)
 ------------------
