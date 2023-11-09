@@ -184,7 +184,7 @@ void topicAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
 	G_->add_or_modify_attrib_local<battery_charge_att>(node.value(), msg.charge);
 	G_->add_or_modify_attrib_local<battery_capacity_att>(node.value(), msg.capacity);
 	G_->add_or_modify_attrib_local<battery_design_capacity_att>(node.value(), msg.design_capacity);
-	G_->add_or_modify_attrib_local<battery_percentage_att>(node.value(), msg.percentage);
+	G_->add_or_modify_attrib_local<battery_percentage_att>(node.value(), msg.percentage * 100.0);
 	G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node.value(), 
 		static_cast<int>(msg.power_supply_status));
 	G_->add_or_modify_attrib_local<battery_power_supply_health_att>(node.value(), 
