@@ -186,8 +186,29 @@ void topicAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
 	G_->add_or_modify_attrib_local<battery_design_capacity_att>(node.value(), msg.design_capacity);
 	G_->add_or_modify_attrib_local<battery_percentage_att>(node.value(), 
 		static_cast<float>(msg.percentage * 100.0));
-	G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node.value(), 
-		static_cast<int>(msg.power_supply_status));
+	// Convert the power supply status from enum to string
+	std::string status;
+	switch (msg.power_supply_status){
+	case 0:
+		status = "unknown";
+		break;
+	case 1:
+		status = "charging";
+		break;
+	case 2:
+		status = "discharging";
+		break;
+	case 3:
+		status = "not_charging";
+		break;
+	case 4:
+		status = "full";
+		break;
+	default:
+		status = "unknown";
+		break;
+	}
+	G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node.value(), status);
 	G_->add_or_modify_attrib_local<battery_power_supply_health_att>(node.value(), 
 		static_cast<int>(msg.power_supply_health));
 	G_->add_or_modify_attrib_local<battery_power_supply_technology_att>(node.value(), 
