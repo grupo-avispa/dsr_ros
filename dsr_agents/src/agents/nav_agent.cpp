@@ -123,8 +123,8 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
 			&& move_node.has_value() && move_node.value().name() == "move"){
-			// Remove the 'abort' or 'cancel' edge between robot and move
-			if (delete_edge(from, to, type)){
+			// Remove the move node from the DSR graph
+			if (G_->delete_node(move_node.value())){
 				cancel_goal();
 				RCLCPP_INFO(this->get_logger(), "Navigation %sed", type.c_str());
 			}
