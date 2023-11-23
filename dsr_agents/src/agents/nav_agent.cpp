@@ -117,16 +117,16 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		}
 	}
 
-	// Check if the robot wants to abort the navigation: robot ---(abort)--> move
-	if (type == "abort"){
+	// Check if the robot wants to abort or cancel the navigation: robot ---(abort)--> move
+	if (type == "abort" || type == "cancel"){
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
 			&& move_node.has_value() && move_node.value().name() == "move"){
-			// Replace the 'abort' edge with a 'finished' edge between robot and move
-			if (replace_edge<finished_edge_type>(from, to, type)){
+			// Remove the 'abort' or 'cancel' edge between robot and move
+			if (delete_edge(from, to, type)){
 				cancel_goal();
-				RCLCPP_INFO(this->get_logger(), "Navigation aborted");
+				RCLCPP_INFO(this->get_logger(), "Navigation %sed", type.c_str());
 			}
 		}
 	}
