@@ -51,7 +51,9 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	// Add the 'navigation' node with and edge 'stopped' hanging from the 'robot' node into the DSR graph
-	add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
+	if (auto nav_node = G_->get_node("navigation"); !nav_node.has_value()){
+		add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
+	}
 
 	// Get the list of the zones
 	get_zones();

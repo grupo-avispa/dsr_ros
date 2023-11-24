@@ -20,6 +20,7 @@ def generate_launch_description():
 
     # Input parameters declaration
     params_file = LaunchConfiguration('params_file')
+    log_level = LaunchConfiguration('log-level')
 
     declare_params_file_arg = DeclareLaunchArgument(
         'params_file',
@@ -29,13 +30,13 @@ def generate_launch_description():
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
-        'dsr_input_file': os.path.join(dsr_agent_dir, 'worlds', 'default.json')
+        'dsr_input_file': os.path.join(dsr_agent_dir, 'worlds', 'empty.json')
     }
 
     configured_params = RewrittenYaml(
         source_file = params_file,
         root_key = '',
-        param_rewrites= param_substitutions,
+        param_rewrites = param_substitutions,
         convert_types = True
     )
 

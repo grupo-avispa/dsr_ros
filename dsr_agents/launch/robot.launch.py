@@ -21,6 +21,7 @@ def generate_launch_description():
 
     # Input parameters declaration
     params_file = LaunchConfiguration('params_file')
+    log_level = LaunchConfiguration('log-level')
 
     declare_params_file_arg = DeclareLaunchArgument(
         'params_file',
