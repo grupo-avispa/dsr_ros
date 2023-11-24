@@ -9,6 +9,7 @@ Changelog for package dsr_agents
 * Battery agent will publish battery_percentage between 0 and 100.
 * Cancel goal before sending a new one.
 * Convert the power supply status from enum to string.
+* Update robot.launch.py with navigation agent.
 
 0.5.0 (07-11-2023)
 ------------------
