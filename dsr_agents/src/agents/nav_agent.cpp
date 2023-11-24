@@ -196,10 +196,7 @@ void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::Wrappe
 		case rclcpp_action::ResultCode::CANCELED:{
 			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
 			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
-				// Delete 'aborting' edge between robot and navigation
-				if (delete_edge("robot", "navigation", "aborting")){
-					RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-				}
+				RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
 			}
 			break;
 		}
