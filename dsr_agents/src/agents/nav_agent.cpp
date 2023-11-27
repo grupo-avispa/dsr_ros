@@ -79,8 +79,21 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 }
 
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+	// Check if the robot wants to abort or cancel the navigation: robot ---(abort)--> move
+	if (type == "abort" || type == "cancel"){
+		auto robot_node = G_->get_node(from);
+		auto move_node = G_->get_node(to);
+		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
+			&& move_node.has_value() && move_node.value().name() == "move"){
+			// Remove the move node from the DSR graph
+			if (G_->delete_node(move_node.value())){
+				cancel_goal();
+				RCLCPP_INFO(this->get_logger(), "Navigation %sed", type.c_str());
+			}
+		}
+	}
 	// Check if the robot wants to start the navigation: robot ---(wants_to)--> move
-	if (type == "wants_to"){
+	else if (type == "wants_to"){
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
@@ -115,20 +128,6 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 					RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
 						room.c_str());
 				}
-			}
-		}
-	}
-
-	// Check if the robot wants to abort or cancel the navigation: robot ---(abort)--> move
-	if (type == "abort" || type == "cancel"){
-		auto robot_node = G_->get_node(from);
-		auto move_node = G_->get_node(to);
-		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
-			&& move_node.has_value() && move_node.value().name() == "move"){
-			// Remove the move node from the DSR graph
-			if (G_->delete_node(move_node.value())){
-				cancel_goal();
-				RCLCPP_INFO(this->get_logger(), "Navigation %sed", type.c_str());
 			}
 		}
 	}
@@ -367,7 +366,7 @@ void navigationAgent::cancel_goal(){
 		return;
 	}
 	const auto status =
-		navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(5));
+		navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(1));
 	if (status != std::future_status::ready) {
 		RCLCPP_ERROR(this->get_logger(), "Timed out waiting for navigation goal to cancel.");
 	}
