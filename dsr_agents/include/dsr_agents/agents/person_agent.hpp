@@ -32,8 +32,10 @@ class personAgent: public AgentNode{
 
 	private:
 		rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr person_sub_;
+		std::string ros_topic_;
 
+		void get_params();
 		void person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg);
 };
 
-#endif  // DSR_AGENT__DSR_AGENT_HPP_
+#endif  // DSR_AGENT__PERSON_AGENT_HPP_

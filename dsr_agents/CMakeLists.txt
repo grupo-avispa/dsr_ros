@@ -31,6 +31,7 @@ find_package(nav2_util REQUIRED)
 find_package(dsr_interfaces REQUIRED)
 find_package(auto_docking_interfaces REQUIRED)
 find_package(semantic_navigation_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 
 ###########
 ## Build ##
@@ -98,6 +99,23 @@ ament_target_dependencies(nav_agent
 )
 target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(nav_agent PRIVATE ${agent_moc})
+
+##################
+## PERSON AGENT ##
+##################
+
+# Executable node
+add_executable(person_agent ${SOURCES} src/agents/person_agent.cpp)
+ament_target_dependencies(person_agent
+  rclcpp
+  Eigen3
+  Qt5
+  nav2_util
+  vision_msgs
+  dsr_interfaces
+)
+target_link_libraries(person_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(person_agent PRIVATE ${agent_moc})
 
 ##############
 ## TF AGENT ##
