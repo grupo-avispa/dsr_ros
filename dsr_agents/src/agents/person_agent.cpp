@@ -34,7 +34,7 @@ personAgent::personAgent(): AgentNode("person_agent"){
 /* Initialize ROS parameters */
 void personAgent::get_params(){
 	// ROS parameters
-	nav2_util::declare_parameter_if_not_declared(this, ros_topic_, 
+	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", 
 		rclcpp::ParameterValue("/object_detection/detections_3d"), 
 		rcl_interfaces::msg::ParameterDescriptor() 
 			.set__description("The ROS topic to subscribe to"));
