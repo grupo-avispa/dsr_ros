@@ -10,6 +10,7 @@ Changelog for package dsr_agents
 * Cancel goal before sending a new one.
 * Convert the power supply status from enum to string.
 * Update robot.launch.py with navigation agent.
+* Add direction when adding a node with edge.
 
 0.5.0 (07-11-2023)
 ------------------

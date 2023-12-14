@@ -64,33 +64,34 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::unique_ptr<DSR::RT_API> rt_;
 
 		/**
-		 * @brief Add a node with an edge into the DSR graph with the given name, parent and priority.
+		 * @brief Add a node with an edge into the DSR graph with the given name, 
+		 * the name of the parent or the child and the 'direction' of the edge.
 		 * By default, all nodes have a low priority (0).
 		 * 
 		 * @tparam NODE_TYPE The type of the DSR node. Defined in ros_to_dsr_types.hpp.
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param name Name of the DSR node.
-		 * @param parent_name Name of the parent DSR node.
-		 * @param priority Priority of the DSR node.
+		 * @param from_to_name Name of the parent or the child DSR node.
+		 * @param as_child True if the node to be added is a child, false if it is a parent.
 		 */
 		template <typename NODE_TYPE, typename EDGE_TYPE> 
-		void add_node_with_edge(const std::string & name, const std::string & parent_name, 
-			const int & priority = 0){
-			// Get the parent node
-			auto parent_node = G_->get_node(parent_name);
+		void add_node_with_edge(const std::string & name, const std::string & from_to_name, 
+			const bool as_child = true){
+			// Get the relative node
+			auto relative_node = G_->get_node(from_to_name);
 			// Create the node
 			auto new_node = DSR::Node::create<NODE_TYPE>(name);
 			// Add default values
-			uint64_t parent_attribute_value = parent_node.has_value() ? parent_node.value().id() : 0;
-			int level_attribute_value = parent_node.has_value() ? 
-				G_->get_node_level(parent_node.value()).value() + 1 : 0;
-			G_->add_or_modify_attrib_local<priority_att>(new_node, priority);
-			G_->add_or_modify_attrib_local<parent_att>(new_node, parent_attribute_value);
+			uint64_t relative_attribute_value = relative_node.has_value() ? relative_node.value().id() : 0;
+			int level_attribute_value = relative_node.has_value() ? 
+				G_->get_node_level(relative_node.value()).value() + 1 : 0;
+			G_->add_or_modify_attrib_local<priority_att>(new_node, 0);
+			G_->add_or_modify_attrib_local<parent_att>(new_node, relative_attribute_value);
 			G_->add_or_modify_attrib_local<level_att>(new_node, level_attribute_value);
 			// Draw the node in the graph: by level if RT edge and parent, random if not
 			std::tuple<float, float> graph_pos;
-			if (parent_node.has_value() && std::is_same<EDGE_TYPE, RT_edge_type>::value){
-				graph_pos = get_position_by_level_in_graph(parent_node.value());
+			if (relative_node.has_value() && std::is_same<EDGE_TYPE, RT_edge_type>::value){
+				graph_pos = get_position_by_level_in_graph(relative_node.value());
 			}else{
 				graph_pos = get_random_position_to_draw_in_graph();
 			}
@@ -101,22 +102,11 @@ class AgentNode: public QObject, public rclcpp::Node{
 			if (auto id = G_->insert_node(new_node); id.has_value()){
 				RCLCPP_INFO(this->get_logger(), 
 					"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
-				// Check if the parent exists
-				if (parent_node.has_value()){
-					// Insert the edge into the DSR graph
-					auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
-						new_node.id());
-					if (G_->insert_or_assign_edge(new_edge)){
-						RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
-							<< parent_node.value().name() << "->" 
-							<< new_node.name() << "] of type ["
-							<< new_edge.type().c_str() << "]");
-					}else{
-						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-							<< parent_node.value().name() << "->" 
-							<< new_node.name() << "] of type ["
-							<< new_edge.type().c_str() << "] couldn't be inserted");
-					}
+				// Insert the edge into the DSR graph
+				if (as_child){
+					add_edge<EDGE_TYPE>(from_to_name, name);
+				}else{
+					add_edge<EDGE_TYPE>(name, from_to_name);
 				}
 			}else{
 				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
