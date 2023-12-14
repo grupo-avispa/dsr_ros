@@ -98,35 +98,34 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
 			&& move_node.has_value() && move_node.value().name() == "move"){
-			// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
-			if (replace_edge<is_performing_edge_type>(from, to, type)){
-				// Replace the 'stopped' edge with a 'navigating' edge between robot and navigation
-				if (replace_edge<navigating_edge_type>("robot", "navigation", "stopped")){
-					// Get the room from the move node
-					std::string room = G_->get_attrib_by_name<zone_att>(
-						move_node.value()).value();
-					// Send the robot to the goal
-					if (room == "dock"){
-						start_docking();
-					}else if (room == "all"){
-						std::random_device rd;
-						std::mt19937 gen(rd());
-						std::uniform_int_distribution<int> distr(0, zones_.size() - 1);
-						room = zones_[distr(gen)];
-						send_to_room(room);
-					}else{
-						send_to_room(room);
+			// Get the attributes from the move node
+			auto goal_x = G_->get_attrib_by_name<goal_x_att>(move_node.value());
+			auto goal_y = G_->get_attrib_by_name<goal_y_att>(move_node.value());
+			auto zone = G_->get_attrib_by_name<zone_att>(move_node.value());
+			// Check if the goal is a point or a room and send the robot
+			if (goal_x.has_value() && goal_y.has_value()){
+				send_to_goal(geometry_msgs::build<geometry_msgs::msg::Pose>()
+					.position(geometry_msgs::build<geometry_msgs::msg::Point>()
+						.x(goal_x.value()).y(goal_y.value()).z(0))
+					.orientation(geometry_msgs::build<geometry_msgs::msg::Quaternion>()
+						.x(0).y(0).z(0).w(1)));
+				RCLCPP_INFO(this->get_logger(), "Navigation started to goal [%f, %f]", 
+					goal_x.value(), goal_y.value());
+			}else if (zone.has_value()){
+				// Check if the zone is dock and start docking or send the robot to the room
+				if (zone.value() == "dock"){
+					start_docking();
+				}else{
+					send_to_room(zone.value());
+				}
+				RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
+					zone.value().c_str());
+				// Update the zone into the DSR graph
+				if (auto nav_node = G_->get_node("navigation"); nav_node.has_value()){
+					if (get_priority(nav_node.value()) == 0){
+						G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), zone.value());
+						G_->update_node(nav_node.value());
 					}
-					current_zone_ = room;
-					// Update the zone into the DSR graph
-					if (auto nav_node = G_->get_node("navigation"); nav_node.has_value()){
-						if (get_priority(nav_node.value()) == 0){
-							G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), current_zone_);
-							G_->update_node(nav_node.value());
-						}
-					}
-					RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
-						room.c_str());
 				}
 			}
 		}
@@ -150,12 +149,23 @@ void navigationAgent::nav_goal_response_callback(const GoalHandleNavigateToPose:
 	if (!goal_handle_){
 		RCLCPP_ERROR(this->get_logger(), "Navigation goal was rejected by server");
 	}else{
-		RCLCPP_INFO(this->get_logger(), "Navigation goal accepted by server, waiting for result");
+		// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
+		if (replace_edge<is_performing_edge_type>("robot", "move", "wants_to")){
+			RCLCPP_INFO(this->get_logger(), 
+				"Navigation goal accepted by server, waiting for result");
+		}
 	}
 }
 
 void navigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr, 
 	const std::shared_ptr<const NavigateToPose::Feedback> feedback){
+
+	// Replace the 'stopped' edge with a 'navigating' edge between robot and navigation
+	auto stopped_edge = G_->get_edge("robot", "navigation", "stopped");
+	if (stopped_edge.has_value()){
+		replace_edge<navigating_edge_type>("robot", "navigation", "stopped");
+	}
+
 	// Set the current pose of the robot
 	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
 		if (get_priority(robot_node.value()) == 0){
@@ -293,13 +303,21 @@ void navigationAgent::undock_result_callback(const GoalHandleUndock::WrappedResu
 void navigationAgent::send_to_room(std::string room_name, int n_goals){
 	// Create the clients for the semantic navigation services
 	goals_generator_client_ = this->create_client<SemanticGoals>("semantic_goals");
-	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(1))) {
+	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(5))) {
 		if (!rclcpp::ok()) {
 			RCLCPP_ERROR(this->get_logger(), 
 				"Interrupted while waiting for the service. Exiting.");
 			return;
 		}
 		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+	}
+
+	// Pick a random room if the room_name is 'all'
+	if (room_name == "all"){
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<int> distr(0, zones_.size() - 1);
+		room_name = zones_[distr(gen)];
 	}
 
 	// Send the request and wait for the response
@@ -361,12 +379,12 @@ void navigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 void navigationAgent::cancel_goal(){
 	if (!goal_handle_ 
 		|| (goal_handle_->get_status() != rclcpp_action::GoalStatus::STATUS_EXECUTING 
-			&& 	goal_handle_->get_status() != rclcpp_action::GoalStatus::STATUS_ACCEPTED)){
+			&& goal_handle_->get_status() != rclcpp_action::GoalStatus::STATUS_ACCEPTED)){
 		RCLCPP_WARN(this->get_logger(), "Cancel called with no active goal.");
 		return;
 	}
 	const auto status =
-		navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(1));
+		navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(5));
 	if (status != std::future_status::ready) {
 		RCLCPP_ERROR(this->get_logger(), "Timed out waiting for navigation goal to cancel.");
 	}
