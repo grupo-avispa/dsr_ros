@@ -118,7 +118,7 @@ Agent that publishes the detected people in the DSR.
 
 #### Subscribed Topics
 
-* **`object_detection/detections_3d`**  ([vision_msgs/Detection3DArray])
+* **`detections_3d`**  ([vision_msgs/Detection3DArray])
 
 	The detected people in 3D format.
 

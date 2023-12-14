@@ -14,6 +14,8 @@ Changelog for package dsr_agents
 * Improve navigation agent: added 'abort', reorder 'wants_to' and 'cancel',
     modify edges in callbacks.
 * Added person_agent.
+* Update launch and params with person agent.
+* Added campero launch and params files.
 
 0.5.0 (07-11-2023)
 ------------------

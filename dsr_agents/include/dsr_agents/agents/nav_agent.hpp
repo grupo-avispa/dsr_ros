@@ -46,7 +46,6 @@ class navigationAgent: public AgentNode{
 		using GoalHandleDock = rclcpp_action::ClientGoalHandle<Dock>;
 		using GoalHandleUndock = rclcpp_action::ClientGoalHandle<Undock>;
 
-		std::string dsr_node_name_;
 		rclcpp_action::Client<NavigateToPose>::SharedPtr navigation_client_;
 		rclcpp_action::Client<Dock>::SharedPtr dock_client_;
 		rclcpp_action::Client<Undock>::SharedPtr undock_client_;
@@ -56,7 +55,6 @@ class navigationAgent: public AgentNode{
 		std::vector<std::string> zones_;
 		std::string current_zone_;
 
-		void get_params();
 		void send_to_room(std::string room_name, int n_goals = 1);
 		void send_to_goal(geometry_msgs::msg::Pose goal_pose);
 		void get_zones();

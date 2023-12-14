@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-    Launches the DSR agents for robot.
+    Launches the DSR agents for the CAMPERO project.
 '''
 import os
 
@@ -17,7 +17,7 @@ from nav2_common.launch import RewrittenYaml
 def generate_launch_description():
     # Getting directories and launch-files
     dsr_agent_dir = get_package_share_directory('dsr_agents')
-    default_params_file = os.path.join(dsr_agent_dir, 'params', 'robot_params.yaml')
+    default_params_file = os.path.join(dsr_agent_dir, 'params', 'campero_params.yaml')
 
     # Input parameters declaration
     params_file = LaunchConfiguration('params_file')
@@ -87,43 +87,17 @@ def generate_launch_description():
             '--log-level', ['battery_agent:=', LaunchConfiguration('log-level')]]
     )
 
-    laser_agent_node = Node(
+    person_agent_node = Node(
         package = 'dsr_agents',
         namespace = '',
-        executable = 'topic_agent',
-        name = 'laser_agent',
+        executable = 'person_agent',
+        name = 'person_agent',
         parameters = [configured_params],
         emulate_tty = True,
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['laser_agent:=', LaunchConfiguration('log-level')]]
-    )
-
-    rgb_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'topic_agent',
-        name = 'rgb_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['rgb_agent:=', LaunchConfiguration('log-level')]]
-    )
-
-    depth_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'topic_agent',
-        name = 'rgbd_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['rgbd_agent:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['person_agent:=', LaunchConfiguration('log-level')]]
     )
 
     return LaunchDescription([
@@ -131,8 +105,6 @@ def generate_launch_description():
         declare_log_level_arg,
         tf_agent_node,
         nav_agent_node,
-        battery_agent_node, 
-        laser_agent_node,
-        rgb_agent_node,
-        depth_agent_node
+        battery_agent_node,
+        person_agent_node
     ])

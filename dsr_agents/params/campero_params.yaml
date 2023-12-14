@@ -1,0 +1,17 @@
+tf_agent:
+  ros__parameters:
+    agent_id: 100
+    dsr_input_file: ''
+nav_agent:
+  ros__parameters:
+    agent_id: 101
+battery_agent:
+  ros__parameters:
+    agent_id: 102
+    dsr_node_name: battery
+    dsr_parent_node_name: robot
+    ros_topic: /battery
+person_agent:
+  ros__parameters:
+    agent_id: 103
+    ros_topic: /object_detection/detections_3d

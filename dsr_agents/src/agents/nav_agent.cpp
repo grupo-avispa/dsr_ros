@@ -30,9 +30,6 @@
 
 /* Initialize the publishers and subscribers */
 navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_(""){
-	// Get ROS parameters
-	get_params();
-
 	// Add connection signals
 	QObject::connect(G_.get(), 
 		&DSR::DSRGraph::update_node_signal, this, &navigationAgent::node_updated);
@@ -57,18 +54,6 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_
 
 	// Get the list of the zones
 	get_zones();
-}
-
-/* Initialize ROS parameters */
-void navigationAgent::get_params(){
-	// ROS parameters
-	// DSR parameters
-	nav2_util::declare_parameter_if_not_declared(this, "dsr_node_name", rclcpp::ParameterValue(""), 
-		rcl_interfaces::msg::ParameterDescriptor()
-			.set__description("The name of the node in the DSR graph"));
-	this->get_parameter("dsr_node_name", dsr_node_name_);
-	RCLCPP_INFO(this->get_logger(), 
-		"The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 }
 
 void navigationAgent::node_updated(std::uint64_t id, const std::string &type){
