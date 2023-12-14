@@ -73,10 +73,12 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param name Name of the DSR node.
 		 * @param from_to_name Name of the parent or the child DSR node.
 		 * @param as_child True if the node to be added is a child, false if it is a parent.
+		 * @return std::optional<DSR::Node> The DSR node if it was added successfully,
 		 */
 		template <typename NODE_TYPE, typename EDGE_TYPE> 
-		void add_node_with_edge(const std::string & name, const std::string & from_to_name, 
-			const bool as_child = true){
+		std::optional<DSR::Node> add_node_with_edge(const std::string & name, 
+			const std::string & from_to_name, const bool as_child = true){
+			std::optional<DSR::Node> return_node;
 			// Get the relative node
 			auto relative_node = G_->get_node(from_to_name);
 			// Create the node
@@ -100,6 +102,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 			G_->add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
 			// Insert the node into the DSR graph
 			if (auto id = G_->insert_node(new_node); id.has_value()){
+				return_node = new_node;
 				RCLCPP_INFO(this->get_logger(), 
 					"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
 				// Insert the edge into the DSR graph
@@ -111,6 +114,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 			}else{
 				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
 			}
+			return return_node;
 		}
 
 		/**
