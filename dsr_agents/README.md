@@ -12,6 +12,7 @@ This package feature two templates for creating agents that can be used to publi
 Along with the templates mentioned above, this package also provides two agents that can be used to publish data in the DSR:
 * **`Navigation agent:`**  which allows the user to publish the navigation data in the DSR.
 * **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
+* **`Person agent:`** which publishes the detected people in the DSR.
 
 By default all nodes are created with low priority (0) and they'll only publish with this priority.
 
@@ -71,14 +72,6 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 #### Parameters
 
-* **`agent_id`** (int, default: 0)
-
-	A unique identifier for the agent.
-
-* **`dsr_input_file`** (string, default: "") (Optional)
-
-	The path to the DSR file that will be loaded.
-
 * **`dsr_node_name`** (string, default: "")
 
 	The name of the node in the DSR where the sensor data should be published.
@@ -119,7 +112,17 @@ Agent that publishes the transformation tree as nodes in the DSR.
 
 	The static transformation tree.
 
-#### Parameters
+### person_agent
+
+Agent that publishes the detected people in the DSR.
+
+#### Subscribed Topics
+
+* **`object_detection/detections_3d`**  ([vision_msgs/Detection3DArray])
+
+	The detected people in 3D format.
+
+### Common parameters for all nodes
 
 * **`agent_id`** (int, default: 0)
 
@@ -129,15 +132,16 @@ Agent that publishes the transformation tree as nodes in the DSR.
 
 	The path to the DSR file that will be loaded.
 
-
 ## Future work
 - [ ] Convert nodes to LifeCycleNodes.
 - [x] Inherit from a generic agent class.
 - [ ] Finish the action agent.
+- [ ] Replace the Detection3DArray message with a custom people message.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/
-[tf2_msgs/TFMessage]: https://docs.ros2.org/humble/api/tf2_msgs/msg/TFMessage.html
+[tf2_msgs/TFMessage]: http://docs.ros.org/api/tf2_msgs/html/msg/TFMessage.html
 [nav2_msgs/action/NavigateToPose]: hhttps://github.com/ros-planning/navigation2/blob/main/nav2_msgs/action/NavigateToPose.action
 [auto_docking_interfaces/action/Dock]: https://gitlab.com/grupo-avispa/ros/docking/-/blob/dev/auto_docking_interfaces/action/Dock.action
 [semantic_navigation_msgs/action/SemanticGoals]: https://gitlab.com/grupo-avispa/ros/semantic_navigation/-/blob/dev/semantic_navigation_msgs/srv/SemanticGoals.srv
+[vision_msgs/Detection3DArray]: http://docs.ros.org/api/vision_msgs/html/msg/Detection3DArray.html

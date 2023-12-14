@@ -2,7 +2,7 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.5.X (UNRELEASED)
+0.6.0 (14-12-2023)
 ------------------
 * Added function to get priority of nodes.
 * Fix get_zones in navigation node.
@@ -13,6 +13,7 @@ Changelog for package dsr_agents
 * Add direction and return node in add_node_with_edge function.
 * Improve navigation agent: added 'abort', reorder 'wants_to' and 'cancel',
     modify edges in callbacks.
+* Added person_agent.
 
 0.5.0 (07-11-2023)
 ------------------
