@@ -131,6 +131,7 @@ ament_target_dependencies(tf_agent
   tf2_sensor_msgs
   tf2_geometry_msgs
   dsr_interfaces
+  nav2_util
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(tf_agent PRIVATE ${agent_moc})
