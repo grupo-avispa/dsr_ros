@@ -1,8 +1,8 @@
 /*
  * PERSON AGENT ROS NODE
  *
- * Copyright (c) 2023 Óscar Pons Fernández <ajtudela@gmail.com>
- * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
+ * Copyright (c) 2023-2024 Óscar Pons Fernández <ajtudela@gmail.com>
+ * Copyright (c) 2023-2024 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
  * This file is part of dsr_agents.
  * 
@@ -10,8 +10,9 @@
  *
  */
 
-#include <vector>
 #include <algorithm>
+#include <string>
+#include <vector>
 
 // ROS
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -66,43 +67,46 @@ void personAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 			RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
 			return;
 		}
+		// Check if the detection is a person
+		// TODO: Fix this when we only subscribe to people (not detections)
+		if (std::stoi(detection.results[0].hypothesis.class_id) == 0){
+			// Check if the detected person is already in the DSR graph
+			std::string person_id = detection.id;
+			auto person_nodes = G_->get_nodes_by_type("person");
+			auto it = std::find_if(person_nodes.begin(), person_nodes.end(), 
+				[this, &person_id](auto node) { 
+					auto identifier = G_->get_attrib_by_name<identifier_att>(node);
+					if (identifier.has_value() && identifier.value() == person_id){
+						return true;
+					}
+					return false;
+				});
 
-		// The detection3D has a class_id value between 0 and 80 because is a COCO dataset but
-		// in the current state, we are subscribe to a fake detection3D topic with faces,
-		// so the class_id is the name of the person
-		std::string person_id = detection.results[0].hypothesis.class_id;
-		auto person_nodes = G_->get_nodes_by_type("person");
-		// Check if the person is already in the DSR graph
-		auto it = std::find_if(person_nodes.begin(), person_nodes.end(), 
-			[this, &person_id](auto node) { 
-				auto identifier = G_->get_attrib_by_name<identifier_att>(node);
-				if (identifier.has_value() && identifier.value() == person_id){
-					return true;
+			// If the person is not in the DSR graph, add them to the DSR graph
+			if (it == person_nodes.end() && !person_id.empty() ){
+				RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
+				if (!std::isdigit(person_id[0])){ 
+					auto person_node = add_node_with_edge<person_node_type, is_with_edge_type>(
+						"person", "robot", false);
+					if (person_node.has_value()){
+						// Add attributes to the node
+						G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
+						G_->add_or_modify_attrib_local<pose_x_att>(person_node.value(), 
+							static_cast<float>(center_point.x));
+						G_->add_or_modify_attrib_local<pose_y_att>(person_node.value(), 
+							static_cast<float>(center_point.y));
+						G_->add_or_modify_attrib_local<pose_angle_att>(person_node.value(), 
+							static_cast<float>(center_point.z));
+						G_->update_node(person_node.value());
+					}
 				}
-				return false;
-			});
-
-		// If the person is not in the DSR graph, add them to the DSR graph
-		if (it == person_nodes.end()){
-			auto person_node = add_node_with_edge<person_node_type, has_edge_type>(
-				"person", "robot", false);
-			if (person_node.has_value()){
-				// Add attributes to the node
-				G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
-				G_->add_or_modify_attrib_local<comm_enable_att>(person_node.value(), true);
-				G_->add_or_modify_attrib_local<safe_distance_att>(person_node.value(), 
-					static_cast<float>(1.0));
-				G_->add_or_modify_attrib_local<pose_x_att>(person_node.value(), 
-					static_cast<float>(center_point.x));
-				G_->add_or_modify_attrib_local<pose_y_att>(person_node.value(), 
-					static_cast<float>(center_point.y));
-				G_->update_node(person_node.value());
+			}else{
+				// If the person is already in the DSR graph, update their pose
+				G_->add_or_modify_attrib_local<pose_x_att>(*it, static_cast<float>(center_point.x));
+				G_->add_or_modify_attrib_local<pose_y_att>(*it, static_cast<float>(center_point.y));
+				G_->add_or_modify_attrib_local<pose_angle_att>(*it, static_cast<float>(center_point.z));
+				G_->update_node(*it);
 			}
-		}else{
-			// If the person is already in the DSR graph, update their pose
-			G_->add_or_modify_attrib_local<pose_x_att>(*it, static_cast<float>(center_point.x));
-			G_->add_or_modify_attrib_local<pose_y_att>(*it, static_cast<float>(center_point.y));
-			G_->update_node(*it);
 		}
 	}
 }

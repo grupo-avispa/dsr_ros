@@ -1,7 +1,7 @@
 /*
  * NAVIGATION AGENT ROS NODE
  *
- * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
+ * Copyright (c) 2023-2024 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
  * This file is part of dsr_agents.
  * 
@@ -21,6 +21,8 @@
 // ROS
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include "auto_docking_interfaces/action/dock.hpp"
@@ -54,10 +56,13 @@ class navigationAgent: public AgentNode{
 		std::shared_ptr<GoalHandleNavigateToPose> goal_handle_;
 		std::vector<std::string> zones_;
 		std::string current_zone_;
+		std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+		std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
 		void send_to_room(std::string room_name, int n_goals = 1);
 		void send_to_goal(geometry_msgs::msg::Pose goal_pose);
 		void get_zones();
+		void update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose);
 		void cancel_goal();
 		void start_docking();
 		void start_undocking();

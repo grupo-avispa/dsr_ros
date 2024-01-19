@@ -2,6 +2,11 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.1 (19-01-2024)
+------------------
+* Update robot pose into the DSR when the navigation is updated in navAgent.
+* Update personAgent 
+
 0.6.0 (14-12-2023)
 ------------------
 * Added function to get priority of nodes.

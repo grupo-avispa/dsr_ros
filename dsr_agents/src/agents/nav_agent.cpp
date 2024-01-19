@@ -19,7 +19,9 @@
 
 // ROS
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav2_util/node_utils.hpp"
+#include "nav2_util/robot_utils.hpp"
 #include "tf2/utils.h"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -44,6 +46,10 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_
 	QObject::connect(G_.get(), 
 		&DSR::DSRGraph::del_node_signal, this, &navigationAgent::node_deleted);
 
+	// Initialize transform buffer and listener
+	tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+	tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
 	// Wait until the DSR graph is ready
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -57,6 +63,16 @@ navigationAgent::navigationAgent(): AgentNode("navigation_agent"), current_zone_
 }
 
 void navigationAgent::node_updated(std::uint64_t id, const std::string &type){
+	// Update the current robot pose into the DSR graph when the navigation node is updated
+	if (auto node = G_->get_node(id); node.has_value() && node.value().name() == "navigation"){
+		// Get the current pose of the robot
+		geometry_msgs::msg::PoseStamped robot_pose;
+		if (!nav2_util::getCurrentPose(robot_pose, *tf_buffer_, "map", "base_link", 2.0)){
+			return;
+		}
+		// Update the pose of the robot into the DSR graph
+		update_robot_pose_in_dsr(robot_pose.pose);
+	}
 }
 
 void navigationAgent::node_attributes_updated(uint64_t id, 
@@ -86,14 +102,15 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 			// Get the attributes from the move node
 			auto goal_x = G_->get_attrib_by_name<goal_x_att>(move_node.value());
 			auto goal_y = G_->get_attrib_by_name<goal_y_att>(move_node.value());
+			auto goal_angle = G_->get_attrib_by_name<goal_angle_att>(move_node.value());
 			auto zone = G_->get_attrib_by_name<zone_att>(move_node.value());
 			// Check if the goal is a point or a room and send the robot
-			if (goal_x.has_value() && goal_y.has_value()){
+			if (goal_x.has_value() && goal_y.has_value() && goal_angle.has_value()){
 				send_to_goal(geometry_msgs::build<geometry_msgs::msg::Pose>()
 					.position(geometry_msgs::build<geometry_msgs::msg::Point>()
 						.x(goal_x.value()).y(goal_y.value()).z(0))
-					.orientation(geometry_msgs::build<geometry_msgs::msg::Quaternion>()
-						.x(0).y(0).z(0).w(1)));
+					.orientation(tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 
+						goal_angle.value()))));
 				RCLCPP_INFO(this->get_logger(), "Navigation started to goal [%f, %f]", 
 					goal_x.value(), goal_y.value());
 			}else if (zone.has_value()){
@@ -151,18 +168,8 @@ void navigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr,
 		replace_edge<navigating_edge_type>("robot", "navigation", "stopped");
 	}
 
-	// Set the current pose of the robot
-	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
-		if (get_priority(robot_node.value()) == 0){
-			G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
-				static_cast<float>(feedback->current_pose.pose.position.x));
-			G_->add_or_modify_attrib_local<pose_y_att>(robot_node.value(), 
-				static_cast<float>(feedback->current_pose.pose.position.y));
-			G_->add_or_modify_attrib_local<pose_angle_att>(robot_node.value(), 
-				static_cast<float>(tf2::getYaw(feedback->current_pose.pose.orientation)));
-			G_->update_node(robot_node.value());
-		}
-	}
+	// Set the current pose of the robot into the DSR graph
+	update_robot_pose_in_dsr(feedback->current_pose.pose);
 }
 
 void navigationAgent::nav_result_callback(const GoalHandleNavigateToPose::WrappedResult & result){
@@ -405,6 +412,21 @@ void navigationAgent::get_zones(){
 				}
 			}
 	});
+}
+
+void navigationAgent::update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose){
+	// Update the robot pose into the DSR graph
+	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
+		if (get_priority(robot_node.value()) == 0){
+			G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
+				static_cast<float>(pose.position.x));
+			G_->add_or_modify_attrib_local<pose_y_att>(robot_node.value(), 
+				static_cast<float>(pose.position.y));
+			G_->add_or_modify_attrib_local<pose_angle_att>(robot_node.value(), 
+				static_cast<float>(tf2::getYaw(pose.orientation)));
+			G_->update_node(robot_node.value());
+		}
+	}
 }
 
 void navigationAgent::start_docking(){

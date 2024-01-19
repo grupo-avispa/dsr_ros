@@ -145,6 +145,9 @@ class AgentNode: public QObject, public rclcpp::Node{
 						<< child_node.value().name() << "] of type ["
 						<< new_edge.type().c_str() << "] couldn't be inserted");
 				}
+			}else{
+				RCLCPP_ERROR_STREAM(this->get_logger(), "The parent node [" 
+					<< from << "] or the child node [" << to << "] doesn't exists");
 			}
 		}
 
