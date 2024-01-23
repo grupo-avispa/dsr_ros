@@ -129,6 +129,8 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 						G_->update_node(nav_node.value());
 					}
 				}
+			}else{
+				RCLCPP_WARN(this->get_logger(), "Goal or zone not found");
 			}
 		}
 	}
@@ -375,10 +377,14 @@ void navigationAgent::cancel_goal(){
 		RCLCPP_WARN(this->get_logger(), "Cancel called with no active goal.");
 		return;
 	}
-	const auto status =
-		navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(5));
-	if (status != std::future_status::ready) {
-		RCLCPP_ERROR(this->get_logger(), "Timed out waiting for navigation goal to cancel.");
+	try{
+		const auto future_status =
+			navigation_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(5));
+		if (future_status != std::future_status::ready) {
+			RCLCPP_ERROR(this->get_logger(), "Timed out waiting for navigation goal to cancel.");
+		}
+	} catch (const rclcpp_action::exceptions::UnknownGoalHandleError &) {
+		RCLCPP_ERROR(this->get_logger(), "Failed to cancel goal: Unknown goal handle");
 	}
 }
 

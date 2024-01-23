@@ -2,6 +2,10 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.2 (23-01-2024)
+------------------
+* Added try-catch in navAgent to handle UnknownGoalHandleError exceptions.
+
 0.6.1 (19-01-2024)
 ------------------
 * Update robot pose into the DSR when the navigation is updated in navAgent.
