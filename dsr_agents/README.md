@@ -62,7 +62,7 @@ The viewer can be launched using the following command:
 
 ### topic_agent
 
-Agent that subscribe to a generic topic and publishes it in the DSR.
+Agent that subscribe to a generic topic in ROS 2 and publishes it as a node in the DSR.
 
 #### Subscribed Topics
 
@@ -82,7 +82,7 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 ### nav_agent
 
-Agent that publishes the navigation data in the DSR.
+Agent that wait until a `move` node is created in the DSR and then start the navigation. The `move` node must be created with an attribute called `zone` that contains the name of the zone where the robot should navigate or with the attributes `goal_x`, `goal_y` and `goal_angle` that contains the goal pose for the robot.
 
 #### Actions
 
@@ -100,7 +100,7 @@ Agent that publishes the navigation data in the DSR.
 
 ### tf_agent
 
-Agent that publishes the transformation tree as nodes in the DSR.
+Agent that publishes the transformations tree as RT nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system. The frame `base_link` is replaced by the `robot` frame in the DSR and the frame `map` is replaced by the `world` frame in the DSR.
 
 #### Subscribed Topics
 
