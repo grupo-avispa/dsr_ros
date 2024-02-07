@@ -82,6 +82,7 @@ void navigationAgent::node_attributes_updated(uint64_t id,
 void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 	// Check if the robot wants to abort or cancel the navigation: robot ---(abort)--> move
 	if (type == "abort" || type == "cancel"){
+		RCLCPP_INFO(this->get_logger(), "Starting to %s the navigation", type.c_str());
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
@@ -95,6 +96,7 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 	}
 	// Check if the robot wants to start the navigation: robot ---(wants_to)--> move
 	else if (type == "wants_to"){
+		RCLCPP_INFO(this->get_logger(), "Starting the navigation");
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
@@ -130,7 +132,7 @@ void navigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 					}
 				}
 			}else{
-				RCLCPP_WARN(this->get_logger(), "Goal or zone not found");
+				RCLCPP_WARN(this->get_logger(), "Goal or zone not found in the move node");
 			}
 		}
 	}
