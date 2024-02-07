@@ -9,7 +9,7 @@
  *
  */
 
-#ifndef DSR_AGENT__ROS_TO_DSR_TYPES_HPP_
+#ifndef DSR_AGENTS__ROS_TO_DSR_TYPES_HPP_
 
 #include <dsr/core/types/type_checking/dsr_node_type.h>
 #include <dsr/core/types/type_checking/dsr_edge_type.h>

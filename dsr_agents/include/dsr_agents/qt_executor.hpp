@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef DSR_AGENT__QT_EXECUTOR_HPP_
-#define DSR_AGENT__QT_EXECUTOR_HPP_
+#ifndef DSR_AGENTS__QT_EXECUTOR_HPP_
+#define DSR_AGENTS__QT_EXECUTOR_HPP_
 
 // C++
 #include <thread>

@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef DSR_AGENT__AGENT_NODE_HPP_
-#define DSR_AGENT__AGENT_NODE_HPP_
+#ifndef DSR_AGENTS__AGENT_NODE_HPP_
+#define DSR_AGENTS__AGENT_NODE_HPP_
 
 // C++
 #include <string>
