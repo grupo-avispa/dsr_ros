@@ -26,9 +26,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_agents/agent_node.hpp"
 
-class tfAgent: public AgentNode{
+class TFAgent: public AgentNode{
 	public:
-		tfAgent();
+		TFAgent();
 
 	private:
 		rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;

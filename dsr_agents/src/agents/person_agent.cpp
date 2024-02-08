@@ -24,7 +24,7 @@
 #include "dsr_agents/agents/person_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-personAgent::personAgent(): AgentNode("person_agent"){
+PersonAgent::PersonAgent(): AgentNode("person_agent"){
 	// Get ROS parameters
 	get_params();
 
@@ -39,11 +39,11 @@ personAgent::personAgent(): AgentNode("person_agent"){
 	person_sub_ = this->create_subscription<vision_msgs::msg::Detection3DArray>(
 		ros_topic_, 
 		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
-		std::bind(&personAgent::person_callback, this, std::placeholders::_1));
+		std::bind(&PersonAgent::person_callback, this, std::placeholders::_1));
 }
 
 /* Initialize ROS parameters */
-void personAgent::get_params(){
+void PersonAgent::get_params(){
 	// ROS parameters
 	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", 
 		rclcpp::ParameterValue("detections_3d"), 
@@ -54,7 +54,7 @@ void personAgent::get_params(){
 		"The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
 }
 
-void personAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
+void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
 	// Get the persons from the detections
 	for (auto detection : msg->detections){
 		// Transform the center point from camera to world target
@@ -115,7 +115,7 @@ int main(int argc, char** argv){
 	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
 
-	auto node = std::make_shared<personAgent>();
+	auto node = std::make_shared<PersonAgent>();
 
 	QtExecutor exe;
 	exe.add_node(node);

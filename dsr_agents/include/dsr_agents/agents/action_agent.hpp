@@ -28,9 +28,9 @@
 
 
 template<typename ActionT>
-class actionAgent: public AgentNode{
+class ActionAgent: public AgentNode{
 	public:
-		actionAgent();
+		ActionAgent();
 
 	private:
 		using GoalHandleActionT = rclcpp_action::ClientGoalHandle<ActionT>;

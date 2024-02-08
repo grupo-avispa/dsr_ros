@@ -34,9 +34,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_agents/agent_node.hpp"
 
-class navigationAgent: public AgentNode{
+class NavigationAgent: public AgentNode{
 	public:
-		navigationAgent();
+		NavigationAgent();
 
 	private:
 		using NavigateToPose = nav2_msgs::action::NavigateToPose;

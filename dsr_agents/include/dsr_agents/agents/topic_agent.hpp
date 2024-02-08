@@ -27,9 +27,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_agents/agent_node.hpp"
 
-class topicAgent: public AgentNode{
+class TopicAgent: public AgentNode{
 	public:
-		topicAgent();
+		TopicAgent();
 
 	private:
 		rclcpp::GenericSubscription::SharedPtr generic_sub_;

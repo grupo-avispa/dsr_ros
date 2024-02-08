@@ -14,23 +14,23 @@
 #include "dsr_agents/agents/action_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-actionAgent::actionAgent(): AgentNode("action_agent"){
+ActionAgent::ActionAgent(): AgentNode("action_agent"){
 	// Get ROS parameters
 	get_params();
 
 	// Add connection signals
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_node_signal, this, &actionAgent::node_updated);
+		&DSR::DSRGraph::update_node_signal, this, &ActionAgent::node_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_node_attr_signal, this, &actionAgent::node_attributes_updated);
+		&DSR::DSRGraph::update_node_attr_signal, this, &ActionAgent::node_attributes_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_edge_signal, this, &actionAgent::edge_updated);
+		&DSR::DSRGraph::update_edge_signal, this, &ActionAgent::edge_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_edge_attr_signal, this, &actionAgent::edge_attributes_updated);
+		&DSR::DSRGraph::update_edge_attr_signal, this, &ActionAgent::edge_attributes_updated);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::del_edge_signal, this, &actionAgent::edge_deleted);
+		&DSR::DSRGraph::del_edge_signal, this, &ActionAgent::edge_deleted);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::del_node_signal, this, &actionAgent::node_deleted);
+		&DSR::DSRGraph::del_node_signal, this, &ActionAgent::node_deleted);
 
 	// Wait until the DSR graph is ready
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -40,7 +40,7 @@ actionAgent::actionAgent(): AgentNode("action_agent"){
 }
 
 /* Initialize ROS parameters */
-void actionAgent::get_params(){
+void ActionAgent::get_params(){
 	// ROS parameters
 	// DSR parameters
 	nav2_util::declare_parameter_if_not_declared(this, "dsr_node_name", rclcpp::ParameterValue(""), 
@@ -51,14 +51,14 @@ void actionAgent::get_params(){
 		"The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 }
 
-void actionAgent::node_updated(std::uint64_t id, const std::string &type){
+void ActionAgent::node_updated(std::uint64_t id, const std::string &type){
 }
 
-void actionAgent::node_attributes_updated(uint64_t id, 
+void ActionAgent::node_attributes_updated(uint64_t id, 
 	const std::vector<std::string>& att_names){
 }
 
-void actionAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
+void ActionAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 	// Check if the robot wants to start the action: robot ---(wants_to)--> action
 	if (type == "wants_to"){
 		auto robot_node = G_->get_node("robot");
@@ -76,18 +76,18 @@ void actionAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std:
 	}
 }
 
-void actionAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
+void ActionAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
 	const std::string &type, const std::vector<std::string>& att_names){
 }
 
-void actionAgent::node_deleted(std::uint64_t id){
+void ActionAgent::node_deleted(std::uint64_t id){
 }
 
-void actionAgent::edge_deleted(std::uint64_t from, std::uint64_t to, 
+void ActionAgent::edge_deleted(std::uint64_t from, std::uint64_t to, 
 	const std::string &edge_tag){
 }
 
-void actionAgent::goal_response_callback(const GoalHandleActionT::SharedPtr 
+void ActionAgent::goal_response_callback(const GoalHandleActionT::SharedPtr 
 	& goal_handle){
 	goal_handle_ = goal_handle;
 	if (!goal_handle_){
@@ -97,12 +97,12 @@ void actionAgent::goal_response_callback(const GoalHandleActionT::SharedPtr
 	}
 }
 
-void actionAgent::feedback_callback(GoalHandleActionT::SharedPtr, 
+void ActionAgent::feedback_callback(GoalHandleActionT::SharedPtr, 
 	const std::shared_ptr<const ActionT::Feedback> feedback){
 	// Modify atributes in the DSR node
 }
 
-void actionAgent::result_callback(const GoalHandleActionT::WrappedResult & result){
+void ActionAgent::result_callback(const GoalHandleActionT::WrappedResult & result){
 	switch (result.code) {
 		case rclcpp_action::ResultCode::SUCCEEDED:{
 			// Replace the 'is_performing' edge with a 'finished' edge between robot and action
@@ -132,7 +132,7 @@ int main(int argc, char** argv){
 	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
 
-	auto node = std::make_shared<actionAgent>();
+	auto node = std::make_shared<ActionAgent>();
 
 	QtExecutor exe;
 	exe.add_node(node);

@@ -17,20 +17,20 @@
 #include "dsr_agents/agents/tf_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-tfAgent::tfAgent(): AgentNode("tf_agent"){
+TFAgent::TFAgent(): AgentNode("tf_agent"){
 	// Subscriber to the tf topics
 	auto latched_profile = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
 	tf_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
 		"/tf", 
 		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
-		std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
+		std::bind(&TFAgent::tf_callback, this, std::placeholders::_1));
 	tf_static_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
 		"/tf_static", 
 		latched_profile,
-		std::bind(&tfAgent::tf_callback, this, std::placeholders::_1));
+		std::bind(&TFAgent::tf_callback, this, std::placeholders::_1));
 }
 
-void tfAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
+void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 	tf2_msgs::msg::TFMessage unsorted_trf, sorted_trf;
 	unsorted_trf = *msg;
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv){
 	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
 
-	auto node = std::make_shared<tfAgent>();
+	auto node = std::make_shared<TFAgent>();
 
 	QtExecutor exe;
 	exe.add_node(node);
