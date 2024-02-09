@@ -18,9 +18,13 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Edge.msg"
+  "msg/Node.msg"
   "srv/SaveDSR.srv"
+  DEPENDENCIES std_msgs
 )
 
 if(BUILD_TESTING)

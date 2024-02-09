@@ -2,6 +2,13 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+X.X.X (09-02-2024)
+------------------
+* Improve DSR documentation.
+* Better information in navAgent.
+* Delete unseen persons in personAgent.
+* Initial dsr_bridge.
+
 0.6.2 (23-01-2024)
 ------------------
 * Added try-catch in navAgent to handle UnknownGoalHandleError exceptions.

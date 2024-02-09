@@ -73,9 +73,9 @@ ament_target_dependencies(topic_agent
   rclcpp
   Eigen3
   Qt5
-  sensor_msgs
-  nav2_util
   dsr_interfaces
+  nav2_util
+  sensor_msgs
 )
 target_link_libraries(topic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(topic_agent PRIVATE ${agent_moc})
@@ -90,10 +90,10 @@ ament_target_dependencies(nav_agent
   rclcpp
   Eigen3
   Qt5
-  geometry_msgs
-  nav2_util
-  tf2
   dsr_interfaces
+  nav2_util
+  geometry_msgs
+  tf2
   auto_docking_interfaces
   semantic_navigation_msgs
 )
@@ -110,9 +110,11 @@ ament_target_dependencies(person_agent
   rclcpp
   Eigen3
   Qt5
-  nav2_util
-  vision_msgs
   dsr_interfaces
+  nav2_util
+  geometry_msgs
+  tf2
+  vision_msgs
 )
 target_link_libraries(person_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(person_agent PRIVATE ${agent_moc})
@@ -127,11 +129,12 @@ ament_target_dependencies(tf_agent
   rclcpp
   Eigen3
   Qt5
+  dsr_interfaces
+  nav2_util
+  geometry_msgs
   tf2_msgs
   tf2_sensor_msgs
   tf2_geometry_msgs
-  dsr_interfaces
-  nav2_util
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(tf_agent PRIVATE ${agent_moc})
@@ -148,10 +151,27 @@ ament_target_dependencies(viewer
 )
 target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
+################
+## DSR BRIDGE ##
+################
+
+# Executable node
+add_executable(dsr_bridge ${SOURCES} src/dsr_bridge.cpp)
+ament_target_dependencies(dsr_bridge
+  rclcpp
+  Eigen3
+  Qt5
+  dsr_interfaces
+  nav2_util
+  geometry_msgs
+)
+target_link_libraries(dsr_bridge ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_sources(dsr_bridge PRIVATE ${agent_moc})
+
 #############
 ## Install ##
 #############
-install(TARGETS topic_agent person_agent tf_agent nav_agent viewer
+install(TARGETS topic_agent person_agent tf_agent nav_agent viewer dsr_bridge
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
