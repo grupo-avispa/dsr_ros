@@ -63,5 +63,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_params_file_arg,
+        declare_log_level_arg,
         dsr_bridge_robot_node
     ])
