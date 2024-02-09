@@ -1,0 +1,4 @@
+dsr_bridge:
+  ros__parameters:
+    agent_id: 106
+    dsr_input_file: ''

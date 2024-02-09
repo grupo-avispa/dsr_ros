@@ -83,12 +83,15 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	if (msg->header.frame_id == this->get_name()){
 		return;
 	}
-
-	// Create the header
-	std_msgs::msg::Header header;
-	header.stamp = this->now();
-	header.frame_id = this->get_name();
-
+	if(msg->deleted == false){ // Create/Modify edge
+		createEdge(msg->parent, msg->child, msg->type);
+	}
+	else{ // Delete edge
+		if(!G_->delete_edge(msg->parent, msg->child, msg->type))
+		{
+			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't delete edge [" << msg->type << "]");
+		}
+	}
 }
 
 void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPtr msg){
@@ -97,12 +100,154 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 		return;
 	}
 
-	// Create the header
-	std_msgs::msg::Header header;
-	header.stamp = this->now();
-	header.frame_id = this->get_name();
+	// TODO: Actualizar a G_->get_node(msg->id) cuando se pueda modificar id del DSR
+	// Check case scenario
+	if(msg->deleted == false && msg->updated == false){ // add new node
+		// Create node by type
+		auto new_node = setNodeType(msg->type, msg->name);
+		if (auto id = G_->insert_node(new_node); id.has_value()){
+			modifyNodeAttribute(new_node, msg->attributes);
+		}else{
+			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert node");
+		}
+	}
+	else if(msg->deleted == false && msg->updated == true){ // update current node
+		// Get node by name
+		if (auto node = G_->get_node(msg->name); node.has_value()){
+			modifyNodeAttribute(node.value(), msg->attributes);
+		}else{
+			RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" << msg->id << "] doesn't exists");
+		}
+	}
+	else if(msg->deleted == true){ // delete node
+		if (auto node = G_->get_node(msg->name); node.has_value()){
+			G_->delete_node(node.value());
+		}else{
+			RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" << msg->id << "] doesn't exists");
+		}
+	}
+}
 
+std::optional<DSR::Edge> DSRBridge::createEdge(uint64_t from, uint64_t to, const std::string &type){
+	DSR::Edge newEdge;
+	if (type == "stopped") {
+		newEdge = DSR::Edge::create<stopped_edge_type>(from, to);
+	} else if (type == "is") {
+		newEdge = DSR::Edge::create<is_edge_type>(from, to);
+	} else if (type == "is_performing") {
+		newEdge = DSR::Edge::create<is_performing_edge_type>(from, to);
+	} else if (type == "is_with") {
+		newEdge = DSR::Edge::create<is_with_edge_type>(from, to);
+	} else if (type == "interacting") {
+		newEdge = DSR::Edge::create<interacting_edge_type>(from, to);
+	} else if (type == "wants_to") {
+		newEdge = DSR::Edge::create<wants_to_edge_type>(from, to);
+	} else if (type == "finished") {
+		newEdge = DSR::Edge::create<finished_edge_type>(from, to);
+	} else if (type == "abort") {
+		newEdge = DSR::Edge::create<abort_edge_type>(from, to);
+	} else if (type == "aborting") {
+		newEdge = DSR::Edge::create<aborting_edge_type>(from, to);
+	} else if (type == "cancel") {
+		newEdge = DSR::Edge::create<cancel_edge_type>(from, to);
+	} else if (type == "failed") {
+		newEdge = DSR::Edge::create<failed_edge_type>(from, to);
+	} else if (type == "navigating") {
+		newEdge = DSR::Edge::create<navigating_edge_type>(from, to);
+	} else if (type == "rt") {
+		auto parent_node = G_->get_node(from);
+		rt_->insert_or_assign_edge_RT(parent_node.value(), to, 
+			{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
+		return {};
+	} else {
+		RCLCPP_ERROR_STREAM(this->get_logger(), "Edge type not valid");
+		return {};
+	}
+	return newEdge;
+}
 
+DSR::Node DSRBridge::setNodeType(std::string nodeType, std::string nodeName){
+	DSR::Node newNode;
+	if (nodeType == "robot") {
+		newNode = DSR::Node::create<robot_node_type>(nodeName);
+	} else if (nodeType == "battery") {
+		newNode = DSR::Node::create<battery_node_type>(nodeName);
+	} else if (nodeType == "person") {
+		newNode = DSR::Node::create<person_node_type>(nodeName);
+	} else if (nodeType == "navigation") {
+		newNode = DSR::Node::create<navigation_node_type>(nodeName);
+	} else if (nodeType == "move") {
+		newNode = DSR::Node::create<move_node_type>(nodeName);
+	} else if (nodeType == "say") {
+		newNode = DSR::Node::create<say_node_type>(nodeName);
+	} else if (nodeType == "play") {
+		newNode = DSR::Node::create<play_node_type>(nodeName);
+	} else if (nodeType == "use_case") {
+		newNode = DSR::Node::create<use_case_node_type>(nodeName);
+	} else if (nodeType == "show") {
+		newNode = DSR::Node::create<show_node_type>(nodeName);
+	} else {
+		RCLCPP_ERROR_STREAM(this->get_logger(), "Node with type '" << nodeType << "' not valid.");
+		return{};
+	}
+	return newNode;
+}
+void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes){
+	std::string attributeName, attributeValue, attributeChoice;
+	for(unsigned int i = 0; i <= attributes.size() / 2; (i = i + 2)){
+		attributeName = attributes[i];
+		attributeValue = attributes[i+1];
+		// General
+		if (attributeName == "priority") {
+			G_->add_or_modify_attrib_local<priority_att>(node, std::stoi(attributeValue));
+		} else if (attributeName == "result_code") {
+			G_->add_or_modify_attrib_local<result_code_att>(node, attributeValue);
+		} else if (attributeName == "number") {
+			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(attributeValue));
+		// Navigation
+		} else if (attributeName == "pose_x") {
+			G_->add_or_modify_attrib_local<pose_x_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "pose_y") {
+			G_->add_or_modify_attrib_local<pose_y_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "pose_angle") {
+			G_->add_or_modify_attrib_local<pose_angle_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "goal_x") {
+			G_->add_or_modify_attrib_local<goal_x_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "goal_y") {
+			G_->add_or_modify_attrib_local<goal_y_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "goal_angle") {
+			G_->add_or_modify_attrib_local<goal_angle_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "zone") {
+			G_->add_or_modify_attrib_local<zone_att>(node, attributeValue);
+		} else if (attributeName == "zones") {
+			G_->add_or_modify_attrib_local<zones_att>(node, attributeValue);
+		// Play / say
+		} else if (attributeName == "text") {
+			G_->add_or_modify_attrib_local<text_att>(node, attributeValue);
+		// Show
+		} else if (attributeName == "interface") {
+			G_->add_or_modify_attrib_local<interface_att>(node, attributeValue);
+		// Battery
+		} else if (attributeName == "battery_percentage") {
+			G_->add_or_modify_attrib_local<battery_percentage_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "battery_power_supply_status") {
+			G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node, attributeValue);
+		// Use case
+		} else if (attributeName == "use_case_id") {
+			G_->add_or_modify_attrib_local<use_case_id_att>(node, attributeValue);
+		// Person
+		} else if (attributeName == "identifier") {
+			G_->add_or_modify_attrib_local<identifier_att>(node, attributeValue);
+		} else if (attributeName == "safe_distance") {
+			G_->add_or_modify_attrib_local<safe_distance_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "menu") {
+			G_->add_or_modify_attrib_local<menu_att>(node, attributeValue);
+		} else {
+			RCLCPP_ERROR_STREAM(this->get_logger(), "Attribute with type '" << attributeName 
+								<< "' not valid." );
+			return;
+		}
+	}
 }
 
 // DSR callbacks
@@ -116,6 +261,7 @@ void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
 		msg.id = id;
 		msg.type = dsr_node.value().type();
 		msg.updated = false;
+		msg.deleted = false;
 		// Get all the attributes
 		for (const auto &attribute : dsr_node.value().attrs()){
 			std::string att;
@@ -146,6 +292,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 		msg.id = id;
 		msg.type = dsr_node.value().type();
 		msg.updated = true;
+		msg.deleted = false;
 		// Get all the attributes
 		for (const auto &attribute : att_names){
 			auto search = dsr_node.value().attrs().find(attribute);
