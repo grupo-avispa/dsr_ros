@@ -14,4 +14,5 @@ battery_agent:
 person_agent:
   ros__parameters:
     agent_id: 103
-    ros_topic: /object_detection/detections_3d
+    ros_topic: object_detection/detections/matched_detections
+    timeout: 90

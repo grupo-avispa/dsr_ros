@@ -14,6 +14,9 @@
 #include <string>
 #include <vector>
 
+// TF
+#include "tf2/utils.h"
+
 // ROS
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -24,7 +27,7 @@
 #include "dsr_agents/agents/person_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-PersonAgent::PersonAgent(): AgentNode("person_agent"){
+personAgent::personAgent(): AgentNode("person_agent"){
 	// Get ROS parameters
 	get_params();
 
@@ -39,11 +42,14 @@ PersonAgent::PersonAgent(): AgentNode("person_agent"){
 	person_sub_ = this->create_subscription<vision_msgs::msg::Detection3DArray>(
 		ros_topic_, 
 		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
-		std::bind(&PersonAgent::person_callback, this, std::placeholders::_1));
+		std::bind(&personAgent::person_callback, this, std::placeholders::_1));
+
+	// Timer to remove people from DSR if they are missed more then 30s
+	timer_ = this->create_wall_timer(5000ms, std::bind(&personAgent::timer_callback, this));
 }
 
 /* Initialize ROS parameters */
-void PersonAgent::get_params(){
+void personAgent::get_params(){
 	// ROS parameters
 	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", 
 		rclcpp::ParameterValue("detections_3d"), 
@@ -52,13 +58,23 @@ void PersonAgent::get_params(){
 	this->get_parameter("ros_topic", ros_topic_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
+
+	nav2_util::declare_parameter_if_not_declared(this, "timeout", 
+		rclcpp::ParameterValue(30), 
+		rcl_interfaces::msg::ParameterDescriptor() 
+			.set__description("The timeout for removing person from DSR"));
+	this->get_parameter("timeout", timeout_);
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter timeout is set to: [%d]", timeout_);
 }
 
-void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
+void personAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
 	// Get the persons from the detections
 	for (auto detection : msg->detections){
 		// Transform the center point from camera to world target
-		geometry_msgs::msg::Point center_point = detection.bbox.center.position;
+		geometry_msgs::msg::PoseStamped center_point;
+		center_point.header = msg->header;
+		center_point.pose.position = detection.bbox.center.position;
 		try{
 			geometry_msgs::msg::TransformStamped transform = tf_buffer_->lookupTransform(
 				"map", msg->header.frame_id, tf2::TimePointZero);
@@ -67,55 +83,75 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 			RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
 			return;
 		}
-		// Check if the detection is a person
-		// TODO: Fix this when we only subscribe to people (not detections)
-		if (std::stoi(detection.results[0].hypothesis.class_id) == 0){
-			// Check if the detected person is already in the DSR graph
-			std::string person_id = detection.id;
-			auto person_nodes = G_->get_nodes_by_type("person");
-			auto it = std::find_if(person_nodes.begin(), person_nodes.end(), 
-				[this, &person_id](auto node) { 
-					auto identifier = G_->get_attrib_by_name<identifier_att>(node);
-					if (identifier.has_value() && identifier.value() == person_id){
-						return true;
-					}
-					return false;
-				});
-
-			// If the person is not in the DSR graph, add them to the DSR graph
-			if (it == person_nodes.end() && !person_id.empty() ){
-				RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
-				if (!std::isdigit(person_id[0])){ 
-					auto person_node = add_node_with_edge<person_node_type, is_with_edge_type>(
-						"person", "robot", false);
-					if (person_node.has_value()){
-						// Add attributes to the node
-						G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
-						G_->add_or_modify_attrib_local<pose_x_att>(person_node.value(), 
-							static_cast<float>(center_point.x));
-						G_->add_or_modify_attrib_local<pose_y_att>(person_node.value(), 
-							static_cast<float>(center_point.y));
-						G_->add_or_modify_attrib_local<pose_angle_att>(person_node.value(), 
-							static_cast<float>(center_point.z));
-						G_->update_node(person_node.value());
-					}
+		// Check if the detected person is already in the DSR graph
+		std::string person_id = detection.id;
+		auto person_nodes = G_->get_nodes_by_type("person");
+		auto it = std::find_if(person_nodes.begin(), person_nodes.end(), 
+			[this, &person_id](auto node) { 
+				auto identifier = G_->get_attrib_by_name<identifier_att>(node);
+				if (identifier.has_value() && identifier.value() == person_id){
+					return true;
 				}
+				return false;
+			});
+
+		// If the person is not in the DSR graph, add them to the DSR graph
+		if (it == person_nodes.end() && !person_id.empty() ){
+			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
+			if (!std::isdigit(person_id[0])){ 
+				auto person_node = add_node_with_edge<person_node_type, is_with_edge_type>(
+					"person", "robot", false);
+				if (person_node.has_value()){
+					// Add attributes to the node
+					G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
+					G_->add_or_modify_attrib_local<pose_x_att>(person_node.value(), 
+						static_cast<float>(center_point.pose.position.x));
+					G_->add_or_modify_attrib_local<pose_y_att>(person_node.value(), 
+						static_cast<float>(center_point.pose.position.y));
+					G_->add_or_modify_attrib_local<pose_angle_att>(person_node.value(), 
+						static_cast<float>(tf2::getYaw(center_point.pose.orientation)));
+					G_->add_or_modify_attrib_local<timestamp_att>(person_node.value(), 
+						static_cast<int>(msg->header.stamp.sec));
+					G_->update_node(person_node.value());
+				}
+			}
+		}else{
+			// If the person is already in the DSR graph, update their pose
+			G_->add_or_modify_attrib_local<pose_x_att>(*it, static_cast<float>(center_point.pose.position.x));
+			G_->add_or_modify_attrib_local<pose_y_att>(*it, static_cast<float>(center_point.pose.position.y));
+			G_->add_or_modify_attrib_local<pose_angle_att>(*it, static_cast<float>(center_point.pose.position.z));
+			G_->add_or_modify_attrib_local<timestamp_att>(*it, static_cast<int>(msg->header.stamp.sec));
+			G_->update_node(*it);
+		}
+		RCLCPP_DEBUG(this->get_logger(), "Time stamp set to: [%d]", msg->header.stamp.sec);
+	}
+}
+
+void personAgent::timer_callback(){
+	// Get person nodes
+	auto person_nodes = G_->get_nodes_by_type("person");
+	// Check all timestamps and if the node has been more than 30s without updates delete it
+	for (const auto& person: person_nodes){
+		// Get ROS time
+		rclcpp::Time now = this->get_clock()->now();
+		auto timestamp = G_->get_attrib_by_name<timestamp_att>(person);
+		if (timestamp.has_value() && (now.seconds() - timestamp.value()) >= timeout_){
+			if (auto person_node = G_->get_node(person.id()); person_node.has_value()){
+				G_->delete_node(person);
 			}else{
-				// If the person is already in the DSR graph, update their pose
-				G_->add_or_modify_attrib_local<pose_x_att>(*it, static_cast<float>(center_point.x));
-				G_->add_or_modify_attrib_local<pose_y_att>(*it, static_cast<float>(center_point.y));
-				G_->add_or_modify_attrib_local<pose_angle_att>(*it, static_cast<float>(center_point.z));
-				G_->update_node(*it);
+				RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" 
+					<< person.id() << "] doesn't exists");
 			}
 		}
 	}
+	RCLCPP_DEBUG(this->get_logger(), "Timer callback done...");
 }
 
 int main(int argc, char** argv){
 	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
 
-	auto node = std::make_shared<PersonAgent>();
+	auto node = std::make_shared<personAgent>();
 
 	QtExecutor exe;
 	exe.add_node(node);

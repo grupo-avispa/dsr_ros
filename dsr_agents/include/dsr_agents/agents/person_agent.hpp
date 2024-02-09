@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef DSR_AGENTS__PERSON_AGENT_HPP_
-#define DSR_AGENTS__PERSON_AGENT_HPP_
+#ifndef DSR_AGENT__PERSON_AGENT_HPP_
+#define DSR_AGENT__PERSON_AGENT_HPP_
 
 // C++
 #include <string>
@@ -24,13 +24,14 @@
 #include "vision_msgs/msg/detection3_d_array.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+
 // DSR
 #include "dsr/api/dsr_api.h"
 #include "dsr_agents/agent_node.hpp"
 
-class PersonAgent: public AgentNode{
+class personAgent: public AgentNode{
 	public:
-		PersonAgent();
+		personAgent();
 
 	private:
 		rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr person_sub_;
@@ -41,9 +42,19 @@ class PersonAgent: public AgentNode{
 
 		/// The listener of the transformations tree.
 		std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-		
+
+		/// Timer to remove people from DSR if they are missed more then 30s
+		rclcpp::TimerBase::SharedPtr timer_;
+
+		/// Maximum elapsed time to remove people from DSR
+		int timeout_;
+
+		/// Get ROS params
 		void get_params();
+		/// Person detection callback
 		void person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg);
+		/// Timeout callback for delete people from DSR
+		void timer_callback();
 };
 
 #endif  // DSR_AGENT__PERSON_AGENT_HPP_
