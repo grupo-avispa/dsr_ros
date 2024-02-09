@@ -53,7 +53,7 @@ def generate_launch_description():
         package = 'dsr_agents',
         namespace = '',
         executable = 'dsr_bridge',
-        name = 'dsr_bridge_robot',
+        name = 'dsr_bridge_nuc',
         parameters = [configured_params],
         emulate_tty = True,
         output = 'screen', 
