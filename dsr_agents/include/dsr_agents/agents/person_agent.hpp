@@ -29,9 +29,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_agents/agent_node.hpp"
 
-class personAgent: public AgentNode{
+class PersonAgent: public AgentNode{
 	public:
-		personAgent();
+		PersonAgent();
 
 	private:
 		rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr person_sub_;

@@ -27,7 +27,7 @@
 #include "dsr_agents/agents/person_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-personAgent::personAgent(): AgentNode("person_agent"){
+PersonAgent::PersonAgent(): AgentNode("person_agent"){
 	// Get ROS parameters
 	get_params();
 
@@ -42,14 +42,14 @@ personAgent::personAgent(): AgentNode("person_agent"){
 	person_sub_ = this->create_subscription<vision_msgs::msg::Detection3DArray>(
 		ros_topic_, 
 		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
-		std::bind(&personAgent::person_callback, this, std::placeholders::_1));
+		std::bind(&PersonAgent::person_callback, this, std::placeholders::_1));
 
 	// Timer to remove people from DSR if they are missed more then 30s
-	timer_ = this->create_wall_timer(5000ms, std::bind(&personAgent::timer_callback, this));
+	timer_ = this->create_wall_timer(5000ms, std::bind(&PersonAgent::timer_callback, this));
 }
 
 /* Initialize ROS parameters */
-void personAgent::get_params(){
+void PersonAgent::get_params(){
 	// ROS parameters
 	nav2_util::declare_parameter_if_not_declared(this, "ros_topic", 
 		rclcpp::ParameterValue("detections_3d"), 
@@ -68,7 +68,7 @@ void personAgent::get_params(){
 		"The parameter timeout is set to: [%d]", timeout_);
 }
 
-void personAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
+void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
 	// Get the persons from the detections
 	for (auto detection : msg->detections){
 		// Transform the center point from camera to world target
@@ -127,7 +127,7 @@ void personAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 	}
 }
 
-void personAgent::timer_callback(){
+void PersonAgent::timer_callback(){
 	// Get person nodes
 	auto person_nodes = G_->get_nodes_by_type("person");
 	// Check all timestamps and if the node has been more than 30s without updates delete it
@@ -151,7 +151,7 @@ int main(int argc, char** argv){
 	QCoreApplication app(argc, argv);
 	rclcpp::init(argc, argv);
 
-	auto node = std::make_shared<personAgent>();
+	auto node = std::make_shared<PersonAgent>();
 
 	QtExecutor exe;
 	exe.add_node(node);
