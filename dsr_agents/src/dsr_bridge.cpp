@@ -377,7 +377,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 
 void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::string &type){
 	RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" << from << "->"  << to << "] of type [" 
-		<< edge_tag.c_str() << "] has been created");
+		<< type.c_str() << "] has been created");
 	// Create the message
 	dsr_interfaces::msg::Edge msg;
 	msg.header.stamp = this->now();
