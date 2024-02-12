@@ -106,6 +106,7 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 		// Create node by type
 		auto new_node = setNodeType(msg->type, msg->name);
 		if (auto id = G_->insert_node(new_node); id.has_value()){
+			G_->add_or_modify_attrib_local<source_att>(new_node, static_cast<std::string>(this->get_name()));
 			modifyNodeAttribute(new_node, msg->attributes);
 		}else{
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert node");
@@ -114,6 +115,7 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 	else if(msg->deleted == false && msg->updated == true){ // update current node
 		// Get node by name
 		if (auto node = G_->get_node(msg->name); node.has_value()){
+			G_->add_or_modify_attrib_local<source_att>(node.value(), static_cast<std::string>(this->get_name()));
 			modifyNodeAttribute(node.value(), msg->attributes);
 		}else{
 			RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" << msg->id << "] doesn't exists");
@@ -194,7 +196,7 @@ DSR::Node DSRBridge::setNodeType(std::string nodeType, std::string nodeName){
 }
 void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes){
 	std::string attributeName, attributeValue, attributeChoice;
-	for(unsigned int i = 0; i <= attributes.size() / 2; (i = i + 2)){
+	for(unsigned int i = 0; i <= attributes.size() / 2; i += 2){
 		attributeName = attributes[i];
 		attributeValue = attributes[i+1];
 		// General
@@ -204,8 +206,6 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 			G_->add_or_modify_attrib_local<result_code_att>(node, attributeValue);
 		} else if (attributeName == "number") {
 			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(attributeValue));
-		}else if (attributeName == "source") {
-			G_->add_or_modify_attrib_local<source_att>(node, attributeValue);
 		// Navigation
 		} else if (attributeName == "pose_x") {
 			G_->add_or_modify_attrib_local<pose_x_att>(node, std::stof(attributeValue));
