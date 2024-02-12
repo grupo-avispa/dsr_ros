@@ -156,6 +156,8 @@ std::optional<DSR::Node> DSRBridge::createNode(std::string nodeType, std::string
 		newNode = DSR::Node::create<use_case_node_type>(nodeName);
 	} else if (nodeType == "show") {
 		newNode = DSR::Node::create<show_node_type>(nodeName);
+	} else if (nodeType == "update_bbdd") {
+		newNode = DSR::Node::create<update_bbdd_node_type>(nodeName);
 	} else {
 		RCLCPP_ERROR_STREAM(this->get_logger(), "Node with type '" << nodeType << "' not valid.");
 		return{};
