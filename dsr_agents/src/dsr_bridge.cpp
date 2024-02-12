@@ -324,7 +324,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 
 void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
 	RCLCPP_INFO(this->get_logger(), 
-		"A node has with id [%s] has been modified in the DSR", id.c_str());
+		"A node has with id [%d] has been modified in the DSR", id);
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
