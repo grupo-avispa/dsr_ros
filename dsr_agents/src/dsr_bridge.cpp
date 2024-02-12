@@ -25,7 +25,7 @@ DSRBridge::DSRBridge(): AgentNode("dsr_bridge"){
 
 	// Add connection signals
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::update_node_signal, this, &DSRBridge::node_updated);
+		&DSR::DSRGraph::create_node_signal, this, &DSRBridge::node_created);
 	QObject::connect(G_.get(), 
 		&DSR::DSRGraph::update_node_attr_signal, this, &DSRBridge::node_attributes_updated);
 	QObject::connect(G_.get(), 
@@ -215,6 +215,10 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 			G_->add_or_modify_attrib_local<result_code_att>(node, attributeValue);
 		} else if (attributeName == "number") {
 			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(attributeValue));
+		} else if (attributeName == "pos_x") {
+			G_->add_or_modify_attrib_local<pos_x_att>(node, std::stof(attributeValue));
+		} else if (attributeName == "pos_y") {
+			G_->add_or_modify_attrib_local<pos_y_att>(node, std::stof(attributeValue));
 		// Navigation
 		} else if (attributeName == "pose_x") {
 			G_->add_or_modify_attrib_local<pose_x_att>(node, std::stof(attributeValue));
@@ -264,8 +268,8 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 }
 
 // DSR callbacks
-void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
-	RCLCPP_INFO(this->get_logger(), "Received a new node of type %s from DSR", type.c_str());
+void DSRBridge::node_created(std::uint64_t id, const std::string &type){
+	RCLCPP_INFO(this->get_logger(), "Received a new node of type [%s] from DSR", type.c_str());
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
@@ -307,16 +311,20 @@ void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
 				}
 				msg.attributes.push_back(attribute.first);
 				msg.attributes.push_back(att_value);
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Attribute [%s] = [%s]", attribute.first.c_str(), att_value.c_str());
 			}
 			// Publish the message
 			RCLCPP_INFO(this->get_logger(), 
-				"Sending new node of type %s to the ROS bridge", type.c_str());
+				"Sending new node of type [%s] to the ROS bridge", type.c_str());
 			node_to_ros_pub_->publish(msg);
 		}
 	}
 }
 
 void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+	RCLCPP_INFO(this->get_logger(), 
+		"A node has with id [%s] has been modified in the DSR", id.c_str());
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
@@ -358,6 +366,8 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 				}
 				msg.attributes.push_back(attribute.first);
 				msg.attributes.push_back(att_value);
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Attribute [%s] = [%s]", attribute.first.c_str(), att_value.c_str());
 			}
 			// Publish the message
 			node_to_ros_pub_->publish(msg);
@@ -366,6 +376,8 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 }
 
 void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::string &type){
+	RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" << from << "->"  << to << "] of type [" 
+		<< edge_tag.c_str() << "] has been created");
 	// Create the message
 	dsr_interfaces::msg::Edge msg;
 	msg.header.stamp = this->now();
@@ -382,6 +394,7 @@ void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to,
 }
 
 void DSRBridge::node_deleted(const DSR::Node &node){
+	RCLCPP_INFO(this->get_logger(), "The node [%s] has been deleted in the DSR", node.name());
 	// Create the message
 	dsr_interfaces::msg::Node msg;
 	msg.header.stamp = this->now();
@@ -394,6 +407,9 @@ void DSRBridge::node_deleted(const DSR::Node &node){
 }
 
 void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
+	RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" << from << "->"  << to << "] of type [" 
+		<< edge_tag.c_str() << "] has been deleted");
+
 	// Create the message
 	dsr_interfaces::msg::Edge msg;
 	msg.header.stamp = this->now();

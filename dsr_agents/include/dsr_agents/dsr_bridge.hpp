@@ -45,7 +45,7 @@ class DSRBridge: public AgentNode{
 		void node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPtr msg);
 
 		// DSR callbacks
-		void node_updated(std::uint64_t id, const std::string &type);
+		void node_created(std::uint64_t id, const std::string &type);
 		void node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names);
 		void edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type);
 		void edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
