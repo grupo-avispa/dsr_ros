@@ -35,6 +35,8 @@ AgentNode::AgentNode(std::string ros_node_name): rclcpp::Node(ros_node_name){
 	qRegisterMetaType<uint64_t>("uint64_t");
 	qRegisterMetaType<std::string>("std::string");
 	qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
+	qRegisterMetaType<DSR::Node>("Node");
+	qRegisterMetaType<DSR::Edge>("Edge");
 	qRegisterMetaType<DSR::SignalInfo>("DSR::SignalInfo");
 }
 
