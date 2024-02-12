@@ -47,7 +47,7 @@ def generate_launch_description():
         description = 'Logging level (info, debug, ...)'
     )
 
-    # Prepare the nodes
+    # Prepare the node
     dsr_bridge_robot_node = Node(
         package = 'dsr_agents',
         namespace = '',

@@ -35,7 +35,7 @@ DSRBridge::DSRBridge(): AgentNode("dsr_bridge"){
 	QObject::connect(G_.get(), 
 		&DSR::DSRGraph::del_edge_signal, this, &DSRBridge::edge_deleted);
 	QObject::connect(G_.get(), 
-		&DSR::DSRGraph::del_node_signal, this, &DSRBridge::node_deleted);
+		&DSR::DSRGraph::del_node_signal_by_node, this, &DSRBridge::node_deleted);
 
 	// Wait until the DSR graph is ready
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -84,13 +84,13 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	if (msg->header.frame_id == this->get_name()){
 		return;
 	}
-	// Create/Modify edge
-	if(msg->deleted == false){
+	// Create / Modify edge
+	if (!msg->deleted){
 		createEdge(msg->parent, msg->child, msg->type);
 	}
-	else{ // Delete edge
-		if(!G_->delete_edge(msg->parent, msg->child, msg->type))
-		{
+	// Delete edge
+	else{
+		if (!G_->delete_edge(msg->parent, msg->child, msg->type)){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't delete edge [" << msg->type << "]");
 		}
 	}
@@ -105,16 +105,18 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 
 	// TODO: Actualizar a G_->get_node(msg->id) cuando se pueda modificar id del DSR
 	// Check case scenario
-	if (msg->deleted == false && msg->updated == false){ // add new node
+	// Add new node
+	if (!msg->deleted && !msg->updated){
 		// Create node by type
-		auto new_node = setNodeType(msg->type, msg->name);
-		G_->add_or_modify_attrib_local<source_att>(new_node, static_cast<std::string>(this->get_name()));
-		modifyNodeAttribute(new_node, msg->attributes);
-		if (auto id = G_->insert_node(new_node); !id.has_value()){
+		auto new_node = createNode(msg->type, msg->name);
+		G_->add_or_modify_attrib_local<source_att>(new_node.value(), static_cast<std::string>(this->get_name()));
+		modifyNodeAttribute(new_node.value(), msg->attributes);
+		if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert node");
 		}
 	}
-	else if (msg->deleted == false && msg->updated == true){ // update current node
+	// Update current node
+	else if (!msg->deleted && msg->updated){
 		// Get node by name
 		if (auto node = G_->get_node(msg->name); node.has_value()){
 			G_->add_or_modify_attrib_local<source_att>(node.value(), static_cast<std::string>(this->get_name()));
@@ -124,13 +126,41 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 			RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" << msg->id << "] doesn't exists");
 		}
 	}
-	else if(msg->deleted == true){ // delete node
+	// Delete node
+	else if (msg->deleted){
 		if (auto node = G_->get_node(msg->name); node.has_value()){
-			G_->delete_node(node.value());
+			G_->delete_node(node.value().name());
 		}else{
 			RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" << msg->id << "] doesn't exists");
 		}
 	}
+}
+
+std::optional<DSR::Node> DSRBridge::createNode(std::string nodeType, std::string nodeName){
+	DSR::Node newNode;
+	if (nodeType == "robot") {
+		newNode = DSR::Node::create<robot_node_type>(nodeName);
+	} else if (nodeType == "battery") {
+		newNode = DSR::Node::create<battery_node_type>(nodeName);
+	} else if (nodeType == "person") {
+		newNode = DSR::Node::create<person_node_type>(nodeName);
+	} else if (nodeType == "navigation") {
+		newNode = DSR::Node::create<navigation_node_type>(nodeName);
+	} else if (nodeType == "move") {
+		newNode = DSR::Node::create<move_node_type>(nodeName);
+	} else if (nodeType == "say") {
+		newNode = DSR::Node::create<say_node_type>(nodeName);
+	} else if (nodeType == "play") {
+		newNode = DSR::Node::create<play_node_type>(nodeName);
+	} else if (nodeType == "use_case") {
+		newNode = DSR::Node::create<use_case_node_type>(nodeName);
+	} else if (nodeType == "show") {
+		newNode = DSR::Node::create<show_node_type>(nodeName);
+	} else {
+		RCLCPP_ERROR_STREAM(this->get_logger(), "Node with type '" << nodeType << "' not valid.");
+		return{};
+	}
+	return newNode;
 }
 
 std::optional<DSR::Edge> DSRBridge::createEdge(uint64_t from, uint64_t to, const std::string &type){
@@ -171,32 +201,6 @@ std::optional<DSR::Edge> DSRBridge::createEdge(uint64_t from, uint64_t to, const
 	return newEdge;
 }
 
-DSR::Node DSRBridge::setNodeType(std::string nodeType, std::string nodeName){
-	DSR::Node newNode;
-	if (nodeType == "robot") {
-		newNode = DSR::Node::create<robot_node_type>(nodeName);
-	} else if (nodeType == "battery") {
-		newNode = DSR::Node::create<battery_node_type>(nodeName);
-	} else if (nodeType == "person") {
-		newNode = DSR::Node::create<person_node_type>(nodeName);
-	} else if (nodeType == "navigation") {
-		newNode = DSR::Node::create<navigation_node_type>(nodeName);
-	} else if (nodeType == "move") {
-		newNode = DSR::Node::create<move_node_type>(nodeName);
-	} else if (nodeType == "say") {
-		newNode = DSR::Node::create<say_node_type>(nodeName);
-	} else if (nodeType == "play") {
-		newNode = DSR::Node::create<play_node_type>(nodeName);
-	} else if (nodeType == "use_case") {
-		newNode = DSR::Node::create<use_case_node_type>(nodeName);
-	} else if (nodeType == "show") {
-		newNode = DSR::Node::create<show_node_type>(nodeName);
-	} else {
-		RCLCPP_ERROR_STREAM(this->get_logger(), "Node with type '" << nodeType << "' not valid.");
-		return{};
-	}
-	return newNode;
-}
 void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes){
 	std::string attributeName, attributeValue, attributeChoice;
 	for(unsigned int i = 0; i <= attributes.size() / 2; i += 2){
@@ -269,23 +273,38 @@ void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
 			msg.header.stamp = this->now();
 			msg.header.frame_id = this->get_name();
 			msg.id = id;
+			msg.name = dsr_node.value().name();
 			msg.type = dsr_node.value().type();
 			msg.updated = false;
 			msg.deleted = false;
 			// Get all the attributes
 			for (const auto &attribute : dsr_node.value().attrs()){
-				std::string att;
-				if (std::is_same_v<decltype(attribute.second.value()), int>){
-					att = std::to_string(std::get<int>(attribute.second.value()));
-				}else if (std::is_same_v<decltype(attribute.second.value()), double>){
-					att = std::to_string(std::get<double>(attribute.second.value()));
-				}else if (std::is_same_v<decltype(attribute.second.value()), bool>){
-					att = std::get<bool>(attribute.second.value()) ? "true" : "false";
-				}else if (std::is_same_v<decltype(attribute.second.value()), std::string>){
-					att = std::get<std::string>(attribute.second.value());
+				std::string att_value;
+				switch (attribute.second.value().index()) {
+					case 0:
+						att_value = std::get<std::string>(attribute.second.value());
+						break;
+					case 1:
+						att_value = std::to_string(std::get<int32_t>(attribute.second.value()));
+						break;
+					case 2:
+						att_value = std::to_string(std::get<float>(attribute.second.value()));
+						break;
+					case 4:
+						att_value = std::get<bool>(attribute.second.value()) ? "true" : "false";
+						break;
+					case 6:
+						att_value = std::to_string(std::get<uint32_t>(attribute.second.value()));
+						break;
+					case 7:
+						att_value = std::to_string(std::get<uint64_t>(attribute.second.value()));
+						break;
+					case 8:
+						att_value = std::to_string(std::get<double>(attribute.second.value()));
+						break;
 				}
 				msg.attributes.push_back(attribute.first);
-				msg.attributes.push_back(att);
+				msg.attributes.push_back(att_value);
 			}
 			// Publish the message
 			RCLCPP_INFO(this->get_logger(), 
@@ -298,33 +317,45 @@ void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
 void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
-		if(auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
+		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
 			(source.has_value() && source != this->get_name()) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Node msg;
 			msg.header.stamp = this->now();
 			msg.header.frame_id = this->get_name();
 			msg.id = id;
+			msg.name = dsr_node.value().name();
 			msg.type = dsr_node.value().type();
 			msg.updated = true;
 			msg.deleted = false;
 			// Get all the attributes
-			for (const auto &attribute : att_names){
-				auto search = dsr_node.value().attrs().find(attribute);
-				if (search != dsr_node.value().attrs().end()){
-					std::string att;
-					if (std::is_same_v<decltype(search->second.value()), int>){
-						att = std::to_string(std::get<int>(search->second.value()));
-					}else if (std::is_same_v<decltype(search->second.value()), double>){
-						att = std::to_string(std::get<double>(search->second.value()));
-					}else if (std::is_same_v<decltype(search->second.value()), bool>){
-						att = std::get<bool>(search->second.value()) ? "true" : "false";
-					}else if (std::is_same_v<decltype(search->second.value()), std::string>){
-						att = std::get<std::string>(search->second.value());
-					}
-					msg.attributes.push_back(search->first);
-					msg.attributes.push_back(att);
+			for (const auto &attribute : dsr_node.value().attrs()){
+				std::string att_value;
+				switch (attribute.second.value().index()) {
+					case 0:
+						att_value = std::get<std::string>(attribute.second.value());
+						break;
+					case 1:
+						att_value = std::to_string(std::get<int32_t>(attribute.second.value()));
+						break;
+					case 2:
+						att_value = std::to_string(std::get<float>(attribute.second.value()));
+						break;
+					case 4:
+						att_value = std::get<bool>(attribute.second.value()) ? "true" : "false";
+						break;
+					case 6:
+						att_value = std::to_string(std::get<uint32_t>(attribute.second.value()));
+						break;
+					case 7:
+						att_value = std::to_string(std::get<uint64_t>(attribute.second.value()));
+						break;
+					case 8:
+						att_value = std::to_string(std::get<double>(attribute.second.value()));
+						break;
 				}
+				msg.attributes.push_back(attribute.first);
+				msg.attributes.push_back(att_value);
 			}
 			// Publish the message
 			node_to_ros_pub_->publish(msg);
@@ -348,12 +379,13 @@ void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to,
 	const std::string &type, const std::vector<std::string>& att_names){
 }
 
-void DSRBridge::node_deleted(std::uint64_t id){
+void DSRBridge::node_deleted(const DSR::Node &node){
 	// Create the message
 	dsr_interfaces::msg::Node msg;
 	msg.header.stamp = this->now();
 	msg.header.frame_id = this->get_name();
-	msg.id = id;
+	msg.id = node.id();
+	msg.name = node.name();
 	msg.deleted = true;
 	// Publish the message
 	node_to_ros_pub_->publish(msg);

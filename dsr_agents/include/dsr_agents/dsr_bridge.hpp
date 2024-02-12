@@ -46,15 +46,16 @@ class DSRBridge: public AgentNode{
 
 		// DSR callbacks
 		void node_updated(std::uint64_t id, const std::string &type);
-		std::optional<DSR::Edge> createEdge(uint64_t from, uint64_t to, const std::string &type);
 		void node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names);
-		void modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes);
-		DSR::Node setNodeType(std::string nodeType, std::string nodeName);
 		void edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type);
 		void edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
 			const std::string &type, const std::vector<std::string>& att_names);
-		void node_deleted(std::uint64_t id);
+		void node_deleted(const DSR::Node &node);
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
+
+		std::optional<DSR::Node> createNode(std::string nodeType, std::string nodeName);
+		std::optional<DSR::Edge> createEdge(uint64_t from, uint64_t to, const std::string &type);
+		void modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes);
 };
 
 #endif  // DSR_AGENT__DSR_BRIDGE_HPP_
