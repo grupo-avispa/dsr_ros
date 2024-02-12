@@ -207,8 +207,7 @@ std::optional<DSR::Edge> DSRBridge::createEdge(std::string from, std::string to,
 			newEdge = DSR::Edge::create<navigating_edge_type>(
 				parent_node.value().id(), child_node.value().id());
 		} else if (type == "rt") {
-			auto parent_node = G_->get_node(from);
-			rt_->insert_or_assign_edge_RT(parent_node.value(), to, 
+			rt_->insert_or_assign_edge_RT(parent_node.value().id(), child_node.value().id(), 
 				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
 			return {};
 		} else {
