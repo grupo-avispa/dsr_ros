@@ -204,6 +204,8 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 			G_->add_or_modify_attrib_local<result_code_att>(node, attributeValue);
 		} else if (attributeName == "number") {
 			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(attributeValue));
+		}else if (attributeName == "source") {
+			G_->add_or_modify_attrib_local<source_att>(node, attributeValue);
 		// Navigation
 		} else if (attributeName == "pose_x") {
 			G_->add_or_modify_attrib_local<pose_x_att>(node, std::stof(attributeValue));
@@ -242,7 +244,9 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 			G_->add_or_modify_attrib_local<safe_distance_att>(node, std::stof(attributeValue));
 		} else if (attributeName == "menu") {
 			G_->add_or_modify_attrib_local<menu_att>(node, attributeValue);
-		} else {
+		}else if (attributeName == "timestamp") {
+			G_->add_or_modify_attrib_local<timestamp_att>(node, std::stoi(attributeValue));
+		}else {
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Attribute with type '" << attributeName 
 								<< "' not valid." );
 			return;
@@ -254,65 +258,71 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
-		// Create the message
-		dsr_interfaces::msg::Node msg;
-		msg.header.stamp = this->now();
-		msg.header.frame_id = this->get_name();
-		msg.id = id;
-		msg.type = dsr_node.value().type();
-		msg.updated = false;
-		msg.deleted = false;
-		// Get all the attributes
-		for (const auto &attribute : dsr_node.value().attrs()){
-			std::string att;
-			if (std::is_same_v<decltype(attribute.second.value()), int>){
-				att = std::to_string(std::get<int>(attribute.second.value()));
-			}else if (std::is_same_v<decltype(attribute.second.value()), double>){
-				att = std::to_string(std::get<double>(attribute.second.value()));
-			}else if (std::is_same_v<decltype(attribute.second.value()), bool>){
-				att = std::get<bool>(attribute.second.value()) ? "true" : "false";
-			}else if (std::is_same_v<decltype(attribute.second.value()), std::string>){
-				att = std::get<std::string>(attribute.second.value());
+		if(auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
+			(source.has_value() && source != this->get_name())){
+			// Create the message
+			dsr_interfaces::msg::Node msg;
+			msg.header.stamp = this->now();
+			msg.header.frame_id = this->get_name();
+			msg.id = id;
+			msg.type = dsr_node.value().type();
+			msg.updated = false;
+			msg.deleted = false;
+			// Get all the attributes
+			for (const auto &attribute : dsr_node.value().attrs()){
+				std::string att;
+				if (std::is_same_v<decltype(attribute.second.value()), int>){
+					att = std::to_string(std::get<int>(attribute.second.value()));
+				}else if (std::is_same_v<decltype(attribute.second.value()), double>){
+					att = std::to_string(std::get<double>(attribute.second.value()));
+				}else if (std::is_same_v<decltype(attribute.second.value()), bool>){
+					att = std::get<bool>(attribute.second.value()) ? "true" : "false";
+				}else if (std::is_same_v<decltype(attribute.second.value()), std::string>){
+					att = std::get<std::string>(attribute.second.value());
+				}
+				msg.attributes.push_back(attribute.first);
+				msg.attributes.push_back(att);
 			}
-			msg.attributes.push_back(attribute.first);
-			msg.attributes.push_back(att);
+			// Publish the message
+			node_to_ros_pub_->publish(msg);
 		}
-		// Publish the message
-		node_to_ros_pub_->publish(msg);
 	}
 }
 
 void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
-		// Create the message
-		dsr_interfaces::msg::Node msg;
-		msg.header.stamp = this->now();
-		msg.header.frame_id = this->get_name();
-		msg.id = id;
-		msg.type = dsr_node.value().type();
-		msg.updated = true;
-		msg.deleted = false;
-		// Get all the attributes
-		for (const auto &attribute : att_names){
-			auto search = dsr_node.value().attrs().find(attribute);
-			if (search != dsr_node.value().attrs().end()){
-				std::string att;
-				if (std::is_same_v<decltype(search->second.value()), int>){
-					att = std::to_string(std::get<int>(search->second.value()));
-				}else if (std::is_same_v<decltype(search->second.value()), double>){
-					att = std::to_string(std::get<double>(search->second.value()));
-				}else if (std::is_same_v<decltype(search->second.value()), bool>){
-					att = std::get<bool>(search->second.value()) ? "true" : "false";
-				}else if (std::is_same_v<decltype(search->second.value()), std::string>){
-					att = std::get<std::string>(search->second.value());
+		if(auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
+			source.has_value() && source != this->get_name()){
+			// Create the message
+			dsr_interfaces::msg::Node msg;
+			msg.header.stamp = this->now();
+			msg.header.frame_id = this->get_name();
+			msg.id = id;
+			msg.type = dsr_node.value().type();
+			msg.updated = true;
+			msg.deleted = false;
+			// Get all the attributes
+			for (const auto &attribute : att_names){
+				auto search = dsr_node.value().attrs().find(attribute);
+				if (search != dsr_node.value().attrs().end()){
+					std::string att;
+					if (std::is_same_v<decltype(search->second.value()), int>){
+						att = std::to_string(std::get<int>(search->second.value()));
+					}else if (std::is_same_v<decltype(search->second.value()), double>){
+						att = std::to_string(std::get<double>(search->second.value()));
+					}else if (std::is_same_v<decltype(search->second.value()), bool>){
+						att = std::get<bool>(search->second.value()) ? "true" : "false";
+					}else if (std::is_same_v<decltype(search->second.value()), std::string>){
+						att = std::get<std::string>(search->second.value());
+					}
+					msg.attributes.push_back(search->first);
+					msg.attributes.push_back(att);
 				}
-				msg.attributes.push_back(search->first);
-				msg.attributes.push_back(att);
 			}
+			// Publish the message
+			node_to_ros_pub_->publish(msg);
 		}
-		// Publish the message
-		node_to_ros_pub_->publish(msg);
 	}
 }
 
