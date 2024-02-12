@@ -45,12 +45,8 @@ REGISTER_NODE_TYPE(move)
 REGISTER_NODE_TYPE(say)
 REGISTER_NODE_TYPE(play)
 REGISTER_NODE_TYPE(use_case)
-REGISTER_NODE_TYPE(docking)
-REGISTER_NODE_TYPE(search_goal)
-REGISTER_NODE_TYPE(set_random_goal)
 REGISTER_NODE_TYPE(show)
 
-REGISTER_EDGE_TYPE(start)
 REGISTER_EDGE_TYPE(stopped)
 REGISTER_EDGE_TYPE(is)
 REGISTER_EDGE_TYPE(is_performing)
@@ -62,33 +58,45 @@ REGISTER_EDGE_TYPE(aborting)
 REGISTER_EDGE_TYPE(cancel)
 REGISTER_EDGE_TYPE(failed)
 REGISTER_EDGE_TYPE(navigating)
-REGISTER_EDGE_TYPE(detected)
-REGISTER_EDGE_TYPE(not_detected)
 
+// General types
 REGISTER_TYPE(priority, int, false)
 REGISTER_TYPE(result_code, std::string, false)
 REGISTER_TYPE(number, int, false)
-REGISTER_TYPE(text, std::string, false)
-REGISTER_TYPE(source, std::string, false)
-REGISTER_TYPE(timestamp, int, false)
+
+// Navigation types
 REGISTER_TYPE(pose_x, float, false)
 REGISTER_TYPE(pose_y, float, false)
 REGISTER_TYPE(pose_angle, float, false)
 REGISTER_TYPE(goal_x, float, false)
 REGISTER_TYPE(goal_y, float, false)
-REGISTER_TYPE(goal_z, float, false)
 REGISTER_TYPE(goal_angle, float, false)
 REGISTER_TYPE(zone, std::string, false)
 REGISTER_TYPE(zones, std::string, false)
+
+// Play / say types
+REGISTER_TYPE(text, std::string, false)
+REGISTER_TYPE(sound, std::string, false)
+REGISTER_TYPE(volume, float, false)
+
+// Show types
+REGISTER_TYPE(interface, std::string, false)
+
+// Use case types: do_nothing, wandering, charging, menu, music, neuron_up, getme, reminder, announcer
 REGISTER_TYPE(use_case_id, std::string, false)
+REGISTER_TYPE(menu_choices, std::string, false)
+
+// Person types
 REGISTER_TYPE(identifier, std::string, false)
 REGISTER_TYPE(safe_distance, float, false)
-REGISTER_TYPE(comm_enable, bool, false)
-REGISTER_TYPE(comm_volume, int, false)
-REGISTER_TYPE(comm_subtitles, bool, false)
-REGISTER_TYPE(comm_textsize, int, false)
-REGISTER_TYPE(comm_onlyimages, bool, false)
+REGISTER_TYPE(comm_parameters, std::string, false)
+REGISTER_TYPE(skills_parameters, std::string, false)
 REGISTER_TYPE(menu, std::string, false)
-REGISTER_TYPE(interface, std::string, false)
+REGISTER_TYPE(reminder, std::string, false)
+REGISTER_TYPE(activities, std::string, false)
+
+// BBDD types
+REGISTER_TYPE(bbdd_agent, std::string, false)
+REGISTER_TYPE(changes, std::string, false)
 
 #endif  // DSR_AGENT__ROS_TO_DSR_TYPES_HPP_
