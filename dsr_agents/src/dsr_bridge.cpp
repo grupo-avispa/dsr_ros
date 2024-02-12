@@ -79,11 +79,13 @@ void DSRBridge::get_params(){
 
 // ROS callbacks
 void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPtr msg){
+	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to edges topic");
 	// The message comes from the same name, ignore it
 	if (msg->header.frame_id == this->get_name()){
 		return;
 	}
-	if(msg->deleted == false){ // Create/Modify edge
+	// Create/Modify edge
+	if(msg->deleted == false){
 		createEdge(msg->parent, msg->child, msg->type);
 	}
 	else{ // Delete edge
@@ -95,6 +97,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 }
 
 void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPtr msg){
+	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to nodes topic");
 	// The message comes from the same name, ignore it
 	if (msg->header.frame_id == this->get_name()){
 		return;
@@ -102,21 +105,21 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 
 	// TODO: Actualizar a G_->get_node(msg->id) cuando se pueda modificar id del DSR
 	// Check case scenario
-	if(msg->deleted == false && msg->updated == false){ // add new node
+	if (msg->deleted == false && msg->updated == false){ // add new node
 		// Create node by type
 		auto new_node = setNodeType(msg->type, msg->name);
-		if (auto id = G_->insert_node(new_node); id.has_value()){
-			G_->add_or_modify_attrib_local<source_att>(new_node, static_cast<std::string>(this->get_name()));
-			modifyNodeAttribute(new_node, msg->attributes);
-		}else{
+		G_->add_or_modify_attrib_local<source_att>(new_node, static_cast<std::string>(this->get_name()));
+		modifyNodeAttribute(new_node, msg->attributes);
+		if (auto id = G_->insert_node(new_node); !id.has_value()){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert node");
 		}
 	}
-	else if(msg->deleted == false && msg->updated == true){ // update current node
+	else if (msg->deleted == false && msg->updated == true){ // update current node
 		// Get node by name
 		if (auto node = G_->get_node(msg->name); node.has_value()){
 			G_->add_or_modify_attrib_local<source_att>(node.value(), static_cast<std::string>(this->get_name()));
 			modifyNodeAttribute(node.value(), msg->attributes);
+			G_->update_node(node.value());
 		}else{
 			RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" << msg->id << "] doesn't exists");
 		}
@@ -256,10 +259,11 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 
 // DSR callbacks
 void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
+	RCLCPP_INFO(this->get_logger(), "Received a new node of type %s from DSR", type.c_str());
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
-		if(auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
-			(source.has_value() && source != this->get_name())){
+		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
+			(source.has_value() && source != this->get_name()) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Node msg;
 			msg.header.stamp = this->now();
@@ -284,6 +288,8 @@ void DSRBridge::node_updated(std::uint64_t id, const std::string &type){
 				msg.attributes.push_back(att);
 			}
 			// Publish the message
+			RCLCPP_INFO(this->get_logger(), 
+				"Sending new node of type %s to the ROS bridge", type.c_str());
 			node_to_ros_pub_->publish(msg);
 		}
 	}
@@ -293,7 +299,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if(auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
-			source.has_value() && source != this->get_name()){
+			(source.has_value() && source != this->get_name()) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Node msg;
 			msg.header.stamp = this->now();

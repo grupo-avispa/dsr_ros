@@ -48,7 +48,6 @@ def generate_launch_description():
     )
 
     # Prepare the nodes
-
     dsr_bridge_robot_node = Node(
         package = 'dsr_agents',
         namespace = '',
@@ -59,7 +58,7 @@ def generate_launch_description():
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['dsr_bridge:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['dsr_bridge_nuc:=', LaunchConfiguration('log-level')]]
     )
 
     return LaunchDescription([
