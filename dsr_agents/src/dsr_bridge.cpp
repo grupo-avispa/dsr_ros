@@ -165,40 +165,56 @@ std::optional<DSR::Node> DSRBridge::createNode(std::string nodeType, std::string
 	return newNode;
 }
 
-std::optional<DSR::Edge> DSRBridge::createEdge(uint64_t from, uint64_t to, const std::string &type){
+std::optional<DSR::Edge> DSRBridge::createEdge(std::string from, std::string to, const std::string &type){
 	DSR::Edge newEdge;
-	if (type == "stopped") {
-		newEdge = DSR::Edge::create<stopped_edge_type>(from, to);
-	} else if (type == "is") {
-		newEdge = DSR::Edge::create<is_edge_type>(from, to);
-	} else if (type == "is_performing") {
-		newEdge = DSR::Edge::create<is_performing_edge_type>(from, to);
-	} else if (type == "is_with") {
-		newEdge = DSR::Edge::create<is_with_edge_type>(from, to);
-	} else if (type == "interacting") {
-		newEdge = DSR::Edge::create<interacting_edge_type>(from, to);
-	} else if (type == "wants_to") {
-		newEdge = DSR::Edge::create<wants_to_edge_type>(from, to);
-	} else if (type == "finished") {
-		newEdge = DSR::Edge::create<finished_edge_type>(from, to);
-	} else if (type == "abort") {
-		newEdge = DSR::Edge::create<abort_edge_type>(from, to);
-	} else if (type == "aborting") {
-		newEdge = DSR::Edge::create<aborting_edge_type>(from, to);
-	} else if (type == "cancel") {
-		newEdge = DSR::Edge::create<cancel_edge_type>(from, to);
-	} else if (type == "failed") {
-		newEdge = DSR::Edge::create<failed_edge_type>(from, to);
-	} else if (type == "navigating") {
-		newEdge = DSR::Edge::create<navigating_edge_type>(from, to);
-	} else if (type == "rt") {
-		auto parent_node = G_->get_node(from);
-		rt_->insert_or_assign_edge_RT(parent_node.value(), to, 
-			{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
-		return {};
-	} else {
-		RCLCPP_ERROR_STREAM(this->get_logger(), "Edge type not valid");
-		return {};
+	auto parent_node = G_->get_node(from);
+	auto child_node = G_->get_node(to);
+	if (parent_node.has_value() && child_node.has_value()){
+		if (type == "stopped") {
+			newEdge = DSR::Edge::create<stopped_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "is") {
+			newEdge = DSR::Edge::create<is_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "is_performing") {
+			newEdge = DSR::Edge::create<is_performing_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "is_with") {
+			newEdge = DSR::Edge::create<is_with_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "interacting") {
+			newEdge = DSR::Edge::create<interacting_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "wants_to") {
+			newEdge = DSR::Edge::create<wants_to_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "finished") {
+			newEdge = DSR::Edge::create<finished_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "abort") {
+			newEdge = DSR::Edge::create<abort_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "aborting") {
+			newEdge = DSR::Edge::create<aborting_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "cancel") {
+			newEdge = DSR::Edge::create<cancel_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "failed") {
+			newEdge = DSR::Edge::create<failed_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "navigating") {
+			newEdge = DSR::Edge::create<navigating_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+		} else if (type == "rt") {
+			auto parent_node = G_->get_node(from);
+			rt_->insert_or_assign_edge_RT(parent_node.value(), to, 
+				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
+			return {};
+		} else {
+			RCLCPP_ERROR_STREAM(this->get_logger(), "Edge type not valid");
+			return {};
+		}
 	}
 	return newEdge;
 }
@@ -323,7 +339,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 }
 
 void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
-	RCLCPP_INFO(this->get_logger(), 
+	RCLCPP_DEBUG(this->get_logger(), 
 		"A node has with id [%d] has been modified in the DSR", id);
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){

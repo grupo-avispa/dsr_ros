@@ -54,7 +54,7 @@ class DSRBridge: public AgentNode{
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 
 		std::optional<DSR::Node> createNode(std::string nodeType, std::string nodeName);
-		std::optional<DSR::Edge> createEdge(uint64_t from, uint64_t to, const std::string &type);
+		std::optional<DSR::Edge> createEdge(std::string from, std::string to, const std::string &type);
 		void modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes);
 };
 
