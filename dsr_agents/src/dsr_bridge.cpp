@@ -441,18 +441,29 @@ void DSRBridge::node_deleted(const DSR::Node &node){
 
 void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
 	RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" << from << "->"  << to << "] of type [" 
-		<< edge_tag.c_str() << "] has been deleted");
-
-	// Create the message
-	dsr_interfaces::msg::Edge msg;
-	msg.header.stamp = this->now();
-	msg.header.frame_id = this->get_name();
-	msg.parent = from;
-	msg.child = to;
-	msg.type = edge_tag;
-	msg.deleted = true;
-	// Publish the message
-	edge_to_ros_pub_->publish(msg);
+		<< edge_tag.c_str() << "] has been deleted in the DSR");
+	
+	auto parent_node = G_->get_node(from);
+	auto child_node = G_->get_node(to);
+	auto edge = G_->get_edge(from, to, edge_tag);
+	if (parent_node.has_value() && child_node.has_value()){
+		if (auto source = G_->get_attrib_by_name<source_att>(edge.value()); 
+			(source.has_value() && source != this->get_name()) || !source.has_value()){
+			// Create the message
+			dsr_interfaces::msg::Edge msg;
+			msg.header.stamp = this->now();
+			msg.header.frame_id = this->get_name();
+			msg.parent = parent_node.value().name();
+			msg.child = child_node.value().name();
+			msg.type = edge_tag;
+			msg.deleted = true;
+			RCLCPP_DEBUG_STREAM(this->get_logger(), "The edge [" << parent_node.value().name() 
+				<< "->" << child_node.value().name() << "] of type [" 
+				<< edge_tag.c_str() << "] has been published to ROS");
+			// Publish the message
+			edge_to_ros_pub_->publish(msg);
+		}
+	}
 }
 
 int main(int argc, char** argv){
