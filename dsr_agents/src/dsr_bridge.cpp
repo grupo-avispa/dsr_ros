@@ -210,8 +210,8 @@ std::optional<DSR::Edge> DSRBridge::createEdge(std::string from, std::string to,
 			newEdge = DSR::Edge::create<navigating_edge_type>(
 				parent_node.value().id(), child_node.value().id());
 		} else if (type == "rt") {
-			/*rt_->insert_or_assign_edge_RT(parent_node.value().id(), child_node.value().id(), 
-				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});*/
+			rt_->insert_or_assign_edge_RT(parent_node.value(), child_node.value().id(), 
+				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
 			return {};
 		} else {
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Edge type not valid");
