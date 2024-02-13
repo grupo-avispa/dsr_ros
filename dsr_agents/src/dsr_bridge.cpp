@@ -86,7 +86,10 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	}
 	// Create / Modify edge
 	if (!msg->deleted){
-		createEdge(msg->parent, msg->child, msg->type);
+		auto new_edge = createEdge(msg->parent, msg->child, msg->type);
+		if (!G_->insert_or_assign_edge(new_edge.value())){
+			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert edge [" << msg->type << "]");
+		}
 	}
 	// Delete edge
 	else{
@@ -207,9 +210,8 @@ std::optional<DSR::Edge> DSRBridge::createEdge(std::string from, std::string to,
 			newEdge = DSR::Edge::create<navigating_edge_type>(
 				parent_node.value().id(), child_node.value().id());
 		} else if (type == "rt") {
-			auto parent_node = G_->get_node(from);
-			rt_->insert_or_assign_edge_RT(parent_node.value(), to, 
-				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
+			/*rt_->insert_or_assign_edge_RT(parent_node.value().id(), child_node.value().id(), 
+				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});*/
 			return {};
 		} else {
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Edge type not valid");
