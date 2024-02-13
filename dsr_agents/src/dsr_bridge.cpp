@@ -75,6 +75,14 @@ void DSRBridge::get_params(){
 	this->get_parameter("node_topic", node_topic_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter node_topic is set to: [%s]", node_topic_.c_str());
+	
+	nav2_util::declare_parameter_if_not_declared(this, "source", 
+		rclcpp::ParameterValue("robot"), 
+		rcl_interfaces::msg::ParameterDescriptor() 
+			.set__description("Physical machine"));
+	this->get_parameter("source", source_);
+	RCLCPP_INFO(this->get_logger(), 
+		"The parameter source is set to: [%s]", source_.c_str());
 }
 
 // ROS callbacks
@@ -87,8 +95,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	// Create / Modify edge
 	if (!msg->deleted){
 		auto new_edge = createEdge(msg->parent, msg->child, msg->type);
-		G_->add_or_modify_attrib_local<source_att>(new_edge.value(), 
-			static_cast<std::string>(this->get_name()));
+		G_->add_or_modify_attrib_local<source_att>(new_edge.value(),source_);
 		if (!G_->insert_or_assign_edge(new_edge.value())){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert edge [" << msg->type << "]");
 		}
@@ -114,7 +121,6 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 	if (!msg->deleted && !msg->updated){
 		// Create node by type
 		auto new_node = createNode(msg->type, msg->name);
-		G_->add_or_modify_attrib_local<source_att>(new_node.value(), static_cast<std::string>(this->get_name()));
 		modifyNodeAttribute(new_node.value(), msg->attributes);
 		if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert node");
@@ -124,7 +130,6 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 	else if (!msg->deleted && msg->updated){
 		// Get node by name
 		if (auto node = G_->get_node(msg->name); node.has_value()){
-			G_->add_or_modify_attrib_local<source_att>(node.value(), static_cast<std::string>(this->get_name()));
 			modifyNodeAttribute(node.value(), msg->attributes);
 			G_->update_node(node.value());
 		}else{
@@ -235,6 +240,8 @@ void DSRBridge::modifyNodeAttribute(DSR::Node & node, std::vector <std::string>&
 			G_->add_or_modify_attrib_local<result_code_att>(node, attributeValue);
 		} else if (attributeName == "number") {
 			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(attributeValue));
+		} else if (attributeName == "source") {
+			G_->add_or_modify_attrib_local<source_att>(node, attributeValue);
 		} else if (attributeName == "pos_x") {
 			G_->add_or_modify_attrib_local<pos_x_att>(node, std::stof(attributeValue));
 		} else if (attributeName == "pos_y") {
@@ -293,11 +300,11 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
-			(source.has_value() && source != this->get_name()) || !source.has_value()){
+			(source.has_value() && source == source_) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Node msg;
 			msg.header.stamp = this->now();
-			msg.header.frame_id = this->get_name();
+			msg.header.frame_id = source_;
 			msg.id = id;
 			msg.name = dsr_node.value().name();
 			msg.type = dsr_node.value().type();
@@ -348,11 +355,11 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
-			(source.has_value() && source != this->get_name()) || !source.has_value()){
+			(source.has_value() && source == source_) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Node msg;
 			msg.header.stamp = this->now();
-			msg.header.frame_id = this->get_name();
+			msg.header.frame_id = source_;
 			msg.id = id;
 			msg.name = dsr_node.value().name();
 			msg.type = dsr_node.value().type();
@@ -404,11 +411,11 @@ void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::st
 	auto edge = G_->get_edge(from, to, type);
 	if (parent_node.has_value() && child_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(edge.value()); 
-			(source.has_value() && source != this->get_name()) || !source.has_value()){
+			(source.has_value() && source == source_) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Edge msg;
 			msg.header.stamp = this->now();
-			msg.header.frame_id = this->get_name();
+			msg.header.frame_id = source_;
 			msg.parent = parent_node.value().name();
 			msg.child = child_node.value().name();
 			msg.type = type;
@@ -448,11 +455,11 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
 	auto edge = G_->get_edge(from, to, edge_tag);
 	if (parent_node.has_value() && child_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(edge.value()); 
-			(source.has_value() && source != this->get_name()) || !source.has_value()){
+			(source.has_value() && source == source_) || !source.has_value()){
 			// Create the message
 			dsr_interfaces::msg::Edge msg;
 			msg.header.stamp = this->now();
-			msg.header.frame_id = this->get_name();
+			msg.header.frame_id = source_;
 			msg.parent = parent_node.value().name();
 			msg.child = child_node.value().name();
 			msg.type = edge_tag;
