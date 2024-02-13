@@ -87,6 +87,8 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	// Create / Modify edge
 	if (!msg->deleted){
 		auto new_edge = createEdge(msg->parent, msg->child, msg->type);
+		G_->add_or_modify_attrib_local<source_att>(new_edge.value(), 
+			static_cast<std::string>(this->get_name()));
 		if (!G_->insert_or_assign_edge(new_edge.value())){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert edge [" << msg->type << "]");
 		}
@@ -395,16 +397,29 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 
 void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::string &type){
 	RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" << from << "->"  << to << "] of type [" 
-		<< type.c_str() << "] has been created");
-	// Create the message
-	dsr_interfaces::msg::Edge msg;
-	msg.header.stamp = this->now();
-	msg.header.frame_id = this->get_name();
-	msg.parent = from;
-	msg.child = to;
-	msg.type = type;
-	// Publish the message
-	edge_to_ros_pub_->publish(msg);
+		<< type.c_str() << "] has been created in the DSR");
+	
+	auto parent_node = G_->get_node(from);
+	auto child_node = G_->get_node(to);
+	auto edge = G_->get_edge(from, to, type);
+	if (parent_node.has_value() && child_node.has_value()){
+		if (auto source = G_->get_attrib_by_name<source_att>(edge.value()); 
+			(source.has_value() && source != this->get_name()) || !source.has_value()){
+			// Create the message
+			dsr_interfaces::msg::Edge msg;
+			msg.header.stamp = this->now();
+			msg.header.frame_id = this->get_name();
+			msg.parent = parent_node.value().name();
+			msg.child = child_node.value().name();
+			msg.type = type;
+			msg.deleted = false;
+			RCLCPP_DEBUG_STREAM(this->get_logger(), "The edge [" << parent_node.value().name() 
+				<< "->" << child_node.value().name() << "] of type [" 
+				<< type.c_str() << "] has been published to ROS");
+			// Publish the message
+			edge_to_ros_pub_->publish(msg);
+		}
+	}
 }
 
 void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
