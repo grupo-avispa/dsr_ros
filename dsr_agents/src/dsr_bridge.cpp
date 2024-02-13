@@ -89,13 +89,13 @@ void DSRBridge::get_params(){
 void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPtr msg){
 	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to edges topic");
 	// The message comes from the same name, ignore it
-	if (msg->header.frame_id == this->get_name()){
+	if (msg->header.frame_id == source_){
 		return;
 	}
 	// Create / Modify edge
 	if (!msg->deleted){
 		auto new_edge = createEdge(msg->parent, msg->child, msg->type);
-		G_->add_or_modify_attrib_local<source_att>(new_edge.value(),source_);
+		G_->add_or_modify_attrib_local<source_att>(new_edge.value(),msg->header.frame_id);
 		if (!G_->insert_or_assign_edge(new_edge.value())){
 			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert edge [" << msg->type << "]");
 		}
@@ -111,7 +111,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPtr msg){
 	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to nodes topic");
 	// The message comes from the same name, ignore it
-	if (msg->header.frame_id == this->get_name()){
+	if (msg->header.frame_id == source_){
 		return;
 	}
 
