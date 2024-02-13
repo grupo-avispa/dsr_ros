@@ -39,7 +39,7 @@ REGISTER_TYPE(battery_serial_number, std::string, false)
  * 
  */
 
-REGISTER_NODE_TYPE(planner)
+REGISTER_NODE_TYPE(brain)
 REGISTER_NODE_TYPE(navigation)
 REGISTER_NODE_TYPE(move)
 REGISTER_NODE_TYPE(say)
@@ -65,6 +65,7 @@ REGISTER_TYPE(priority, int, false)
 REGISTER_TYPE(result_code, std::string, false)
 REGISTER_TYPE(number, int, false)
 REGISTER_TYPE(source, std::string, false)
+REGISTER_TYPE(timestamp, int, false)
 
 // Navigation types
 REGISTER_TYPE(pose_x, float, false)
@@ -96,8 +97,6 @@ REGISTER_TYPE(skills_parameters, std::string, false)
 REGISTER_TYPE(menu, std::string, false)
 REGISTER_TYPE(reminder, std::string, false)
 REGISTER_TYPE(activities, std::string, false)
-REGISTER_TYPE(timestamp, int, false)
-
 
 // BBDD types
 REGISTER_TYPE(bbdd_agent, std::string, false)
