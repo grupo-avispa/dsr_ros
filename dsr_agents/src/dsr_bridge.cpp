@@ -109,7 +109,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 }
 
 void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPtr msg){
-	RCLCPP_INFO_ONCE(this->get_logger(), "Subscribed to nodes topic");
+	RCLCPP_INFO(this->get_logger(), "Subscribed to nodes topic from [%s]", msg->header.frame_id.c_str());
 	// The message comes from the same name, ignore it
 	if (msg->header.frame_id == source_){
 		return;
@@ -350,8 +350,10 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 }
 
 void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::string>& att_names){
+	static int count = 0;
+	RCLCPP_INFO(this->get_logger(), "Received a node with id [%d] from DSR", id++);
 	RCLCPP_DEBUG(this->get_logger(), 
-		"A node has with id [%d] has been modified in the DSR", id);
+		"A node has with id [%ld] has been modified in the DSR", id);
 	// Get the node from the DSR graph
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
@@ -365,36 +367,42 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 			msg.type = dsr_node.value().type();
 			msg.updated = true;
 			msg.deleted = false;
+			RCLCPP_DEBUG_STREAM(this->get_logger(), 
+				"The node [" << dsr_node.value().name() << "] from " << source_ 
+				<< " has been updated. Sending to ROS bridge.");
 			// Get all the attributes
-			for (const auto &attribute : dsr_node.value().attrs()){
-				std::string att_value;
-				switch (attribute.second.value().index()) {
-					case 0:
-						att_value = std::get<std::string>(attribute.second.value());
-						break;
-					case 1:
-						att_value = std::to_string(std::get<int32_t>(attribute.second.value()));
-						break;
-					case 2:
-						att_value = std::to_string(std::get<float>(attribute.second.value()));
-						break;
-					case 4:
-						att_value = std::get<bool>(attribute.second.value()) ? "true" : "false";
-						break;
-					case 6:
-						att_value = std::to_string(std::get<uint32_t>(attribute.second.value()));
-						break;
-					case 7:
-						att_value = std::to_string(std::get<uint64_t>(attribute.second.value()));
-						break;
-					case 8:
-						att_value = std::to_string(std::get<double>(attribute.second.value()));
-						break;
+			for (const auto &att_name : att_names){
+				auto search = dsr_node.value().attrs().find(att_name);
+				if (search != dsr_node.value().attrs().end()){
+					std::string att_value;
+					switch (search->second.value().index()) {
+						case 0:
+							att_value = std::get<std::string>(search->second.value());
+							break;
+						case 1:
+							att_value = std::to_string(std::get<int32_t>(search->second.value()));
+							break;
+						case 2:
+							att_value = std::to_string(std::get<float>(search->second.value()));
+							break;
+						case 4:
+							att_value = std::get<bool>(search->second.value()) ? "true" : "false";
+							break;
+						case 6:
+							att_value = std::to_string(std::get<uint32_t>(search->second.value()));
+							break;
+						case 7:
+							att_value = std::to_string(std::get<uint64_t>(search->second.value()));
+							break;
+						case 8:
+							att_value = std::to_string(std::get<double>(search->second.value()));
+							break;
+					}
+					msg.attributes.push_back(att_name);
+					msg.attributes.push_back(att_value);
+					RCLCPP_DEBUG(this->get_logger(), 
+						"Attribute [%s] = [%s]", att_name.c_str(), att_value.c_str());
 				}
-				msg.attributes.push_back(attribute.first);
-				msg.attributes.push_back(att_value);
-				RCLCPP_DEBUG(this->get_logger(), 
-					"Attribute [%s] = [%s]", attribute.first.c_str(), att_value.c_str());
 			}
 			// Publish the message
 			node_to_ros_pub_->publish(msg);
