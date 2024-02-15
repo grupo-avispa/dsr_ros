@@ -2,6 +2,8 @@
  * DSR BRIDGE ROS NODE
  *
  * Copyright (c) 2024 Alberto José Tudela Roldán <ajtudela@gmail.com>
+ * Copyright (c) 2024 Óscar Pons Fernández <oscarpf22@gmail.com>
+ * Copyright (c) 2024 José Galeas Merchan <>
  * 
  * This file is part of dsr_agents.
  * 
@@ -56,9 +58,15 @@ class DSRBridge: public AgentNode{
 		void node_deleted(const DSR::Node &node);
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 
-		std::optional<DSR::Node> createNode(std::string nodeType, std::string nodeName);
-		std::optional<DSR::Edge> createEdge(std::string from, std::string to, const std::string &type);
-		void modifyNodeAttribute(DSR::Node & node, std::vector <std::string>& attributes);
+		// Helper functions
+		std::optional<DSR::Node> create_dsr_node(std::string name, std::string type);
+		std::optional<DSR::Edge> create_dsr_edge(
+			std::string from, std::string to, const std::string &type);
+		dsr_interfaces::msg::Node create_msg_node(std::string name, std::string type);
+		dsr_interfaces::msg::Edge create_msg_edge(
+			std::uint64_t from, std::uint64_t to, const std::string &type);
+		void modify_node_attributes(DSR::Node & node, std::vector <std::string>& att_str);
+		std::string attribute_to_string(const DSR::Attribute &att);
 };
 
 #endif  // DSR_AGENT__DSR_BRIDGE_HPP_
