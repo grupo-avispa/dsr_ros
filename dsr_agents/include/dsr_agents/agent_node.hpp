@@ -64,6 +64,12 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::unique_ptr<DSR::RT_API> rt_;
 
 		/**
+		 * @brief Name of the physical machine.
+		 * 
+		 */
+		std::string source_;
+
+		/**
 		 * @brief Add a node with an edge into the DSR graph with the given name, 
 		 * the name of the parent or the child and the 'direction' of the edge.
 		 * By default, all nodes have a low priority (0).
@@ -353,12 +359,6 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * 
 		 */
 		std::string dsr_input_file_;
-
-		/**
-		 * @brief Name of the physical machine.
-		 * 
-		 */
-		std::string source_;
 
 		/**
 		 * @brief Initialize ROS parameters.
