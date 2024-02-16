@@ -40,9 +40,6 @@ class DSRBridge: public AgentNode{
 		rclcpp::Publisher<dsr_interfaces::msg::Node>::SharedPtr node_to_ros_pub_;
 		std::string edge_topic_, node_topic_;
 
-		// Physical machine source name
-		std::string source_;
-
 		void get_params();
 
 		// ROS callbacks

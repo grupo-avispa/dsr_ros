@@ -65,6 +65,12 @@ void AgentNode::get_common_params(){
 	this->get_parameter("dsr_input_file", dsr_input_file_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter dsr_input_file is set to: [%s]", dsr_input_file_.c_str());
+
+	// Other parameters
+	nav2_util::declare_parameter_if_not_declared(this, "source", rclcpp::ParameterValue("robot"), 
+		rcl_interfaces::msg::ParameterDescriptor()
+			.set__description("Physical source of the agent"));
+	this->get_parameter("source", source_);
 }
 
 void AgentNode::update_rt_attributes(DSR::Node & from, DSR::Node & to, 

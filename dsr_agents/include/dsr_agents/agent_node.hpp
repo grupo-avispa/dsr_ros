@@ -355,6 +355,12 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::string dsr_input_file_;
 
 		/**
+		 * @brief Name of the physical machine.
+		 * 
+		 */
+		std::string source_;
+
+		/**
 		 * @brief Initialize ROS parameters.
 		 * 
 		 */

@@ -77,14 +77,6 @@ void DSRBridge::get_params(){
 	this->get_parameter("node_topic", node_topic_);
 	RCLCPP_INFO(this->get_logger(), 
 		"The parameter node_topic is set to: [%s]", node_topic_.c_str());
-	
-	nav2_util::declare_parameter_if_not_declared(this, "source", 
-		rclcpp::ParameterValue("robot"), 
-		rcl_interfaces::msg::ParameterDescriptor() 
-			.set__description("Physical machine"));
-	this->get_parameter("source", source_);
-	RCLCPP_INFO(this->get_logger(), 
-		"The parameter source is set to: [%s]", source_.c_str());
 }
 
 // ROS callbacks
