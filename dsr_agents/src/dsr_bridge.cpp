@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2024 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * Copyright (c) 2024 Óscar Pons Fernández <oscarpf22@gmail.com>
- * Copyright (c) 2024 José Galeas Merchan <>
+ * Copyright (c) 2024 José Galeas Merchan <jgaleas1999@gmail.com>
  * 
  * This file is part of dsr_agents.
  * 
@@ -93,7 +93,9 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 		// Add the source attribute with the physical machine name
 		G_->add_or_modify_attrib_local<source_att>(new_edge.value(), msg->header.frame_id);
 		if (!G_->insert_or_assign_edge(new_edge.value())){
-			RCLCPP_ERROR_STREAM(this->get_logger(), "Can't insert edge [" << msg->type << "]");
+			RCLCPP_ERROR_STREAM(this->get_logger(), "Error inserting [" 
+				<< msg->parent.c_str() << "->" << msg->child.c_str() << "] edge of type [" 
+				<< msg->type.c_str() << "] in the DSR");
 		}
 	}
 	// Delete an edge
@@ -110,22 +112,20 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 		return;
 	}
 
-	// Create a new node
-	if (!msg->deleted && !msg->updated){
-		auto new_node = create_dsr_node(msg->name, msg->type);
-		modify_node_attributes(new_node.value(), msg->attributes);
-		if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
-			RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", msg->name.c_str());
-		}
-	}
-	// Update the current node
-	else if (!msg->deleted && msg->updated){
+	// Create or update the current node
+	if (!msg->deleted){
 		// Get node by name
 		if (auto node = G_->get_node(msg->name); node.has_value()){
 			modify_node_attributes(node.value(), msg->attributes);
-			G_->update_node(node.value());
+			if (!G_->update_node(node.value())){
+				RCLCPP_ERROR(this->get_logger(), "Error updating [%s] node", msg->name.c_str());
+			}
 		}else{
-			RCLCPP_ERROR(this->get_logger(), "Error updating [%s] node", msg->name.c_str());
+			auto new_node = create_dsr_node(msg->name, msg->type);
+			modify_node_attributes(new_node.value(), msg->attributes);
+			if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
+				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", msg->name.c_str());
+			}
 		}
 	}
 	// Delete the node
@@ -143,7 +143,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 	// Filter the edges that comes from the same source
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
-			(source.has_value() && source == source_) || !source.has_value()){
+			(source.has_value() && source == source_)){
 			// Create the message
 			auto node_msg = create_msg_node(dsr_node.value().name(), dsr_node.value().type());
 			// Get all the attributes
@@ -152,7 +152,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 				node_msg.attributes.push_back(att_name);
 				node_msg.attributes.push_back(att_str);
 				RCLCPP_DEBUG(this->get_logger(), 
-					"Attribute [%s] = [%s]", att_name.c_str(), att_str.c_str());
+					"Attribute node [%s] = [%s]", att_name.c_str(), att_str.c_str());
 			}
 			// Publish the message
 			node_to_ros_pub_->publish(node_msg);
@@ -167,7 +167,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 	// Filter the edges that comes from the same source
 	if (auto dsr_node = G_->get_node(id); dsr_node.has_value()){
 		if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value()); 
-			(source.has_value() && source.value() == source_) || !source.has_value()){
+			(source.has_value() && source.value() == source_)){
 			// Create the message
 			auto node_msg = create_msg_node(dsr_node.value().name(), dsr_node.value().type());
 			// Mark the node as updated
@@ -180,7 +180,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 					node_msg.attributes.push_back(att_name);
 					node_msg.attributes.push_back(att_value);
 					RCLCPP_DEBUG(this->get_logger(), 
-						"Attribute [%s] = [%s]", att_name.c_str(), att_value.c_str());
+						"Attribute edge [%s] = [%s]", att_name.c_str(), att_value.c_str());
 				}
 			}
 			// Publish the message
@@ -194,22 +194,58 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 
 void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::string &type){
 	// Filter the edges that comes from the same source
-	auto edge = G_->get_edge(from, to, type);
-	auto source = G_->get_attrib_by_name<source_att>(edge.value()); 
-	if ((source.has_value() && source.value() == source_) || !source.has_value()){
-		// Create the message
-		auto edge_msg = create_msg_edge(from, to, type);
-		// Publish the message
-		edge_to_ros_pub_->publish(edge_msg);
-		RCLCPP_DEBUG_STREAM(this->get_logger(), "The edge [" 
-			<< edge_msg.parent.c_str() << "->" 
-			<< edge_msg.child.c_str() << "] of type ["
-			<< edge_msg.type.c_str() << "] has been created in the DSR");
+	if (auto dsr_edge = G_->get_edge(from, to, type); dsr_edge.has_value()){
+		if (auto source = G_->get_attrib_by_name<source_att>(dsr_edge.value()); 
+			(source.has_value() && source.value() == source_)){
+			// Create the message
+			auto edge_msg = create_msg_edge(from, to, type);
+			// Get all the attributes
+			for (const auto& [att_name, att_value] : dsr_edge.value().attrs()){
+				std::string att_str = attribute_to_string(att_value);
+				edge_msg.attributes.push_back(att_name);
+				edge_msg.attributes.push_back(att_str);
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Attribute edge [%s] = [%s]", att_name.c_str(), att_str.c_str());
+			}
+			// Publish the message
+			edge_to_ros_pub_->publish(edge_msg);
+			RCLCPP_DEBUG_STREAM(this->get_logger(), "The edge [" 
+				<< edge_msg.parent.c_str() << "->" 
+				<< edge_msg.child.c_str() << "] of type ["
+				<< edge_msg.type.c_str() << "] has been created in the DSR");
+		}
 	}
 }
 
 void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
 	const std::string &type, const std::vector<std::string>& att_names){
+	// Filter the edges that comes from the same source
+	if (auto dsr_edge = G_->get_edge(from, to, type); dsr_edge.has_value()){
+		if (auto source = G_->get_attrib_by_name<source_att>(dsr_edge.value()); 
+			(source.has_value() && source.value() == source_)){
+			// Create the message
+			auto edge_msg = create_msg_edge(from, to, type);
+			// Mark the node as updated
+			edge_msg.updated = true;
+			// Get all the updated attributes
+			for (const auto &att_name : att_names){
+				auto search = dsr_edge.value().attrs().find(att_name);
+				if (search != dsr_edge.value().attrs().end()){
+					std::string att_value = attribute_to_string(search->second);
+					edge_msg.attributes.push_back(att_name);
+					edge_msg.attributes.push_back(att_value);
+					RCLCPP_DEBUG(this->get_logger(), 
+						"Attribute edge [%s] = [%s]", att_name.c_str(), att_value.c_str());
+				}
+			}
+			// Publish the message
+			edge_to_ros_pub_->publish(edge_msg);
+			RCLCPP_DEBUG_STREAM(this->get_logger(), "Updated edge [" 
+				<< edge_msg.parent.c_str() << "->" 
+				<< edge_msg.child.c_str() << "] of type ["
+				<< edge_msg.type.c_str() << "] successfully in the DSR");
+		}
+	}
 }
 
 void DSRBridge::node_deleted(const DSR::Node &node){
@@ -220,7 +256,8 @@ void DSRBridge::node_deleted(const DSR::Node &node){
 	// Publish the message
 	node_to_ros_pub_->publish(node_msg);
 	RCLCPP_DEBUG_STREAM(this->get_logger(), 
-		"The node [" << node.name() << "] of type [" << node.type() << "] has been deleted in the DSR");
+		"The node [" << node.name() << "] of type [" 
+		<< node.type() << "] has been deleted in the DSR");
 }
 
 void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
@@ -241,6 +278,8 @@ std::optional<DSR::Node> DSRBridge::create_dsr_node(std::string name, std::strin
 	DSR::Node new_node;
 	if (type == "robot") {
 		new_node = DSR::Node::create<robot_node_type>(name);
+	} else if (type == "transform") {
+		new_node = DSR::Node::create<transform_node_type>(name);
 	} else if (type == "battery") {
 		new_node = DSR::Node::create<battery_node_type>(name);
 	} else if (type == "person") {
@@ -308,7 +347,7 @@ std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
 		} else if (type == "navigating") {
 			new_edge = DSR::Edge::create<navigating_edge_type>(
 				parent_node.value().id(), child_node.value().id());
-		} else if (type == "rt") {
+		} else if (type == "RT") {
 			rt_->insert_or_assign_edge_RT(parent_node.value(), child_node.value().id(), 
 				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
 			return {};
@@ -356,22 +395,26 @@ void DSRBridge::modify_node_attributes(DSR::Node & node, std::vector<std::string
 		DSR::Attribute::get_valtype(att_value);
 	}*/
 
-	for (unsigned int i = 0; i <= att_str.size() / 2; i += 2){
+	for (unsigned int i = 0; i < att_str.size(); i+=2){
 		std::string att_name = att_str[i];
 		std::string att_value = att_str[i+1];
 		// General
-		if (att_name == "priority") {
-			G_->add_or_modify_attrib_local<priority_att>(node, std::stoi(att_value));
-		} else if (att_name == "result_code") {
-			G_->add_or_modify_attrib_local<result_code_att>(node, att_value);
-		} else if (att_name == "number") {
-			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(att_value));
-		} else if (att_name == "source") {
-			G_->add_or_modify_attrib_local<source_att>(node, att_value);
+		if (att_name == "level") {
+			G_->add_or_modify_attrib_local<level_att>(node, std::stoi(att_value));
+		} else if (att_name == "parent") {
+			G_->add_or_modify_attrib_local<parent_att>(node, std::stoul(att_value));
 		} else if (att_name == "pos_x") {
 			G_->add_or_modify_attrib_local<pos_x_att>(node, std::stof(att_value));
 		} else if (att_name == "pos_y") {
 			G_->add_or_modify_attrib_local<pos_y_att>(node, std::stof(att_value));
+		} else if (att_name == "number") {
+			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(att_value));
+		} else if (att_name == "priority") {
+			G_->add_or_modify_attrib_local<priority_att>(node, std::stoi(att_value));
+		} else if (att_name == "source") {
+			G_->add_or_modify_attrib_local<source_att>(node, att_value);
+		} else if (att_name == "result_code") {
+			G_->add_or_modify_attrib_local<result_code_att>(node, att_value);
 		// Navigation
 		} else if (att_name == "pose_x") {
 			G_->add_or_modify_attrib_local<pose_x_att>(node, std::stof(att_value));
@@ -416,6 +459,8 @@ void DSRBridge::modify_node_attributes(DSR::Node & node, std::vector<std::string
 			RCLCPP_ERROR(this->get_logger(), "Error modifying attribute [%s]", att_name.c_str());
 			return;
 		}
+		RCLCPP_DEBUG(this->get_logger(), 
+			"Updating attribute [%s] = [%s]", att_name.c_str(), att_value.c_str());
 	}
 }
 

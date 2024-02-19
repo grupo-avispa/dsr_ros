@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2024 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * Copyright (c) 2024 Óscar Pons Fernández <oscarpf22@gmail.com>
- * Copyright (c) 2024 José Galeas Merchan <>
+ * Copyright (c) 2024 José Galeas Merchan <jgaleas1999@gmail.com>
  * 
  * This file is part of dsr_agents.
  * 
