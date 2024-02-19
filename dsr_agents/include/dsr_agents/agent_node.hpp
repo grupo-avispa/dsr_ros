@@ -127,6 +127,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 
 		/**
 		 * @brief Add an edge into the DSR graph with the given parent and child nodes names.
+		 * By default, all edges have the source attribute set to the name of the physical machine.
 		 * 
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param from Name of the parent DSR node.
@@ -141,6 +142,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 				// Create the edge
 				auto new_edge = DSR::Edge::create<EDGE_TYPE>(parent_node.value().id(), 
 					child_node.value().id());
+				G_->add_or_modify_attrib_local<source_att>(new_edge, source_);
 				// Insert the edge into the DSR graph
 				if (G_->insert_or_assign_edge(new_edge)){
 					RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
@@ -161,6 +163,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 
 		/**
 		 * @brief Add an edge into the DSR graph with the given parent and child nodes id.
+		 * By default, all edges have the source attribute set to the name of the physical machine.
 		 * 
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param from Id of the parent DSR node.
@@ -174,6 +177,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 			if (parent_node.has_value() && child_node.has_value()){
 				// Create the edge
 				auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
+				G_->add_or_modify_attrib_local<source_att>(new_edge, source_);
 				// Insert the edge into the DSR graph
 				if (G_->insert_or_assign_edge(new_edge)){
 					RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
@@ -254,6 +258,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 		/**
 		 * @brief Replace an edge into the DSR graph with the given parent and child nodes id and
 		 * the old edge type. This method previously checks if the parent and child nodes exist.
+		 * By default, all edges have the source attribute set to the name of the physical machine.
 		 * 
 		 * @tparam EDGE_TYPE The type of the new DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param from Id of the parent DSR node.
@@ -273,6 +278,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 					if (G_->delete_edge(from, to, old_edge)){
 						// Create the new edge
 						auto new_edge = DSR::Edge::create<EDGE_TYPE>(from, to);
+						G_->add_or_modify_attrib_local<source_att>(new_edge, source_);
 						// Insert the new edge into the DSR graph
 						if (G_->insert_or_assign_edge(new_edge)){
 							RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" 
