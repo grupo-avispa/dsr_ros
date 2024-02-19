@@ -260,7 +260,7 @@ std::optional<DSR::Node> DSRBridge::create_dsr_node(std::string name, std::strin
 	} else if (type == "update_bbdd") {
 		new_node = DSR::Node::create<update_bbdd_node_type>(name);
 	} else {
-		RCLCPP_ERROR_STREAM(this->get_logger(), "Node with type '" << name << "' not valid.");
+		RCLCPP_ERROR(this->get_logger(), "Error creating node with type [%s]", type.c_str());
 		return{};
 	}
 	return new_node;
@@ -313,7 +313,7 @@ std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
 				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
 			return {};
 		} else {
-			RCLCPP_ERROR_STREAM(this->get_logger(), "Edge type not valid");
+			RCLCPP_ERROR(this->get_logger(), "Error creating edge with type [%s]", type.c_str());
 			return {};
 		}
 	}
@@ -413,8 +413,7 @@ void DSRBridge::modify_node_attributes(DSR::Node & node, std::vector<std::string
 		}else if (att_name == "timestamp") {
 			G_->add_or_modify_attrib_local<timestamp_att>(node, std::stoi(att_value));
 		}else {
-			RCLCPP_ERROR_STREAM(this->get_logger(), 
-				"Attribute with type '" << att_name << "' not valid." );
+			RCLCPP_ERROR(this->get_logger(), "Error modifying attribute [%s]", att_name.c_str());
 			return;
 		}
 	}

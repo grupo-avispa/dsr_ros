@@ -71,6 +71,7 @@ void AgentNode::get_common_params(){
 		rcl_interfaces::msg::ParameterDescriptor()
 			.set__description("Physical source of the agent"));
 	this->get_parameter("source", source_);
+	RCLCPP_INFO(this->get_logger(), "The parameter source is set to: [%s]", source_.c_str());
 }
 
 void AgentNode::update_rt_attributes(DSR::Node & from, DSR::Node & to, 

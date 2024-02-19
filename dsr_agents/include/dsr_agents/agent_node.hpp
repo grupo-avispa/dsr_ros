@@ -72,7 +72,8 @@ class AgentNode: public QObject, public rclcpp::Node{
 		/**
 		 * @brief Add a node with an edge into the DSR graph with the given name, 
 		 * the name of the parent or the child and the 'direction' of the edge.
-		 * By default, all nodes have a low priority (0).
+		 * By default, all nodes have a low priority (0) and the source attribute is set 
+		 * to the name of the physical machine.
 		 * 
 		 * @tparam NODE_TYPE The type of the DSR node. Defined in ros_to_dsr_types.hpp.
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
@@ -94,6 +95,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 			int level_attribute_value = relative_node.has_value() ? 
 				G_->get_node_level(relative_node.value()).value() + 1 : 0;
 			G_->add_or_modify_attrib_local<priority_att>(new_node, 0);
+			G_->add_or_modify_attrib_local<source_att>(new_node, source_);
 			G_->add_or_modify_attrib_local<parent_att>(new_node, relative_attribute_value);
 			G_->add_or_modify_attrib_local<level_att>(new_node, level_attribute_value);
 			// Draw the node in the graph: by level if RT edge and parent, random if not
