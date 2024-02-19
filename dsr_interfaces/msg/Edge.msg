@@ -5,4 +5,5 @@ string parent
 string child
 string type
 string[] attributes
+bool updated
 bool deleted
