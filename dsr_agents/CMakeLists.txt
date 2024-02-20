@@ -58,6 +58,15 @@ set(SOURCES
   src/qt_executor.cpp
 )
 
+# Set common dependencies
+set(COMMON_DEPENDENCIES
+  rclcpp
+  Eigen3
+  Qt5
+  dsr_interfaces
+  nav2_util
+)
+
 ## Qt Moc
 qt5_wrap_cpp(agent_moc ${HEADERS}
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
@@ -70,11 +79,7 @@ qt5_wrap_cpp(agent_moc ${HEADERS}
 # Executable node
 add_executable(topic_agent ${SOURCES} src/agents/topic_agent.cpp)
 ament_target_dependencies(topic_agent
-  rclcpp
-  Eigen3
-  Qt5
-  dsr_interfaces
-  nav2_util
+  ${COMMON_DEPENDENCIES}
   sensor_msgs
 )
 target_link_libraries(topic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
@@ -87,11 +92,7 @@ target_sources(topic_agent PRIVATE ${agent_moc})
 # Executable node
 add_executable(nav_agent ${SOURCES} src/agents/nav_agent.cpp)
 ament_target_dependencies(nav_agent
-  rclcpp
-  Eigen3
-  Qt5
-  dsr_interfaces
-  nav2_util
+  ${COMMON_DEPENDENCIES}
   geometry_msgs
   tf2
   auto_docking_interfaces
@@ -107,11 +108,7 @@ target_sources(nav_agent PRIVATE ${agent_moc})
 # Executable node
 add_executable(person_agent ${SOURCES} src/agents/person_agent.cpp)
 ament_target_dependencies(person_agent
-  rclcpp
-  Eigen3
-  Qt5
-  dsr_interfaces
-  nav2_util
+  ${COMMON_DEPENDENCIES}
   geometry_msgs
   tf2
   vision_msgs
@@ -126,11 +123,7 @@ target_sources(person_agent PRIVATE ${agent_moc})
 # Executable node
 add_executable(tf_agent ${SOURCES} src/agents/tf_agent.cpp)
 ament_target_dependencies(tf_agent
-  rclcpp
-  Eigen3
-  Qt5
-  dsr_interfaces
-  nav2_util
+  ${COMMON_DEPENDENCIES}
   geometry_msgs
   tf2_msgs
   tf2_sensor_msgs
@@ -158,11 +151,7 @@ target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
 # Executable node
 add_executable(dsr_bridge ${SOURCES} src/dsr_bridge.cpp)
 ament_target_dependencies(dsr_bridge
-  rclcpp
-  Eigen3
-  Qt5
-  dsr_interfaces
-  nav2_util
+  ${COMMON_DEPENDENCIES}
   geometry_msgs
 )
 target_link_libraries(dsr_bridge ${DSR_LIBRARIES} ${QT_LIBRARIES})
