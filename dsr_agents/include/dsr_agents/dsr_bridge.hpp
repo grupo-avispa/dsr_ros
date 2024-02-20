@@ -62,7 +62,8 @@ class DSRBridge: public AgentNode{
 		dsr_interfaces::msg::Node create_msg_node(std::string name, std::string type);
 		dsr_interfaces::msg::Edge create_msg_edge(
 			std::uint64_t from, std::uint64_t to, const std::string &type);
-		void modify_node_attributes(DSR::Node & node, std::vector <std::string>& att_str);
+		template <typename TYPE>
+		void modify_attributes(TYPE & elem, std::vector <std::string>& att_str);
 		std::string attribute_to_string(const DSR::Attribute &att);
 };
 

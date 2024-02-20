@@ -87,15 +87,23 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	if (msg->header.frame_id == source_){
 		return;
 	}
-	// Create or update and edge
+	// Create or update the current edge
 	if (!msg->deleted){
-		auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type);
-		// Add the source attribute with the physical machine name
-		G_->add_or_modify_attrib_local<source_att>(new_edge.value(), msg->header.frame_id);
-		if (!G_->insert_or_assign_edge(new_edge.value())){
-			RCLCPP_ERROR_STREAM(this->get_logger(), "Error inserting [" 
-				<< msg->parent.c_str() << "->" << msg->child.c_str() << "] edge of type [" 
-				<< msg->type.c_str() << "] in the DSR");
+		if (auto edge = G_->get_edge(msg->parent, msg->child, msg->type); edge.has_value()){
+			modify_attributes(edge.value(), msg->attributes);
+			if (!G_->insert_or_assign_edge(edge.value())) {
+				RCLCPP_ERROR_STREAM(this->get_logger(), "Error updating [" 
+					<< msg->parent.c_str() << "->" << msg->child.c_str() << "] edge of type [" 
+					<< msg->type.c_str() << "] in the DSR");
+			}
+		}else{
+			auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type);
+			modify_attributes(new_edge.value(), msg->attributes);
+			if (!G_->insert_or_assign_edge(new_edge.value())){
+				RCLCPP_ERROR_STREAM(this->get_logger(), "Error inserting [" 
+					<< msg->parent.c_str() << "->" << msg->child.c_str() << "] edge of type [" 
+					<< msg->type.c_str() << "] in the DSR");
+			}
 		}
 	}
 	// Delete an edge
@@ -114,15 +122,14 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 
 	// Create or update the current node
 	if (!msg->deleted){
-		// Get node by name
 		if (auto node = G_->get_node(msg->name); node.has_value()){
-			modify_node_attributes(node.value(), msg->attributes);
+			modify_attributes(node.value(), msg->attributes);
 			if (!G_->update_node(node.value())){
 				RCLCPP_ERROR(this->get_logger(), "Error updating [%s] node", msg->name.c_str());
 			}
 		}else{
 			auto new_node = create_dsr_node(msg->name, msg->type);
-			modify_node_attributes(new_node.value(), msg->attributes);
+			modify_attributes(new_node.value(), msg->attributes);
 			if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
 				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", msg->name.c_str());
 			}
@@ -381,12 +388,14 @@ dsr_interfaces::msg::Edge DSRBridge::create_msg_edge(
 		edge_msg.parent = parent_node.value().name();
 		edge_msg.child = child_node.value().name();
 		edge_msg.type = type;
+		edge_msg.updated = false;
 		edge_msg.deleted = false;
 	}
 	return edge_msg;
 }
 
-void DSRBridge::modify_node_attributes(DSR::Node & node, std::vector<std::string>& att_str){
+template <typename TYPE>
+void DSRBridge::modify_attributes(TYPE & elem, std::vector <std::string>& att_str){
 	/*std::map<std::string, DSR::Attribute> attributes;
 	for (unsigned int i = 0; i <= att_str.size() / 2; i += 2){
 		std::string att_name = att_str[i];
@@ -400,61 +409,61 @@ void DSRBridge::modify_node_attributes(DSR::Node & node, std::vector<std::string
 		std::string att_value = att_str[i+1];
 		// General
 		if (att_name == "level") {
-			G_->add_or_modify_attrib_local<level_att>(node, std::stoi(att_value));
+			G_->add_or_modify_attrib_local<level_att>(elem, std::stoi(att_value));
 		} else if (att_name == "parent") {
-			G_->add_or_modify_attrib_local<parent_att>(node, std::stoul(att_value));
+			G_->add_or_modify_attrib_local<parent_att>(elem, std::stoul(att_value));
 		} else if (att_name == "pos_x") {
-			G_->add_or_modify_attrib_local<pos_x_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<pos_x_att>(elem, std::stof(att_value));
 		} else if (att_name == "pos_y") {
-			G_->add_or_modify_attrib_local<pos_y_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<pos_y_att>(elem, std::stof(att_value));
 		} else if (att_name == "number") {
-			G_->add_or_modify_attrib_local<number_att>(node, std::stoi(att_value));
+			G_->add_or_modify_attrib_local<number_att>(elem, std::stoi(att_value));
 		} else if (att_name == "priority") {
-			G_->add_or_modify_attrib_local<priority_att>(node, std::stoi(att_value));
+			G_->add_or_modify_attrib_local<priority_att>(elem, std::stoi(att_value));
 		} else if (att_name == "source") {
-			G_->add_or_modify_attrib_local<source_att>(node, att_value);
+			G_->add_or_modify_attrib_local<source_att>(elem, att_value);
 		} else if (att_name == "result_code") {
-			G_->add_or_modify_attrib_local<result_code_att>(node, att_value);
+			G_->add_or_modify_attrib_local<result_code_att>(elem, att_value);
 		// Navigation
 		} else if (att_name == "pose_x") {
-			G_->add_or_modify_attrib_local<pose_x_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<pose_x_att>(elem, std::stof(att_value));
 		} else if (att_name == "pose_y") {
-			G_->add_or_modify_attrib_local<pose_y_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<pose_y_att>(elem, std::stof(att_value));
 		} else if (att_name == "pose_angle") {
-			G_->add_or_modify_attrib_local<pose_angle_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<pose_angle_att>(elem, std::stof(att_value));
 		} else if (att_name == "goal_x") {
-			G_->add_or_modify_attrib_local<goal_x_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<goal_x_att>(elem, std::stof(att_value));
 		} else if (att_name == "goal_y") {
-			G_->add_or_modify_attrib_local<goal_y_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<goal_y_att>(elem, std::stof(att_value));
 		} else if (att_name == "goal_angle") {
-			G_->add_or_modify_attrib_local<goal_angle_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<goal_angle_att>(elem, std::stof(att_value));
 		} else if (att_name == "zone") {
-			G_->add_or_modify_attrib_local<zone_att>(node, att_value);
+			G_->add_or_modify_attrib_local<zone_att>(elem, att_value);
 		} else if (att_name == "zones") {
-			G_->add_or_modify_attrib_local<zones_att>(node, att_value);
+			G_->add_or_modify_attrib_local<zones_att>(elem, att_value);
 		// Play / say
 		} else if (att_name == "text") {
-			G_->add_or_modify_attrib_local<text_att>(node, att_value);
+			G_->add_or_modify_attrib_local<text_att>(elem, att_value);
 		// Show
 		} else if (att_name == "interface") {
-			G_->add_or_modify_attrib_local<interface_att>(node, att_value);
+			G_->add_or_modify_attrib_local<interface_att>(elem, att_value);
 		// Battery
 		} else if (att_name == "battery_percentage") {
-			G_->add_or_modify_attrib_local<battery_percentage_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<battery_percentage_att>(elem, std::stof(att_value));
 		} else if (att_name == "battery_power_supply_status") {
-			G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node, att_value);
+			G_->add_or_modify_attrib_local<battery_power_supply_status_att>(elem, att_value);
 		// Use case
 		} else if (att_name == "use_case_id") {
-			G_->add_or_modify_attrib_local<use_case_id_att>(node, att_value);
+			G_->add_or_modify_attrib_local<use_case_id_att>(elem, att_value);
 		// Person
 		} else if (att_name == "identifier") {
-			G_->add_or_modify_attrib_local<identifier_att>(node, att_value);
+			G_->add_or_modify_attrib_local<identifier_att>(elem, att_value);
 		} else if (att_name == "safe_distance") {
-			G_->add_or_modify_attrib_local<safe_distance_att>(node, std::stof(att_value));
+			G_->add_or_modify_attrib_local<safe_distance_att>(elem, std::stof(att_value));
 		} else if (att_name == "menu") {
-			G_->add_or_modify_attrib_local<menu_att>(node, att_value);
+			G_->add_or_modify_attrib_local<menu_att>(elem, att_value);
 		}else if (att_name == "timestamp") {
-			G_->add_or_modify_attrib_local<timestamp_att>(node, std::stoi(att_value));
+			G_->add_or_modify_attrib_local<timestamp_att>(elem, std::stoi(att_value));
 		}else {
 			RCLCPP_ERROR(this->get_logger(), "Error modifying attribute [%s]", att_name.c_str());
 			return;
@@ -466,20 +475,43 @@ void DSRBridge::modify_node_attributes(DSR::Node & node, std::vector<std::string
 
 std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
 	switch (att.value().index()) {
-		case 0:
+		case 0:{
 			return std::get<std::string>(att.value());
-		case 1:
+		}
+		case 1:{
 			return std::to_string(std::get<int32_t>(att.value()));
-		case 2:
+		}
+		case 2:{
 			return std::to_string(std::get<float>(att.value()));
-		case 4:
+		}
+		case 3:{
+			std::string att_str;
+			for (const auto &value: std::get<std::vector<float>>(att.value())){
+				att_str = std::to_string(value) + std::string(";");
+			}
+			att_str.pop_back();
+			return att_str;
+		}
+		case 4:{
 			return std::get<bool>(att.value()) ? "true" : "false";
-		case 6:
+		}
+		case 5:{
+			std::string att_str;
+			for (const auto &value: std::get<std::vector<uint8_t>>(att.value())){
+				att_str = std::to_string(value) + std::string(";");
+			}
+			att_str.pop_back();
+			return att_str;
+		}
+		case 6:{
 			return std::to_string(std::get<uint32_t>(att.value()));
-		case 7:
+		}
+		case 7:{
 			return std::to_string(std::get<uint64_t>(att.value()));
-		case 8:
+		}
+		case 8:{
 			return std::to_string(std::get<double>(att.value()));
+		}
 	}
 }
 
