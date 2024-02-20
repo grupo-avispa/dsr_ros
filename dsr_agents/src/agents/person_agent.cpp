@@ -96,11 +96,11 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 			});
 
 		// If the person is not in the DSR graph, add them to the DSR graph
-		if (it == person_nodes.end() && !person_id.empty() ){
+		if (it == person_nodes.end() ){
 			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
 			if (!std::isdigit(person_id[0])){ 
 				auto person_node = add_node_with_edge<person_node_type, is_with_edge_type>(
-					"person", "robot", false);
+					person_id, "robot", false);
 				if (person_node.has_value()){
 					// Add attributes to the node
 					G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
@@ -136,11 +136,8 @@ void PersonAgent::timer_callback(){
 		rclcpp::Time now = this->get_clock()->now();
 		auto timestamp = G_->get_attrib_by_name<timestamp_att>(person);
 		if (timestamp.has_value() && (now.seconds() - timestamp.value()) >= timeout_){
-			if (auto person_node = G_->get_node(person.id()); person_node.has_value()){
+			if (auto iw_edge = G_->get_edge("robot", person.name(), "is_with"); !iw_edge.has_value()){
 				G_->delete_node(person);
-			}else{
-				RCLCPP_ERROR_STREAM(this->get_logger(), "The node [" 
-					<< person.id() << "] doesn't exists");
 			}
 		}
 	}
