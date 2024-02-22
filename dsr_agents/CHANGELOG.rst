@@ -9,6 +9,9 @@ X.X.X (XX-02-2024)
 * Delete unseen persons in personAgent.
 * Initial dsr_bridge.
 * Added qRegisterMetaType.
+* Added source to all agents.
+* Refactor CMakelists.txt.
+* Added new functions to agent node.
 
 0.6.2 (23-01-2024)
 ------------------
