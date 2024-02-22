@@ -355,9 +355,12 @@ std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
 			new_edge = DSR::Edge::create<navigating_edge_type>(
 				parent_node.value().id(), child_node.value().id());
 		} else if (type == "RT") {
-			rt_->insert_or_assign_edge_RT(parent_node.value(), child_node.value().id(), 
-				{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0});
-			return {};
+			new_edge = DSR::Edge::create<RT_edge_type>(
+				parent_node.value().id(), child_node.value().id());
+			G_->add_or_modify_attrib_local<rt_rotation_euler_xyz_att>(
+				new_edge, std::vector<float>{0.0, 0.0, 0.0});
+			G_->add_or_modify_attrib_local<rt_translation_att>(
+				new_edge, std::vector<float>{0.0, 0.0, 0.0});
 		} else {
 			RCLCPP_ERROR(this->get_logger(), "Error creating edge with type [%s]", type.c_str());
 			return {};
