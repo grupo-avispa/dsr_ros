@@ -99,7 +99,7 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 		if (it == person_nodes.end() ){
 			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
 			if (!std::isdigit(person_id[0])){ 
-				auto person_node = add_node_with_edge<person_node_type, is_with_edge_type>(
+				auto [person_node, edge] = add_node_with_edge<person_node_type, is_with_edge_type>(
 					person_id, "robot", false);
 				if (person_node.has_value()){
 					// Add attributes to the node

@@ -14,6 +14,7 @@
 
 // C++
 #include <string>
+#include <tuple>
 #include <type_traits>
 
 // Qt
@@ -70,6 +71,39 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::string source_;
 
 		/**
+		 * @brief Add a node into the DSR graph with the given name and type.
+		 * By default, all nodes have a low priority (0) and the source attribute is set 
+		 * to the name of the physical machine.
+		 * 
+		 * @tparam NODE_TYPE The type of the DSR node. Defined in ros_to_dsr_types.hpp.
+		 * @param name Name of the DSR node.
+		 * @return std::optional<DSR::Node> The DSR node if it was added successfully,
+		 */
+		template <typename NODE_TYPE> 
+		std::optional<DSR::Node> add_node(const std::string & name){
+			std::optional<DSR::Node> return_node;
+			// Create the node
+			auto new_node = DSR::Node::create<NODE_TYPE>(name);
+			// Add default values
+			G_->add_or_modify_attrib_local<priority_att>(new_node, 0);
+			G_->add_or_modify_attrib_local<source_att>(new_node, source_);
+			// Draw the node in the graph randomly
+			const auto &[random_x, random_y] = get_random_position_to_draw_in_graph();
+			G_->add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
+			G_->add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
+			// Insert the node into the DSR graph
+			if (auto id = G_->insert_node(new_node); id.has_value()){
+				return_node = new_node;
+				RCLCPP_INFO(this->get_logger(), 
+					"Inserted node [%s] successfully of type [%s]", 
+					name.c_str(), new_node.type().c_str());
+			}else{
+				RCLCPP_ERROR(this->get_logger(), "Error inserting node [%s]", name.c_str());
+			}
+			return return_node;
+		}
+
+		/**
 		 * @brief Add a node with an edge into the DSR graph with the given name, 
 		 * the name of the parent or the child and the 'direction' of the edge.
 		 * By default, all nodes have a low priority (0) and the source attribute is set 
@@ -80,12 +114,15 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param name Name of the DSR node.
 		 * @param from_to_name Name of the parent or the child DSR node.
 		 * @param as_child True if the node to be added is a child, false if it is a parent.
-		 * @return std::optional<DSR::Node> The DSR node if it was added successfully,
+		 * @return std::tuple<std::optional<DSR::Node>, std::optional<DSR::Edge>>
+		 * The DSR node and the DSR edge if they were added successfully.
 		 */
 		template <typename NODE_TYPE, typename EDGE_TYPE> 
-		std::optional<DSR::Node> add_node_with_edge(const std::string & name, 
+		std::tuple<std::optional<DSR::Node>, std::optional<DSR::Edge>>
+		add_node_with_edge(const std::string & name, 
 			const std::string & from_to_name, const bool as_child = true){
 			std::optional<DSR::Node> return_node;
+			std::optional<DSR::Edge> return_edge;
 			// Get the relative node
 			auto relative_node = G_->get_node(from_to_name);
 			// Create the node
@@ -112,17 +149,18 @@ class AgentNode: public QObject, public rclcpp::Node{
 			if (auto id = G_->insert_node(new_node); id.has_value()){
 				return_node = new_node;
 				RCLCPP_INFO(this->get_logger(), 
-					"Inserted [%s] node successfully with id [%lu]", name.c_str(), id.value());
+					"Inserted node [%s] successfully of type [%s]", 
+					name.c_str(), new_node.type().c_str());
 				// Insert the edge into the DSR graph
 				if (as_child){
-					add_edge<EDGE_TYPE>(from_to_name, name);
+					return_edge = add_edge<EDGE_TYPE>(from_to_name, name);
 				}else{
-					add_edge<EDGE_TYPE>(name, from_to_name);
+					return_edge = add_edge<EDGE_TYPE>(name, from_to_name);
 				}
 			}else{
-				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", name.c_str());
+				RCLCPP_ERROR(this->get_logger(), "Error inserting node [%s]", name.c_str());
 			}
-			return return_node;
+			return std::make_tuple(return_node, return_edge);
 		}
 
 		/**
@@ -132,9 +170,12 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param from Name of the parent DSR node.
 		 * @param to  Name of the child DSR node.
+		 * @return std::optional<DSR::Edge> The DSR edge if it was added successfully.
 		 */
 		template <typename EDGE_TYPE> 
-		void add_edge(const std::string & from, const std::string & to){
+		std::optional<DSR::Edge> add_edge(const std::string & from, const std::string & to){
+			std::optional<DSR::Edge> return_edge;
+			// Get the relatives nodes
 			auto parent_node = G_->get_node(from);
 			auto child_node = G_->get_node(to);
 			// Insert the edge into the DSR graph
@@ -145,20 +186,25 @@ class AgentNode: public QObject, public rclcpp::Node{
 				G_->add_or_modify_attrib_local<source_att>(new_edge, source_);
 				// Insert the edge into the DSR graph
 				if (G_->insert_or_assign_edge(new_edge)){
-					RCLCPP_DEBUG_STREAM(this->get_logger(), "Inserted new edge [" 
-						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() << "] of type ["
-						<< new_edge.type().c_str() << "]");
+					return_edge = new_edge;
+					RCLCPP_INFO(this->get_logger(), 
+						"Inserted edge [%s->%s] successfully of type [%s]", 
+						parent_node.value().name().c_str(), 
+						child_node.value().name().c_str(), 
+						new_edge.type().c_str());
 				}else{
-					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() << "] of type ["
-						<< new_edge.type().c_str() << "] couldn't be inserted");
+					RCLCPP_ERROR(this->get_logger(), 
+						"Error inserting edge [%s->%s] of type [%s]",
+						parent_node.value().name().c_str(), 
+						child_node.value().name().c_str(), 
+						new_edge.type().c_str());
 				}
 			}else{
-				RCLCPP_ERROR_STREAM(this->get_logger(), "The parent node [" 
-					<< from << "] or the child node [" << to << "] doesn't exists");
+				RCLCPP_ERROR(this->get_logger(), 
+					"The parent node [%s] or the child node [%s] doesn't exists",
+					from.c_str(), to.c_str());
 			}
+			return return_edge;
 		}
 
 		/**
@@ -168,9 +214,12 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @tparam EDGE_TYPE The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
 		 * @param from Id of the parent DSR node.
 		 * @param to  Id of the child DSR node.
+		 * @return std::optional<DSR::Edge> The DSR edge if it was added successfully.
 		 */
 		template <typename EDGE_TYPE> 
-		void add_edge(uint64_t from, uint64_t to){
+		std::optional<DSR::Edge> add_edge(uint64_t from, uint64_t to){
+			std::optional<DSR::Edge> return_edge;
+			// Get the relatives nodes
 			auto parent_node = G_->get_node(from);
 			auto child_node = G_->get_node(to);
 			// Insert the edge into the DSR graph
@@ -180,17 +229,59 @@ class AgentNode: public QObject, public rclcpp::Node{
 				G_->add_or_modify_attrib_local<source_att>(new_edge, source_);
 				// Insert the edge into the DSR graph
 				if (G_->insert_or_assign_edge(new_edge)){
-					RCLCPP_INFO_STREAM(this->get_logger(), "Inserted new edge [" 
-						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() << "] of type ["
-						<< new_edge.type().c_str() << "]");
+					return_edge = new_edge;
+					RCLCPP_INFO(this->get_logger(), 
+						"Inserted edge [%s->%s] successfully of type [%s]", 
+						parent_node.value().name().c_str(), 
+						child_node.value().name().c_str(), 
+						new_edge.type().c_str());
 				}else{
-					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-						<< parent_node.value().name() << "->" 
-						<< child_node.value().name() << "] of type ["
-						<< new_edge.type().c_str() << "] couldn't be inserted");
+					RCLCPP_ERROR(this->get_logger(), 
+						"Error inserting edge [%s->%s] of type [%s]",
+						parent_node.value().name().c_str(), 
+						child_node.value().name().c_str(), 
+						new_edge.type().c_str());
 				}
 			}
+			return return_edge;
+		}
+
+		/**
+		 * @brief Delete a node into the DSR graph with the given id. 
+		 * This method previously checks if the node exists.
+		 * 
+		 * @param id Id of the DSR node.
+		 * @param to Id of the child DSR node.
+		 * @return true If the node was deleted successfully. False otherwise.
+		 */
+		bool delete_node(uint64_t id){
+			// Check if the node exists
+			if (auto node = G_->get_node(id); node.has_value()){
+				// Delete the node
+				if (G_->delete_node(id)){
+					RCLCPP_INFO(this->get_logger(), 
+						"Deleted node [%s] successfully", node.value().name().c_str());
+					return true;
+				}else{
+					RCLCPP_ERROR(this->get_logger(), 
+						"Error deleting node [%s]", node.value().name().c_str());}
+			}else{
+				RCLCPP_ERROR(this->get_logger(), 
+					"The node [%lu] doesn't exists", id);
+			}
+			return false;
+		}
+
+		/**
+		 * @brief Delete a node into the DSR graph with the given id. 
+		 * This method previously checks if the node exists.
+		 * 
+		 * @param id Id of the DSR node.
+		 * @param to Id of the child DSR node.
+		 * @return true If the node was deleted successfully. False otherwise.
+		 */
+		bool delete_node(const std::string & name){
+			return delete_node(G_->get_node(name).value().id());
 		}
 
 		/**
@@ -200,32 +291,33 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param from Id of the parent DSR node.
 		 * @param to Id of the child DSR node.
 		 * @param edge_type Name of the DSR edge.
-		 * @return true If the edge was replaced successfully.
-		 * @return false If the edge couldn't be replaced.
+		 * @return true If the edge was replaced successfully. False otherwise.
 		 */
 		bool delete_edge(uint64_t from, uint64_t to, std::string edge_type){
-			// Check if the parent and child nodes exist and if the edge exists
+			// Check if the parent and child nodes exist and if the edge existsd
 			auto parent_node = G_->get_node(from);
 			auto child_node = G_->get_node(to);
 			if (parent_node.has_value() && child_node.has_value()){
 				if (auto edge = G_->get_edge(from, to, edge_type); edge.has_value()){
 					// Delete the edge
 					if (G_->delete_edge(from, to, edge_type)){
-						RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" 
-							<< parent_node.value().name() << "->" 
-							<< child_node.value().name() << "] of type ["
-							<< edge_type.c_str() << "] has been deleted");
+						RCLCPP_INFO(this->get_logger(), 
+							"Deleted edge [%s->%s] successfully of type [%s]", 
+							parent_node.value().name().c_str(), 
+							child_node.value().name().c_str(), 
+							edge_type.c_str());
 						return true;
 					}else{
-						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-							<< parent_node.value().name() << "->" 
-							<< child_node.value().name() << "] of type ["
-							<< edge_type.c_str() << "] couldn't be deleted");
+						RCLCPP_ERROR(this->get_logger(), 
+							"Error deleting edge [%s->%s] of type [%s]", 
+							parent_node.value().name().c_str(), 
+							child_node.value().name().c_str(), 
+							edge_type.c_str());
 					}
 				}else{
-					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-						<< from << "->" << to << "] of type [" <<
-						edge_type.c_str() << "] doesn't exists");
+					RCLCPP_ERROR(this->get_logger(), 
+						"The edge [%lu->%lu] of type [%s] doesn't exists", 
+						from, to, edge_type.c_str());
 				}
 			}
 			return false;
@@ -238,8 +330,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param from Name of the parent DSR node.
 		 * @param to Name of the child DSR node.
 		 * @param edge_type Name of the DSR edge.
-		 * @return true If the edge was replaced successfully.
-		 * @return false If the edge couldn't be replaced.
+		 * @return true If the edge was replaced successfully. False otherwise.
 		 */
 		bool delete_edge(const std::string& from, const std::string& to, std::string edge_type){
 			// Check if the parent and child nodes exist
@@ -249,8 +340,9 @@ class AgentNode: public QObject, public rclcpp::Node{
 					return delete_edge(parent_node.value().id(), 
 						child_node.value().id(), edge_type);
 				}else{
-					RCLCPP_ERROR_STREAM(this->get_logger(), "The parent node [" 
-						<< from << "] or the child node [" << to << "] doesn't exists");
+					RCLCPP_ERROR(this->get_logger(), 
+						"The parent node [%s] or the child node [%s] doesn't exists",
+						from.c_str(), to.c_str());
 				}
 			return false;
 		}
@@ -264,8 +356,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param from Id of the parent DSR node.
 		 * @param to Id of the child DSR node.
 		 * @param old_edge Name of the old DSR edge.
-		 * @return true If the edge was replaced successfully.
-		 * @return false If the edge couldn't be replaced.
+		 * @return true If the edge was replaced successfully. False otherwise.
 		 */
 		template <typename EDGE_TYPE>
 		bool replace_edge(uint64_t from, uint64_t to, std::string old_edge){
@@ -281,27 +372,30 @@ class AgentNode: public QObject, public rclcpp::Node{
 						G_->add_or_modify_attrib_local<source_att>(new_edge, source_);
 						// Insert the new edge into the DSR graph
 						if (G_->insert_or_assign_edge(new_edge)){
-							RCLCPP_INFO_STREAM(this->get_logger(), "The edge [" 
-								<< parent_node.value().name() << "->" 
-								<< child_node.value().name() << "] of type [" 
-								<< old_edge.c_str() << "] has been replaced by ["
-								<< new_edge.type().c_str() << "]");
+							RCLCPP_INFO(this->get_logger(), 
+								"Replaced edge [%s->%s] successfully of type [%s] by [%s]", 
+								parent_node.value().name().c_str(), 
+								child_node.value().name().c_str(), 
+								old_edge.c_str(), 
+								new_edge.type().c_str());
 							return true;
 						}
 					}else{
-						RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-							<< parent_node.value().name() << "->" 
-							<< child_node.value().name() << "] of type ["
-							<< old_edge.c_str() << "] couldn't be deleted");
+						RCLCPP_ERROR(this->get_logger(), 
+							"Error deleting edge [%s->%s] of type [%s]", 
+							parent_node.value().name().c_str(), 
+							child_node.value().name().c_str(), 
+							old_edge.c_str());
 					}
 				}else{
-					RCLCPP_ERROR_STREAM(this->get_logger(), "The edge [" 
-						<< from << "->" << to << "] of type ["
-						<< old_edge.c_str() << "] doesn't exists");
+					RCLCPP_ERROR(this->get_logger(), 
+						"The edge [%lu->%lu] of type [%s] doesn't exists", 
+						from, to, old_edge.c_str());
 				}
 			}else{
-				RCLCPP_ERROR_STREAM(this->get_logger(), "The parent node [" 
-					<< from << "] or the child node [" << to << "] doesn't exists");
+				RCLCPP_ERROR(this->get_logger(), 
+					"The parent node [%lu] or the child node [%lu] doesn't exists",
+					from, to);
 			}
 			return false;
 		}
@@ -314,8 +408,7 @@ class AgentNode: public QObject, public rclcpp::Node{
 		 * @param from Name of the parent DSR node.
 		 * @param to Name of the child DSR node.
 		 * @param old_edge Name of the old DSR edge.
-		 * @return true If the edge was replaced successfully.
-		 * @return false If the edge couldn't be replaced.
+		 * @return true If the edge was replaced successfully. False otherwise.
 		 */
 		template <typename EDGE_TYPE>
 		bool replace_edge(const std::string& from, const std::string& to, std::string old_edge){
