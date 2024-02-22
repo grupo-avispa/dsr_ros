@@ -39,26 +39,29 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 	std::string parent_frame = unsorted_trf.transforms[0].header.frame_id;
 	do {
 		// Copy the transforms from the unsorted vector to the sorted vector if the parent frame is the same
-		std::copy_if(unsorted_trf.transforms.begin(), unsorted_trf.transforms.end(), std::back_inserter(sorted_trf.transforms),
-						[parent_frame](const auto & trf) {
-							return trf.header.frame_id == parent_frame;
-						});
+		std::copy_if(unsorted_trf.transforms.begin(), unsorted_trf.transforms.end(), 
+			std::back_inserter(sorted_trf.transforms),
+				[parent_frame](const auto & trf) {
+					return trf.header.frame_id == parent_frame;
+				});
 		// Erase the elements from the original vector
-		unsorted_trf.transforms.erase(std::remove_if(unsorted_trf.transforms.begin(), unsorted_trf.transforms.end(),
-							[parent_frame](const auto & trf) {
-								return trf.header.frame_id == parent_frame;
-							}),
-					unsorted_trf.transforms.end());
+		unsorted_trf.transforms.erase(std::remove_if(unsorted_trf.transforms.begin(), 
+			unsorted_trf.transforms.end(),
+					[parent_frame](const auto & trf) {
+						return trf.header.frame_id == parent_frame;
+					}),
+			unsorted_trf.transforms.end());
 		// Get the new parent frame
 		parent_frame = sorted_trf.transforms[i].child_frame_id;
 		i++;
 	} while (unsorted_trf.transforms.size() > 0);
 
 	// Replace 'base_link' with robot and 'map' with world
-	std::for_each(sorted_trf.transforms.begin(), sorted_trf.transforms.end(), [](auto & trf) {
-		trf.header.frame_id = (trf.header.frame_id == "base_link") ? "robot" : trf.header.frame_id;
+	std::for_each(sorted_trf.transforms.begin(), sorted_trf.transforms.end(), 
+		[source=source_](auto & trf) {
+		trf.header.frame_id = (trf.header.frame_id == "base_link") ? source : trf.header.frame_id;
 		trf.header.frame_id = (trf.header.frame_id == "map") ? "world" : trf.header.frame_id;
-		trf.child_frame_id  = (trf.child_frame_id  == "base_link") ? "robot" : trf.child_frame_id;
+		trf.child_frame_id  = (trf.child_frame_id  == "base_link") ? source : trf.child_frame_id;
 		trf.child_frame_id = (trf.child_frame_id  == "map") ? "world" : trf.child_frame_id;
 	});
 

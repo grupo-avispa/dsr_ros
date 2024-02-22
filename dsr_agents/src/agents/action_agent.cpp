@@ -36,7 +36,7 @@ ActionAgent::ActionAgent(): AgentNode("action_agent"){
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	// Add the navigation node to the DSR graph
-	add_node_with_edge<navigation_node_type, stopped_edge_type>(dsr_node_name_, "robot");
+	add_node_with_edge<navigation_node_type, stopped_edge_type>(dsr_node_name_, source_);
 }
 
 /* Initialize ROS parameters */
@@ -61,7 +61,7 @@ void ActionAgent::node_attributes_updated(uint64_t id,
 void ActionAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 	// Check if the robot wants to start the action: robot ---(wants_to)--> action
 	if (type == "wants_to"){
-		auto robot_node = G_->get_node("robot");
+		auto robot_node = G_->get_node(source_);
 		auto action_node = G_->get_node(dsr_node_name_);
 		if (robot_node.has_value() && from == robot_node.value().id() 
 			&& action_node.has_value() && to == action_node.value().id()){
@@ -106,14 +106,14 @@ void ActionAgent::result_callback(const GoalHandleActionT::WrappedResult & resul
 	switch (result.code) {
 		case rclcpp_action::ResultCode::SUCCEEDED:{
 			// Replace the 'is_performing' edge with a 'finished' edge between robot and action
-			if (replace_edge<finished_edge_type>("robot", dsr_node_name_, "is_performing")){
+			if (replace_edge<finished_edge_type>(source_, dsr_node_name_, "is_performing")){
 				RCLCPP_INFO(this->get_logger(), "Goal was reached");
 			}
 			break;
 		}
 		case rclcpp_action::ResultCode::ABORTED:{
 			// Replace the 'is_performing' edge with a 'failed' edge between robot and action
-			if (replace_edge<failed_edge_type>("robot", dsr_node_name_, "is_performing")){
+			if (replace_edge<failed_edge_type>(source_, dsr_node_name_, "is_performing")){
 				RCLCPP_ERROR(this->get_logger(), "Goal was failed");
 			}
 			break;

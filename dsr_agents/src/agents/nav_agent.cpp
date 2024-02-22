@@ -55,7 +55,7 @@ NavigationAgent::NavigationAgent(): AgentNode("navigation_agent"), current_zone_
 
 	// Add the 'navigation' node with and edge 'stopped' hanging from the 'robot' node into the DSR graph
 	if (auto nav_node = G_->get_node("navigation"); !nav_node.has_value()){
-		add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", "robot");
+		add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", source_);
 	}
 
 	// Get the list of the zones
@@ -85,7 +85,7 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		RCLCPP_INFO(this->get_logger(), "Starting to %s the navigation", type.c_str());
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
-		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
+		if (robot_node.has_value() &&  robot_node.value().name() == source_
 			&& move_node.has_value() && move_node.value().type() == "move"){
 			// Remove the move node from the DSR graph
 			if (G_->delete_node(move_node.value())){
@@ -99,7 +99,7 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		RCLCPP_INFO(this->get_logger(), "Starting the navigation");
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
-		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
+		if (robot_node.has_value() &&  robot_node.value().name() == source_
 			&& move_node.has_value() && move_node.value().type() == "move"){
 			// Get the attributes from the move node
 			auto goal_x = G_->get_attrib_by_name<goal_x_att>(move_node.value());
@@ -156,7 +156,7 @@ void NavigationAgent::nav_goal_response_callback(const GoalHandleNavigateToPose:
 		RCLCPP_ERROR(this->get_logger(), "Navigation goal was rejected by server");
 	}else{
 		// Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
-		if (replace_edge<is_performing_edge_type>("robot", "move", "wants_to")){
+		if (replace_edge<is_performing_edge_type>(source_, "move", "wants_to")){
 			RCLCPP_INFO(this->get_logger(), 
 				"Navigation goal accepted by server, waiting for result");
 		}
@@ -167,9 +167,9 @@ void NavigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr,
 	const std::shared_ptr<const NavigateToPose::Feedback> feedback){
 
 	// Replace the 'stopped' edge with a 'navigating' edge between robot and navigation
-	auto stopped_edge = G_->get_edge("robot", "navigation", "stopped");
+	auto stopped_edge = G_->get_edge(source_, "navigation", "stopped");
 	if (stopped_edge.has_value()){
-		replace_edge<navigating_edge_type>("robot", "navigation", "stopped");
+		replace_edge<navigating_edge_type>(source_, "navigation", "stopped");
 	}
 
 	// Set the current pose of the robot into the DSR graph
@@ -178,23 +178,23 @@ void NavigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr,
 
 void NavigationAgent::nav_result_callback(const GoalHandleNavigateToPose::WrappedResult & result){
 	// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-	if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+	if (replace_edge<stopped_edge_type>(source_, "navigation", "navigating")){
 		switch (result.code) {
 			case rclcpp_action::ResultCode::SUCCEEDED:
 				// Replace the 'is_performing' edge with a 'finished' edge between robot and move
-				if (replace_edge<finished_edge_type>("robot", "move", "is_performing")){
+				if (replace_edge<finished_edge_type>(source_, "move", "is_performing")){
 					RCLCPP_INFO(this->get_logger(), "Goal reached");
 				}
 				break;
 			case rclcpp_action::ResultCode::ABORTED:
 				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
-				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
+				if (replace_edge<failed_edge_type>(source_, "move", "is_performing")){
 					RCLCPP_ERROR(this->get_logger(), "Goal aborted");
 				}
 				break;
 			case rclcpp_action::ResultCode::CANCELED:
 				// Replace the 'is_performing' edge with a 'canceled' edge between robot and move
-				if (replace_edge<cancel_edge_type>("robot", "move", "is_performing")){
+				if (replace_edge<cancel_edge_type>(source_, "move", "is_performing")){
 					RCLCPP_ERROR(this->get_logger(), "Goal canceled");
 				}
 				break;
@@ -219,23 +219,23 @@ void NavigationAgent::dock_feedback_callback(GoalHandleDock::SharedPtr,
 
 void NavigationAgent::dock_result_callback(const GoalHandleDock::WrappedResult & result){
 	// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-	if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+	if (replace_edge<stopped_edge_type>(source_, "navigation", "navigating")){
 		switch (result.code) {
 			case rclcpp_action::ResultCode::SUCCEEDED:
 				// Replace the 'is_performing' edge with a 'finished' edge between robot and move
-				if (replace_edge<finished_edge_type>("robot", "move", "is_performing")){
+				if (replace_edge<finished_edge_type>(source_, "move", "is_performing")){
 					RCLCPP_INFO(this->get_logger(), "Docking succeeded");
 				}
 				break;
 			case rclcpp_action::ResultCode::ABORTED:
 				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
-				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
+				if (replace_edge<failed_edge_type>(source_, "move", "is_performing")){
 					RCLCPP_ERROR(this->get_logger(), "Docking aborted");
 				}
 				break;
 			case rclcpp_action::ResultCode::CANCELED:
 				// Replace the 'is_performing' edge with a 'canceled' edge between robot and move
-				if (replace_edge<cancel_edge_type>("robot", "move", "is_performing")){
+				if (replace_edge<cancel_edge_type>(source_, "move", "is_performing")){
 					RCLCPP_ERROR(this->get_logger(), "Docking canceled");
 				}
 				break;
@@ -407,7 +407,7 @@ void NavigationAgent::get_zones(){
 
 void NavigationAgent::update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose){
 	// Update the robot pose into the DSR graph
-	if (auto robot_node = G_->get_node("robot"); robot_node.has_value()){
+	if (auto robot_node = G_->get_node(source_); robot_node.has_value()){
 		if (get_priority(robot_node.value()) == 0){
 			G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
 				static_cast<float>(pose.position.x));
