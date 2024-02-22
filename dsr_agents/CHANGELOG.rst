@@ -5,7 +5,7 @@ Changelog for package dsr_agents
 X.X.X (XX-02-2024)
 ------------------
 * Improve DSR documentation.
-* Better information in navAgent.
+* Better information and refactor in navAgent.
 * Delete unseen persons in personAgent.
 * Initial dsr_bridge.
 * Added qRegisterMetaType.

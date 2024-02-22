@@ -64,7 +64,7 @@ NavigationAgent::NavigationAgent(): AgentNode("navigation_agent"), current_zone_
 
 void NavigationAgent::node_updated(std::uint64_t id, const std::string &type){
 	// Update the current robot pose into the DSR graph when the navigation node is updated
-	if (auto node = G_->get_node(id); node.has_value() && node.value().name() == "navigation"){
+	if (auto node = G_->get_node(id); node.has_value() && node.value().type() == "navigation"){
 		// Get the current pose of the robot
 		geometry_msgs::msg::PoseStamped robot_pose;
 		if (!nav2_util::getCurrentPose(robot_pose, *tf_buffer_, "map", "base_link", 2.0)){
@@ -86,7 +86,7 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
-			&& move_node.has_value() && move_node.value().name() == "move"){
+			&& move_node.has_value() && move_node.value().type() == "move"){
 			// Remove the move node from the DSR graph
 			if (G_->delete_node(move_node.value())){
 				cancel_goal();
@@ -100,7 +100,7 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == "robot"
-			&& move_node.has_value() && move_node.value().name() == "move"){
+			&& move_node.has_value() && move_node.value().type() == "move"){
 			// Get the attributes from the move node
 			auto goal_x = G_->get_attrib_by_name<goal_x_att>(move_node.value());
 			auto goal_y = G_->get_attrib_by_name<goal_y_att>(move_node.value());
@@ -177,37 +177,30 @@ void NavigationAgent::nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr,
 }
 
 void NavigationAgent::nav_result_callback(const GoalHandleNavigateToPose::WrappedResult & result){
-	switch (result.code) {
-		case rclcpp_action::ResultCode::SUCCEEDED:{
-			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+	// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
+	if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+		switch (result.code) {
+			case rclcpp_action::ResultCode::SUCCEEDED:
 				// Replace the 'is_performing' edge with a 'finished' edge between robot and move
 				if (replace_edge<finished_edge_type>("robot", "move", "is_performing")){
-					RCLCPP_INFO(this->get_logger(), "Goal was reached");
+					RCLCPP_INFO(this->get_logger(), "Goal reached");
 				}
-			}
-			break;
-		}
-		case rclcpp_action::ResultCode::ABORTED:{
-			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				break;
+			case rclcpp_action::ResultCode::ABORTED:
 				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
 				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
-					RCLCPP_ERROR(this->get_logger(), "Goal was failed");
+					RCLCPP_ERROR(this->get_logger(), "Goal aborted");
 				}
-			}
-			break;
-		}
-		case rclcpp_action::ResultCode::CANCELED:{
-			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
-				RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-			}
-			break;
-		}
-		default:{
-			RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-			break;
+				break;
+			case rclcpp_action::ResultCode::CANCELED:
+				// Replace the 'is_performing' edge with a 'canceled' edge between robot and move
+				if (replace_edge<cancel_edge_type>("robot", "move", "is_performing")){
+					RCLCPP_ERROR(this->get_logger(), "Goal canceled");
+				}
+				break;
+			default:
+				RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+				break;
 		}
 	}
 }
@@ -225,40 +218,30 @@ void NavigationAgent::dock_feedback_callback(GoalHandleDock::SharedPtr,
 }
 
 void NavigationAgent::dock_result_callback(const GoalHandleDock::WrappedResult & result){
-	switch (result.code) {
-		case rclcpp_action::ResultCode::SUCCEEDED:{
-			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+	// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
+	if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+		switch (result.code) {
+			case rclcpp_action::ResultCode::SUCCEEDED:
 				// Replace the 'is_performing' edge with a 'finished' edge between robot and move
 				if (replace_edge<finished_edge_type>("robot", "move", "is_performing")){
 					RCLCPP_INFO(this->get_logger(), "Docking succeeded");
 				}
-			}
-			break;
-		}
-		case rclcpp_action::ResultCode::ABORTED:{
-			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
+				break;
+			case rclcpp_action::ResultCode::ABORTED:
 				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
 				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
-					RCLCPP_ERROR(this->get_logger(), "Docking failed");
+					RCLCPP_ERROR(this->get_logger(), "Docking aborted");
 				}
-			}
-			break;
-		}
-		case rclcpp_action::ResultCode::CANCELED:{
-			// Replace the 'navigating' edge with a 'stopped' edge between robot and navigation
-			if (replace_edge<stopped_edge_type>("robot", "navigation", "navigating")){
-				// Replace the 'is_performing' edge with a 'failed' edge between robot and move
-				if (replace_edge<failed_edge_type>("robot", "move", "is_performing")){
+				break;
+			case rclcpp_action::ResultCode::CANCELED:
+				// Replace the 'is_performing' edge with a 'canceled' edge between robot and move
+				if (replace_edge<cancel_edge_type>("robot", "move", "is_performing")){
 					RCLCPP_ERROR(this->get_logger(), "Docking canceled");
 				}
-			}
-			break;
-		}
-		default:{
-			RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-			break;
+				break;
+			default:
+				RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+				break;
 		}
 	}
 }
@@ -282,7 +265,7 @@ void NavigationAgent::undock_result_callback(const GoalHandleUndock::WrappedResu
 			break;
 		}
 		case rclcpp_action::ResultCode::ABORTED:{
-			RCLCPP_ERROR(this->get_logger(), "Undocking failed");
+			RCLCPP_ERROR(this->get_logger(), "Undocking aborted");
 			break;
 		}
 		case rclcpp_action::ResultCode::CANCELED:{
