@@ -15,6 +15,7 @@
 
 // ROS
 #include "nav2_util/node_utils.hpp"
+#include "nav2_util/string_utils.hpp"
 
 // DSR
 #include "dsr_agents/qt_executor.hpp"
@@ -280,91 +281,29 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
 		<< edge_msg.type.c_str() << "] has been deleted in the DSR");
 }
 
-// Helper functions
+// Converter functions
 std::optional<DSR::Node> DSRBridge::create_dsr_node(std::string name, std::string type){
-	DSR::Node new_node;
-	if (type == "robot") {
-		new_node = DSR::Node::create<robot_node_type>(name);
-	} else if (type == "transform") {
-		new_node = DSR::Node::create<transform_node_type>(name);
-	} else if (type == "battery") {
-		new_node = DSR::Node::create<battery_node_type>(name);
-	} else if (type == "person") {
-		new_node = DSR::Node::create<person_node_type>(name);
-	} else if (type == "navigation") {
-		new_node = DSR::Node::create<navigation_node_type>(name);
-	} else if (type == "move") {
-		new_node = DSR::Node::create<move_node_type>(name);
-	} else if (type == "say") {
-		new_node = DSR::Node::create<say_node_type>(name);
-	} else if (type == "play") {
-		new_node = DSR::Node::create<play_node_type>(name);
-	} else if (type == "use_case") {
-		new_node = DSR::Node::create<use_case_node_type>(name);
-	} else if (type == "show") {
-		new_node = DSR::Node::create<show_node_type>(name);
-	} else if (type == "update_bbdd") {
-		new_node = DSR::Node::create<update_bbdd_node_type>(name);
-	} else {
-		RCLCPP_ERROR(this->get_logger(), "Error creating node with type [%s]", type.c_str());
-		return{};
+	if (!node_types::check_type(type)) {
+		throw std::runtime_error("Error, [" + type + "] is not a valid node type");
 	}
+	DSR::Node new_node;
+	new_node.name(name);
+	new_node.type(type);
 	return new_node;
 }
 
 std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
 	std::string from, std::string to, const std::string &type){
+	if (!edge_types::check_type(type)) {
+		throw std::runtime_error("Error, [" + type + "] is not a valid edge type");
+	}
 	DSR::Edge new_edge;
 	auto parent_node = G_->get_node(from);
 	auto child_node = G_->get_node(to);
 	if (parent_node.has_value() && child_node.has_value()){
-		if (type == "stopped") {
-			new_edge = DSR::Edge::create<stopped_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "is") {
-			new_edge = DSR::Edge::create<is_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "is_performing") {
-			new_edge = DSR::Edge::create<is_performing_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "is_with") {
-			new_edge = DSR::Edge::create<is_with_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "interacting") {
-			new_edge = DSR::Edge::create<interacting_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "wants_to") {
-			new_edge = DSR::Edge::create<wants_to_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "finished") {
-			new_edge = DSR::Edge::create<finished_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "abort") {
-			new_edge = DSR::Edge::create<abort_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "aborting") {
-			new_edge = DSR::Edge::create<aborting_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "cancel") {
-			new_edge = DSR::Edge::create<cancel_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "failed") {
-			new_edge = DSR::Edge::create<failed_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "navigating") {
-			new_edge = DSR::Edge::create<navigating_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-		} else if (type == "RT") {
-			new_edge = DSR::Edge::create<RT_edge_type>(
-				parent_node.value().id(), child_node.value().id());
-			G_->add_or_modify_attrib_local<rt_rotation_euler_xyz_att>(
-				new_edge, std::vector<float>{0.0, 0.0, 0.0});
-			G_->add_or_modify_attrib_local<rt_translation_att>(
-				new_edge, std::vector<float>{0.0, 0.0, 0.0});
-		} else {
-			RCLCPP_ERROR(this->get_logger(), "Error creating edge with type [%s]", type.c_str());
-			return {};
-		}
+		new_edge.from(parent_node.value().id());
+		new_edge.to(child_node.value().id());
+		new_edge.type(type);
 	}
 	return new_edge;
 }
@@ -397,86 +336,53 @@ dsr_interfaces::msg::Edge DSRBridge::create_msg_edge(
 	return edge_msg;
 }
 
+// Helper functions
 template <typename TYPE>
 void DSRBridge::modify_attributes(TYPE & elem, std::vector <std::string>& att_str){
-	/*std::map<std::string, DSR::Attribute> attributes;
-	for (unsigned int i = 0; i <= att_str.size() / 2; i += 2){
-		std::string att_name = att_str[i];
-		std::string att_value = att_str[i+1];
-		//attributes[att_name] = att_value;
-		DSR::Attribute::get_valtype(att_value);
-	}*/
-
 	for (unsigned int i = 0; i < att_str.size(); i+=2){
 		std::string att_name = att_str[i];
 		std::string att_value = att_str[i+1];
-		// General
-		if (att_name == "level") {
-			G_->add_or_modify_attrib_local<level_att>(elem, std::stoi(att_value));
-		} else if (att_name == "parent") {
-			G_->add_or_modify_attrib_local<parent_att>(elem, std::stoul(att_value));
-		} else if (att_name == "pos_x") {
-			G_->add_or_modify_attrib_local<pos_x_att>(elem, std::stof(att_value));
-		} else if (att_name == "pos_y") {
-			G_->add_or_modify_attrib_local<pos_y_att>(elem, std::stof(att_value));
-		} else if (att_name == "number") {
-			G_->add_or_modify_attrib_local<number_att>(elem, std::stoi(att_value));
-		} else if (att_name == "priority") {
-			G_->add_or_modify_attrib_local<priority_att>(elem, std::stoi(att_value));
-		} else if (att_name == "source") {
-			G_->add_or_modify_attrib_local<source_att>(elem, att_value);
-		} else if (att_name == "result_code") {
-			G_->add_or_modify_attrib_local<result_code_att>(elem, att_value);
-		// Navigation
-		} else if (att_name == "pose_x") {
-			G_->add_or_modify_attrib_local<pose_x_att>(elem, std::stof(att_value));
-		} else if (att_name == "pose_y") {
-			G_->add_or_modify_attrib_local<pose_y_att>(elem, std::stof(att_value));
-		} else if (att_name == "pose_angle") {
-			G_->add_or_modify_attrib_local<pose_angle_att>(elem, std::stof(att_value));
-		} else if (att_name == "goal_x") {
-			G_->add_or_modify_attrib_local<goal_x_att>(elem, std::stof(att_value));
-		} else if (att_name == "goal_y") {
-			G_->add_or_modify_attrib_local<goal_y_att>(elem, std::stof(att_value));
-		} else if (att_name == "goal_angle") {
-			G_->add_or_modify_attrib_local<goal_angle_att>(elem, std::stof(att_value));
-		} else if (att_name == "zone") {
-			G_->add_or_modify_attrib_local<zone_att>(elem, att_value);
-		} else if (att_name == "zones") {
-			G_->add_or_modify_attrib_local<zones_att>(elem, att_value);
-		// Play / say
-		} else if (att_name == "text") {
-			G_->add_or_modify_attrib_local<text_att>(elem, att_value);
-		// Show
-		} else if (att_name == "interface") {
-			G_->add_or_modify_attrib_local<interface_att>(elem, att_value);
-		// Battery
-		} else if (att_name == "battery_percentage") {
-			G_->add_or_modify_attrib_local<battery_percentage_att>(elem, std::stof(att_value));
-		} else if (att_name == "battery_power_supply_status") {
-			G_->add_or_modify_attrib_local<battery_power_supply_status_att>(elem, att_value);
-		// Use case
-		} else if (att_name == "use_case_id") {
-			G_->add_or_modify_attrib_local<use_case_id_att>(elem, att_value);
-		// Person
-		} else if (att_name == "identifier") {
-			G_->add_or_modify_attrib_local<identifier_att>(elem, att_value);
-		} else if (att_name == "safe_distance") {
-			G_->add_or_modify_attrib_local<safe_distance_att>(elem, std::stof(att_value));
-		} else if (att_name == "menu") {
-			G_->add_or_modify_attrib_local<menu_att>(elem, att_value);
-		}else if (att_name == "timestamp") {
-			G_->add_or_modify_attrib_local<timestamp_att>(elem, std::stoi(att_value));
-		}else {
-			RCLCPP_ERROR(this->get_logger(), "Error modifying attribute [%s]", att_name.c_str());
-			return;
+		DSR::Types att_type = parse_type(att_value);
+
+		DSR::Attribute new_att;
+		switch (att_type) {
+			case DSR::Types::STRING:{
+				new_att.value(std::string(att_value));
+				break;
+			}
+			case DSR::Types::INT:{
+				new_att.value(std::stoi(att_value));
+				break;
+			}
+			case DSR::Types::FLOAT:{
+				new_att.value(std::stof(att_value));
+				break;
+			}
+			case DSR::Types::FLOAT_VEC:{
+				std::vector<std::string> values = nav2_util::split(att_value, ',');
+				std::vector<float> float_values;
+				for (const auto &value: values){
+					float_values.push_back(std::stof(value));
+				}
+				new_att.value(float_values);
+				break;
+			}
+			case DSR::Types::BOOL:{
+				new_att.value(att_value == "true");
+				break;
+			}
+			default:
+				break;
 		}
+		// Add the attribute to the element
+		G_->runtime_checked_add_attrib_local(elem, att_name, new_att);
 		RCLCPP_DEBUG(this->get_logger(), 
 			"Updating attribute [%s] = [%s]", att_name.c_str(), att_value.c_str());
 	}
 }
 
 std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
+	std::locale::global(std::locale("C"));
 	switch (att.value().index()) {
 		case 0:{
 			return std::get<std::string>(att.value());
@@ -516,6 +422,59 @@ std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
 			return std::to_string(std::get<double>(att.value()));
 		}
 	}
+}
+
+DSR::Types DSRBridge::parse_type(const std::string &type){
+	std::istringstream iss(type);
+
+	// Try to convert to int
+	int int_result;
+	iss >> int_result;
+	if (!iss.fail() && iss.eof()) {
+		return DSR::Types::INT;
+	}
+	// Clear the state of iss and reset the read pointer
+	iss.clear();
+	iss.seekg(0);
+
+	// Try to convert to float
+	float float_result;
+	iss >> float_result;
+	if (!iss.fail() && iss.eof()) {
+		if (float_result == static_cast<int>(float_result)) {
+			return DSR::Types::INT;
+		} else {
+			return DSR::Types::FLOAT;
+		}
+	}
+	iss.clear();
+	iss.seekg(0);
+
+	// Try to convert to vector of float (separated by comma)
+	char comma;
+	std::vector<float> vector_result;
+	while (iss >> float_result >> comma) {
+		// Check if the delimitator is a comma except at the end
+		if (comma != ',' && !iss.eof()) {
+			return DSR::Types::STRING;
+		}
+		vector_result.push_back(float_result);
+	}
+	if (iss.eof()) {
+		return DSR::Types::FLOAT_VEC;
+	}
+	iss.clear();
+	iss.seekg(0);
+
+	// Try to convert to bool ("true" or "false")
+	bool bool_result;
+	iss >> std::boolalpha >> bool_result;
+	if (!iss.fail() && iss.eof()) {
+		return DSR::Types::BOOL;
+	}
+
+	// In other case, return a string
+	return DSR::Types::STRING;
 }
 
 int main(int argc, char** argv){

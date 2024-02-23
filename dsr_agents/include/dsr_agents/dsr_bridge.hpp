@@ -55,16 +55,19 @@ class DSRBridge: public AgentNode{
 		void node_deleted(const DSR::Node &node);
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 
-		// Helper functions
+		// Converter functions
 		std::optional<DSR::Node> create_dsr_node(std::string name, std::string type);
 		std::optional<DSR::Edge> create_dsr_edge(
 			std::string from, std::string to, const std::string &type);
 		dsr_interfaces::msg::Node create_msg_node(std::string name, std::string type);
 		dsr_interfaces::msg::Edge create_msg_edge(
 			std::uint64_t from, std::uint64_t to, const std::string &type);
+
+		// Helper functions
 		template <typename TYPE>
 		void modify_attributes(TYPE & elem, std::vector <std::string>& att_str);
 		std::string attribute_to_string(const DSR::Attribute &att);
+		DSR::Types parse_type(const std::string &type);
 };
 
 #endif  // DSR_AGENT__DSR_BRIDGE_HPP_
