@@ -22,6 +22,8 @@
 // ROS
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/executor.hpp"
+#include "rclcpp/macros.hpp"
+#include "rclcpp/visibility_control.hpp"
 
 /**
  * @brief Single-threaded executor implementation for mixing Qt and ROS events.
@@ -30,17 +32,21 @@
 class QtExecutor : public QObject, public rclcpp::Executor{
 	Q_OBJECT
 	public:
+		RCLCPP_SMART_PTR_DEFINITIONS(QtExecutor)
+
 		/**
 		 * @brief Default constructor. See the rclcpp::Executor documentation for more information.
 		 * 
 		 * @param args See the rclcpp::ExecutorOptions documentation for more information.
 		 */
+		RCLCPP_PUBLIC
 		QtExecutor(const rclcpp::ExecutorOptions &args = rclcpp::ExecutorOptions());
 
 		/**
 		 * @brief Default destructor. Destroy the Qt Executor object
 		 * 
 		 */
+		RCLCPP_PUBLIC
 		virtual ~QtExecutor();
 
 		/**
@@ -48,12 +54,14 @@ class QtExecutor : public QObject, public rclcpp::Executor{
 		 * comes in, execute it, and keep blocking.
 		 * 
 		 */
+		RCLCPP_PUBLIC
 		void spin();
 
 		/**
 		 * @brief Start the executor.
 		 * 
 		 */
+		RCLCPP_PUBLIC
 		void start();
 
 	private:
@@ -72,6 +80,8 @@ class QtExecutor : public QObject, public rclcpp::Executor{
 		Q_SIGNAL void on_new_work();
 	
 	private:
+		RCLCPP_DISABLE_COPY(QtExecutor)
+
 		std::thread thread_;
 };
 
