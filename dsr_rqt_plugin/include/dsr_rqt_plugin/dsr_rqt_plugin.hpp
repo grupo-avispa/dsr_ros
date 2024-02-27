@@ -34,11 +34,14 @@ class DSRView : public rqt_gui_cpp::Plugin{
 		virtual ~DSRView();
 		virtual void initPlugin(qt_gui_cpp::PluginContext& context);
 		virtual void shutdownPlugin();
-		virtual void saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const;
-		virtual void restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings);
+		virtual void saveSettings(qt_gui_cpp::Settings& plugin_settings, 
+			qt_gui_cpp::Settings& instance_settings) const;
+		virtual void restoreSettings(const qt_gui_cpp::Settings& plugin_settings, 
+			const qt_gui_cpp::Settings& instance_settings);
 
 	protected:
-		QWidget* widget_;
+		QWidget* widget_graph_;
+		QWidget* widget_tree_;
 
 	private:
 		// DSR

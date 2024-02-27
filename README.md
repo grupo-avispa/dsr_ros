@@ -4,7 +4,7 @@
 
 ## Overview
 
-A ROS2 stack that contains agents, interfaces and RQT plugins for connecting to CORTEX architecture using a Deep State Representation (DSR) graph.
+A ROS 2 stack that contains agents, interfaces and RQT plugins for connecting to CORTEX architecture using a Deep State Representation (DSR) graph.
 
  * [dsr_agents]: agents to connect to CORTEX architecture.
  * [dsr_interfaces]: messages and services to interact with the DSR agents and ROS.

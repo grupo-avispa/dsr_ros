@@ -12,6 +12,7 @@ X.X.X (XX-02-2024)
 * Added source to all agents.
 * Refactor CMakelists.txt.
 * Added new functions to agent node.
+* Remove viewer as it's integrated in dsr_rqt_plugin.
 
 0.6.2 (23-01-2024)
 ------------------

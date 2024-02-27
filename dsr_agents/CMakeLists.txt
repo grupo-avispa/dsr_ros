@@ -132,18 +132,6 @@ ament_target_dependencies(tf_agent
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 target_sources(tf_agent PRIVATE ${agent_moc})
 
-############
-## VIEWER ##
-############
-
-# Executable node
-add_executable(viewer src/viewer.cpp)
-ament_target_dependencies(viewer
-  Eigen3
-  Qt5
-)
-target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
-
 ################
 ## DSR BRIDGE ##
 ################
@@ -160,7 +148,7 @@ target_sources(dsr_bridge PRIVATE ${agent_moc})
 #############
 ## Install ##
 #############
-install(TARGETS topic_agent person_agent tf_agent nav_agent viewer dsr_bridge
+install(TARGETS topic_agent person_agent tf_agent nav_agent dsr_bridge
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

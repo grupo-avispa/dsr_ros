@@ -10,7 +10,7 @@
         <statustip>Plugins related to the DSR.</statustip>
       </group>
       <label>DSR View</label>
-      <icon type="theme">preferences-system-network</icon>
+      <icon type="theme">zen-icon</icon>
       <statustip>A GUI plugin to visualize a DSR graph.</statustip>
     </qtgui>
   </class>
