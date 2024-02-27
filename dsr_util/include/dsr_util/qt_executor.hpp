@@ -4,14 +4,14 @@
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
- * This file is part of dsr_agents.
+ * This file is part of dsr_util.
  * 
  * All rights reserved.
  *
  */
 
-#ifndef DSR_AGENTS__QT_EXECUTOR_HPP_
-#define DSR_AGENTS__QT_EXECUTOR_HPP_
+#ifndef DSR_UTIL__QT_EXECUTOR_HPP_
+#define DSR_UTIL__QT_EXECUTOR_HPP_
 
 // C++
 #include <thread>
@@ -85,4 +85,4 @@ class QtExecutor : public QObject, public rclcpp::Executor{
 		std::thread thread_;
 };
 
-#endif  // DSR_AGENT__QT_EXECUTOR_HPP_
+#endif  // DSR_UTIL__QT_EXECUTOR_HPP_

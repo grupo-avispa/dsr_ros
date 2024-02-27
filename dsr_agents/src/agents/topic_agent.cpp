@@ -22,7 +22,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 // DSR
-#include "dsr_agents/qt_executor.hpp"
+#include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/agents/topic_agent.hpp"
 
 /* Initialize the publishers and subscribers */

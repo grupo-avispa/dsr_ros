@@ -10,7 +10,7 @@
  */
 
 // DSR
-#include "dsr_agents/qt_executor.hpp"
+#include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/agents/action_agent.hpp"
 
 /* Initialize the publishers and subscribers */

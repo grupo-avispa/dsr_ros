@@ -23,7 +23,7 @@
 #include "nav2_util/node_utils.hpp"
 
 // DSR
-#include "dsr_agents/qt_executor.hpp"
+#include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/agents/person_agent.hpp"
 
 /* Initialize the publishers and subscribers */

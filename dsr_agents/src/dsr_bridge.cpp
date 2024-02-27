@@ -18,7 +18,7 @@
 #include "nav2_util/string_utils.hpp"
 
 // DSR
-#include "dsr_agents/qt_executor.hpp"
+#include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/dsr_bridge.hpp"
 
 /* Initialize the publishers and subscribers */

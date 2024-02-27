@@ -12,7 +12,7 @@
 
 #include <QCoreApplication>
 
-#include "dsr_agents/qt_executor.hpp"
+#include "dsr_util/qt_executor.hpp"
 
 QtExecutor::QtExecutor(const rclcpp::ExecutorOptions &args) : rclcpp::Executor(args){
 	QObject::connect(this, &QtExecutor::on_new_work, this, &QtExecutor::spin_work, 

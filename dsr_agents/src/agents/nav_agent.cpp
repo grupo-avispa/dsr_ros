@@ -27,7 +27,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 // DSR
-#include "dsr_agents/qt_executor.hpp"
+#include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */

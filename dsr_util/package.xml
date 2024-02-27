@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>dsr_agents</name>
-  <version>0.6.2</version>
-  <description>ROS2 interface to connect to CORTEX architecture using a Deep State Representation (DSR) graph.</description>
+  <name>dsr_util</name>
+  <version>0.1.0</version>
+  <description>Package for utility functions and classes used in the DSR ROS 2 interface.</description>
   <maintainer email="ajtudela@gmail.com">Alberto J. Tudela Roldán</maintainer>
   <license>TODO</license>
   <author email="ajtudela@gmail.com">Alberto J. Tudela Roldán</author>
@@ -12,20 +12,6 @@
   <build_depend>qtbase5-dev</build_depend>
   <depend>rclcpp</depend>
   <depend>eigen</depend>
-  <depend>fastcdr</depend>
-  <depend>fastrtps</depend>
-  <depend>dsr_interfaces</depend>
-  <depend>dsr_util</depend>
-  <depend>geometry_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_msgs</depend>
-  <depend>tf2_sensor_msgs</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>nav2_util</depend>
-  <depend>auto_docking_interfaces</depend>
-  <depend>semantic_navigation_msgs</depend>
-  <depend>vision_msgs</depend>
   <exec_depend>libqt5-core</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -28,7 +28,7 @@
 #include "dsr/api/dsr_api.h"
 
 #include "dsr_interfaces/srv/save_dsr.hpp"
-#include "dsr_agents/ros_to_dsr_types.hpp"
+#include "dsr_util/ros_to_dsr_types.hpp"
 
 /**
  * @brief Base class to connect the DSR graph with ROS 2. It contains common methods and attributes

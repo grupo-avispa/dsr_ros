@@ -3,13 +3,13 @@
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
- * This file is part of dsr_agents.
+ * This file is part of dsr_util.
  * 
  * All rights reserved.
  *
  */
 
-#ifndef DSR_AGENTS__ROS_TO_DSR_TYPES_HPP_
+#ifndef DSR_UTIL__ROS_TO_DSR_TYPES_HPP_
 
 #include <dsr/core/types/type_checking/dsr_node_type.h>
 #include <dsr/core/types/type_checking/dsr_edge_type.h>
@@ -102,4 +102,4 @@ REGISTER_TYPE(activities, std::string, false)
 REGISTER_TYPE(bbdd_agent, std::string, false)
 REGISTER_TYPE(changes, std::string, false)
 
-#endif  // DSR_AGENT__ROS_TO_DSR_TYPES_HPP_
+#endif  // DSR_UTIL__ROS_TO_DSR_TYPES_HPP_
