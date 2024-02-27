@@ -67,6 +67,7 @@ class DSRBridge: public AgentNode{
 		template <typename TYPE>
 		void modify_attributes(TYPE & elem, std::vector <std::string>& att_str);
 		std::string attribute_to_string(const DSR::Attribute &att);
+		DSR::Attribute string_to_attribute(const std::string &att_value);
 		DSR::Types parse_type(const std::string &type);
 };
 

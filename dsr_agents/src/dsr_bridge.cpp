@@ -88,28 +88,34 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	if (msg->header.frame_id == source_){
 		return;
 	}
-	// Create or update the current edge
-	if (!msg->deleted){
+	// Create the current edge
+	if (!msg->deleted && !msg->updated){
+		auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type);
+		modify_attributes(new_edge.value(), msg->attributes);
+		if (!G_->insert_or_assign_edge(new_edge.value())){
+			RCLCPP_ERROR(this->get_logger(), 
+				"The edge [%s->%s] of type [%s] could not be inserted in the DSR",
+				msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+		}
+	}
+	// Update the current edge
+	else if (!msg->deleted && msg->updated){
 		if (auto edge = G_->get_edge(msg->parent, msg->child, msg->type); edge.has_value()){
 			modify_attributes(edge.value(), msg->attributes);
 			if (!G_->insert_or_assign_edge(edge.value())) {
-				RCLCPP_ERROR_STREAM(this->get_logger(), "Error updating [" 
-					<< msg->parent.c_str() << "->" << msg->child.c_str() << "] edge of type [" 
-					<< msg->type.c_str() << "] in the DSR");
-			}
-		}else{
-			auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type);
-			modify_attributes(new_edge.value(), msg->attributes);
-			if (!G_->insert_or_assign_edge(new_edge.value())){
-				RCLCPP_ERROR_STREAM(this->get_logger(), "Error inserting [" 
-					<< msg->parent.c_str() << "->" << msg->child.c_str() << "] edge of type [" 
-					<< msg->type.c_str() << "] in the DSR");
+				RCLCPP_ERROR(this->get_logger(), 
+					"The edge [%s->%s] of type [%s] could not be updated in the DSR",
+					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
 			}
 		}
 	}
-	// Delete an edge
-	else{
+	// Delete the current edge
+	else if (msg->deleted){
 		delete_edge(msg->parent, msg->child, msg->type);
+	}
+	// Error
+	else{
+		RCLCPP_ERROR(this->get_logger(), "The edge message is not well defined");
 	}
 }
 
@@ -126,13 +132,15 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 		if (auto node = G_->get_node(msg->name); node.has_value()){
 			modify_attributes(node.value(), msg->attributes);
 			if (!G_->update_node(node.value())){
-				RCLCPP_ERROR(this->get_logger(), "Error updating [%s] node", msg->name.c_str());
+				RCLCPP_ERROR(this->get_logger(), 
+					"The node [%s] could not be updated in the DSR", msg->name.c_str());
 			}
 		}else{
 			auto new_node = create_dsr_node(msg->name, msg->type);
 			modify_attributes(new_node.value(), msg->attributes);
 			if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
-				RCLCPP_ERROR(this->get_logger(), "Error inserting [%s] node", msg->name.c_str());
+				RCLCPP_ERROR(this->get_logger(), 
+					"The node [%s] could not be inserted in the DSR", msg->name.c_str());
 			}
 		}
 	}
@@ -141,7 +149,8 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 		if (auto node = G_->get_node(msg->name); node.has_value()){
 			G_->delete_node(node.value().name());
 		}else{
-			RCLCPP_ERROR(this->get_logger(), "Error deleting [%s] node", msg->name.c_str());
+			RCLCPP_ERROR(this->get_logger(), 
+				"The node [%s] could not be deleted in the DSR", msg->name.c_str());
 		}
 	}
 }
@@ -188,7 +197,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 					node_msg.attributes.push_back(att_name);
 					node_msg.attributes.push_back(att_value);
 					RCLCPP_DEBUG(this->get_logger(), 
-						"Attribute edge [%s] = [%s]", att_name.c_str(), att_value.c_str());
+						"Attribute node [%s] = [%s]", att_name.c_str(), att_value.c_str());
 				}
 			}
 			// Publish the message
@@ -217,10 +226,9 @@ void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::st
 			}
 			// Publish the message
 			edge_to_ros_pub_->publish(edge_msg);
-			RCLCPP_DEBUG_STREAM(this->get_logger(), "The edge [" 
-				<< edge_msg.parent.c_str() << "->" 
-				<< edge_msg.child.c_str() << "] of type ["
-				<< edge_msg.type.c_str() << "] has been created in the DSR");
+			RCLCPP_DEBUG(this->get_logger(), 
+				"The edge [%s->%s] of type [%s] has been created in the DSR",
+				edge_msg.parent.c_str(), edge_msg.child.c_str(), edge_msg.type.c_str());
 		}
 	}
 }
@@ -248,10 +256,9 @@ void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to,
 			}
 			// Publish the message
 			edge_to_ros_pub_->publish(edge_msg);
-			RCLCPP_DEBUG_STREAM(this->get_logger(), "Updated edge [" 
-				<< edge_msg.parent.c_str() << "->" 
-				<< edge_msg.child.c_str() << "] of type ["
-				<< edge_msg.type.c_str() << "] successfully in the DSR");
+			RCLCPP_DEBUG(this->get_logger(), 
+				"The edge [%s->%s] of type [%s] has been updated in the DSR",
+				edge_msg.parent.c_str(), edge_msg.child.c_str(), edge_msg.type.c_str());
 		}
 	}
 }
@@ -263,9 +270,9 @@ void DSRBridge::node_deleted(const DSR::Node &node){
 	node_msg.deleted = true;
 	// Publish the message
 	node_to_ros_pub_->publish(node_msg);
-	RCLCPP_DEBUG_STREAM(this->get_logger(), 
-		"The node [" << node.name() << "] of type [" 
-		<< node.type() << "] has been deleted in the DSR");
+	RCLCPP_DEBUG(this->get_logger(), 
+		"The node [%s] of type [%s] has been deleted in the DSR",
+		node_msg.name.c_str(), node_msg.type.c_str());
 }
 
 void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag){
@@ -275,10 +282,9 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
 	edge_msg.deleted = true;
 	// Publish the message
 	edge_to_ros_pub_->publish(edge_msg);
-	RCLCPP_DEBUG_STREAM(this->get_logger(), "The edge [" 
-		<< edge_msg.parent.c_str() << "->" 
-		<< edge_msg.child.c_str() << "] of type ["
-		<< edge_msg.type.c_str() << "] has been deleted in the DSR");
+	RCLCPP_DEBUG(this->get_logger(), 
+		"The edge [%s->%s] of type [%s] has been deleted in the DSR",
+		edge_msg.parent.c_str(), edge_msg.child.c_str(), edge_msg.type.c_str());
 }
 
 // Converter functions
@@ -342,42 +348,24 @@ void DSRBridge::modify_attributes(TYPE & elem, std::vector <std::string>& att_st
 	for (unsigned int i = 0; i < att_str.size(); i+=2){
 		std::string att_name = att_str[i];
 		std::string att_value = att_str[i+1];
-		DSR::Types att_type = parse_type(att_value);
 
 		DSR::Attribute new_att;
-		switch (att_type) {
-			case DSR::Types::STRING:{
-				new_att.value(std::string(att_value));
-				break;
-			}
-			case DSR::Types::INT:{
-				new_att.value(std::stoi(att_value));
-				break;
-			}
-			case DSR::Types::FLOAT:{
-				new_att.value(std::stof(att_value));
-				break;
-			}
-			case DSR::Types::FLOAT_VEC:{
-				std::vector<std::string> values = nav2_util::split(att_value, ',');
-				std::vector<float> float_values;
-				for (const auto &value: values){
-					float_values.push_back(std::stof(value));
-				}
-				new_att.value(float_values);
-				break;
-			}
-			case DSR::Types::BOOL:{
-				new_att.value(att_value == "true");
-				break;
-			}
-			default:
-				break;
+		// Exceptions with uint64_t
+		if (att_name == "parent"){
+			new_att.value(std::stoull(att_value));
+		}else{
+			new_att = string_to_attribute(att_value);
 		}
 		// Add the attribute to the element
-		G_->runtime_checked_add_attrib_local(elem, att_name, new_att);
-		RCLCPP_DEBUG(this->get_logger(), 
-			"Updating attribute [%s] = [%s]", att_name.c_str(), att_value.c_str());
+		if (G_->runtime_checked_add_attrib_local(elem, att_name, new_att)){
+			RCLCPP_DEBUG(this->get_logger(), 
+				"Updating attribute [%s] = [%s] with type [%ld]",
+				att_name.c_str(), att_value.c_str(), new_att.value().index());
+		}else{
+			RCLCPP_ERROR(this->get_logger(), 
+				"The type [%d] of the attribute [%s] = [%s] is not compatible with the element",
+				parse_type(att_value), att_name.c_str(), att_value.c_str());
+		}
 	}
 }
 
@@ -421,11 +409,62 @@ std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
 		case 8:{
 			return std::to_string(std::get<double>(att.value()));
 		}
+		default:
+			return "";
 	}
+}
+
+DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value){
+	DSR::Attribute new_att;
+	DSR::Types att_type = parse_type(att_value);
+	switch (att_type) {
+		case DSR::Types::STRING:{
+			new_att.value(std::string(att_value));
+			break;
+		}
+		case DSR::Types::INT:{
+			new_att.value(std::stoi(att_value));
+			break;
+		}
+		case DSR::Types::FLOAT:{
+			if (att_value == "nan"){
+				new_att.value(std::numeric_limits<float>::quiet_NaN());
+			}else{
+				new_att.value(std::stof(att_value));
+			}
+			break;
+		}
+		case DSR::Types::FLOAT_VEC:{
+			std::vector<std::string> values = nav2_util::split(att_value, ',');
+			std::vector<float> float_values;
+			for (const auto &value: values){
+				if (value == "nan"){
+					float_values.push_back(std::numeric_limits<float>::quiet_NaN());
+				}else{
+					float_values.push_back(std::stof(value));
+				}
+			}
+			new_att.value(float_values);
+			break;
+		}
+		case DSR::Types::BOOL:{
+			new_att.value(att_value == "true");
+			break;
+		}
+		case DSR::Types::UINT64:{
+			new_att.value(std::stoull(att_value));
+			break;
+		}
+		default:
+			break;
+	}
+	return new_att;
 }
 
 DSR::Types DSRBridge::parse_type(const std::string &type){
 	std::istringstream iss(type);
+
+	// TODO: Fix parse uint64_t
 
 	// Try to convert to int
 	int int_result;
@@ -472,7 +511,10 @@ DSR::Types DSRBridge::parse_type(const std::string &type){
 	if (!iss.fail() && iss.eof()) {
 		return DSR::Types::BOOL;
 	}
-
+	// Check if it is a nan
+	if (type == "nan") {
+		return DSR::Types::FLOAT;
+	}
 	// In other case, return a string
 	return DSR::Types::STRING;
 }
