@@ -15,6 +15,7 @@ X.X.X (XX-02-2024)
 * Remove viewer as it's integrated in dsr_rqt_plugin.
 * Remove QtExecutor as it's integrated in dsr_util.
 * Move ros_to_dsr_types.hpp to dsr_util.
+* Refactor agent_node to use dsr_util.
 
 0.6.2 (23-01-2024)
 ------------------
