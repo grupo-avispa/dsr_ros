@@ -126,7 +126,7 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 					zone.value().c_str());
 				// Update the zone into the DSR graph
 				if (auto nav_node = G_->get_node("navigation"); nav_node.has_value()){
-					if (get_priority(nav_node.value()) == 0){
+					if (G_->get_priority(nav_node.value()) == 0){
 						G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), zone.value());
 						G_->update_node(nav_node.value());
 					}
@@ -393,7 +393,7 @@ void NavigationAgent::get_zones(){
 
 			// Add the list of the zones to the DSR graph
 			if (auto world_node = G_->get_node("world"); world_node.has_value()){
-				if (get_priority(world_node.value()) == 0){
+				if (G_->get_priority(world_node.value()) == 0){
 					std::vector<std::string> zones_expanded(zones_);
 					zones_expanded.push_back("all");
 					zones_expanded.push_back("dock");
@@ -408,7 +408,7 @@ void NavigationAgent::get_zones(){
 void NavigationAgent::update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose){
 	// Update the robot pose into the DSR graph
 	if (auto robot_node = G_->get_node(source_); robot_node.has_value()){
-		if (get_priority(robot_node.value()) == 0){
+		if (G_->get_priority(robot_node.value()) == 0){
 			G_->add_or_modify_attrib_local<pose_x_att>(robot_node.value(), 
 				static_cast<float>(pose.position.x));
 			G_->add_or_modify_attrib_local<pose_y_att>(robot_node.value(), 

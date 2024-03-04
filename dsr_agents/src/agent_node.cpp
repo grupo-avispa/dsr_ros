@@ -21,7 +21,7 @@ AgentNode::AgentNode(std::string ros_node_name): rclcpp::Node(ros_node_name){
 	get_common_params();
 
 	// Create graph
-	G_ = std::make_shared<DSR::DSRGraph>(ros_node_name, agent_id_, dsr_input_file_);
+	G_ = std::make_shared<DSR::DSRGraphExt>(ros_node_name, agent_id_, dsr_input_file_);
 
 	// Get RT API
 	rt_ = G_->get_rt_api();
@@ -95,36 +95,4 @@ void AgentNode::save_dsr(const std::shared_ptr<dsr_interfaces::srv::SaveDSR::Req
 	std::shared_ptr<dsr_interfaces::srv::SaveDSR::Response> response){
 	G_->write_to_json_file(request->dsr_url);
 	response->result = true;
-}
-
-int AgentNode::get_priority(const DSR::Node & node){
-	if (auto priority = G_->get_attrib_by_name<priority_att>(node); priority.has_value()){
-		return priority.value();
-	}
-	return std::numeric_limits<int>::quiet_NaN();
-}
-
-std::tuple<float, float> AgentNode::get_position_by_level_in_graph(const DSR::Node &parent){
-	auto children = G_->get_node_edges_by_type(parent, "RT");
-	std::vector<float> x_values;
-	for (const auto & child : children){
-		x_values.push_back(G_->get_attrib_by_name<pos_x_att>(
-			G_->get_node(child.to()).value()).value());
-	}
-	float max = G_->get_attrib_by_name<pos_x_att>(parent).value() - 300;
-	if (!x_values.empty()){
-		max = std::ranges::max(x_values);
-	}
-	return std::make_tuple(max + 200 , G_->get_attrib_by_name<pos_y_att>(parent).value() + 80);
-}
-
-std::tuple<float, float> AgentNode::get_random_position_to_draw_in_graph(){
-	static std::random_device rd;
-	static std::mt19937 mt(rd());
-
-	float x_min_limit = -800, y_min_limit = -700, x_max_limit = 800, y_max_limit = 500;
-	std::uniform_real_distribution<double> dist_x(x_min_limit, x_max_limit);
-	std::uniform_real_distribution<double> dist_y(y_min_limit, y_max_limit);
-
-	return std::make_tuple(dist_x(mt), dist_y(mt));
 }

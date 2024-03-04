@@ -107,7 +107,7 @@ void TopicAgent::deserialize_and_update_attributes(
 
 	// Update the attributes of the node only if its priority is 0
 	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
-		if (get_priority(dsr_node.value()) == 0){
+		if (G_->get_priority(dsr_node.value()) == 0){
 			modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
 			G_->update_node(dsr_node.value());
 		}
