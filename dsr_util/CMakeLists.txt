@@ -79,6 +79,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
   # PATTERN ".svn" EXCLUDE
 )
 
+install(DIRECTORY worlds
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 # ############
 # # Testing ##
 # ############

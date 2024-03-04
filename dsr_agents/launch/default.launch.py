@@ -16,6 +16,7 @@ from nav2_common.launch import RewrittenYaml
 def generate_launch_description():
     # Getting directories and launch-files
     dsr_agent_dir = get_package_share_directory('dsr_agents')
+    dsr_util_dir = get_package_share_directory('dsr_util')
     default_params_file = os.path.join(dsr_agent_dir, 'params', 'default_params.yaml')
 
     # Input parameters declaration
@@ -30,7 +31,7 @@ def generate_launch_description():
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
-        'dsr_input_file': os.path.join(dsr_agent_dir, 'worlds', 'empty.json')
+        'dsr_input_file': os.path.join(dsr_util_dir, 'worlds', 'empty.json')
     }
 
     configured_params = RewrittenYaml(

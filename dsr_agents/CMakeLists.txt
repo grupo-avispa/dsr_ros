@@ -161,7 +161,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY launch params worlds
+install(DIRECTORY launch params
   DESTINATION share/${PROJECT_NAME}/
 )
 
