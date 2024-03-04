@@ -16,9 +16,9 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     # Getting directories and launch-files
-    dsr_agent_dir = get_package_share_directory('dsr_agents')
+    dsr_bridge_dir = get_package_share_directory('dsr_bridge')
     dsr_util_dir = get_package_share_directory('dsr_util')
-    default_params_file = os.path.join(dsr_agent_dir, 'params', 'dsr_bridge_params.yaml')
+    default_params_file = os.path.join(dsr_bridge_dir, 'params', 'default_params.yaml')
 
     # Input parameters declaration
     params_file = LaunchConfiguration('params_file')
@@ -50,16 +50,16 @@ def generate_launch_description():
 
     # Prepare the node
     dsr_bridge_robot_node = Node(
-        package = 'dsr_agents',
+        package = 'dsr_bridge',
         namespace = '',
         executable = 'dsr_bridge',
-        name = 'dsr_bridge_nuc',
+        name = 'dsr_bridge_robot',
         parameters = [configured_params],
         emulate_tty = True,
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['dsr_bridge_nuc:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['dsr_bridge_robot:=', LaunchConfiguration('log-level')]]
     )
 
     return LaunchDescription([

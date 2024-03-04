@@ -5,14 +5,14 @@
  * Copyright (c) 2024 Óscar Pons Fernández <oscarpf22@gmail.com>
  * Copyright (c) 2024 José Galeas Merchan <jgaleas1999@gmail.com>
  * 
- * This file is part of dsr_agents.
+ * This file is part of dsr_bridge.
  * 
  * All rights reserved.
  *
  */
 
-#ifndef DSR_AGENTS__DSR_BRIDGE_HPP_
-#define DSR_AGENTS__DSR_BRIDGE_HPP_
+#ifndef DSR_BRIDGE__DSR_BRIDGE_HPP_
+#define DSR_BRIDGE__DSR_BRIDGE_HPP_
 
 // C++
 #include <string>
@@ -71,4 +71,4 @@ class DSRBridge: public AgentNode{
 		DSR::Types parse_type(const std::string &type);
 };
 
-#endif  // DSR_AGENT__DSR_BRIDGE_HPP_
+#endif  // DSR_BRIDGE__DSR_BRIDGE_HPP_

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>dsr_bridge</name>
+  <version>1.0.0</version>
+  <description>Bridge to connect two DSR instances through ROS 2.</description>
+  <maintainer email="ajtudela@gmail.com">Alberto J. Tudela Roldán</maintainer>
+  <license>TODO</license>
+  <author email="ajtudela@gmail.com">Alberto J. Tudela Roldán</author>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
+  <build_depend>qtbase5-dev</build_depend>
+  <depend>rclcpp</depend>
+  <depend>eigen</depend>
+  <depend>fastcdr</depend>
+  <depend>fastrtps</depend>
+  <depend>nav2_util</depend>
+  <depend>dsr_interfaces</depend>
+  <depend>dsr_util</depend>
+  <depend>dsr_agents</depend>
+  <exec_depend>libqt5-core</exec_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

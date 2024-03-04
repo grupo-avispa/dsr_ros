@@ -19,7 +19,7 @@
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/dsr_bridge.hpp"
+#include "dsr_bridge/dsr_bridge.hpp"
 
 /* Initialize the publishers and subscribers */
 DSRBridge::DSRBridge(): AgentNode("dsr_bridge"){

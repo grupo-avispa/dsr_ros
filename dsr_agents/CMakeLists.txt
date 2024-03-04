@@ -10,10 +10,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-################################################
-## Find  dependencies                         ##
-################################################
-## Find ament macros and libraries
+# ###############################################
+# # Find  dependencies                         ##
+# ###############################################
+# # Find ament macros and libraries
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
@@ -34,11 +34,11 @@ find_package(auto_docking_interfaces REQUIRED)
 find_package(semantic_navigation_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
 
-###########
-## Build ##
-###########
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
+# ##########
+# # Build ##
+# ##########
+# # Specify additional locations of header files
+# # Your package locations should be listed before other locations
 include_directories(
   include
 )
@@ -57,9 +57,9 @@ set(common_dependencies
   nav2_util
 )
 
-###################
-## TOPIC AGENT ##
-###################
+# ##################
+# # TOPIC AGENT ##
+# ##################
 
 # Executable node
 add_executable(topic_agent src/topic_agent.cpp)
@@ -69,9 +69,9 @@ ament_target_dependencies(topic_agent
 )
 target_link_libraries(topic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
-######################
-## NAVIGATION AGENT ##
-######################
+# #####################
+# # NAVIGATION AGENT ##
+# #####################
 
 # Executable node
 add_executable(nav_agent src/nav_agent.cpp)
@@ -84,9 +84,9 @@ ament_target_dependencies(nav_agent
 )
 target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
-##################
-## PERSON AGENT ##
-##################
+# #################
+# # PERSON AGENT ##
+# #################
 
 # Executable node
 add_executable(person_agent src/person_agent.cpp)
@@ -98,9 +98,9 @@ ament_target_dependencies(person_agent
 )
 target_link_libraries(person_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
-##############
-## TF AGENT ##
-##############
+# #############
+# # TF AGENT ##
+# #############
 
 # Executable node
 add_executable(tf_agent src/tf_agent.cpp)
@@ -113,22 +113,10 @@ ament_target_dependencies(tf_agent
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
-################
-## DSR BRIDGE ##
-################
-
-# Executable node
-add_executable(dsr_bridge src/dsr_bridge.cpp)
-ament_target_dependencies(dsr_bridge
-  ${common_dependencies}
-  geometry_msgs
-)
-target_link_libraries(dsr_bridge ${DSR_LIBRARIES} ${QT_LIBRARIES})
-
-#############
-## Install ##
-#############
-install(TARGETS topic_agent person_agent tf_agent nav_agent dsr_bridge
+# ############
+# # Install ##
+# ############
+install(TARGETS topic_agent person_agent tf_agent nav_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
@@ -137,19 +125,36 @@ install(TARGETS topic_agent person_agent tf_agent nav_agent dsr_bridge
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION include/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.hpp"
-#   PATTERN ".svn" EXCLUDE
+
+  # PATTERN ".svn" EXCLUDE
 )
 
 install(DIRECTORY launch params
   DESTINATION share/${PROJECT_NAME}/
 )
 
-#############
-## Testing ##
-#############
+# ############
+# # Testing ##
+# ############
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# ##################################
+# # ament specific configuration ##
+# ##################################
+ament_export_include_directories(include)
+ament_export_dependencies(
+  ${common_dependencies}
+  geometry_msgs
+  tf2
+  sensor_msgs
+  vision_msgs
+  tf2_msgs
+  tf2_sensor_msgs
+  tf2_geometry_msgs
+  auto_docking_interfaces
+  semantic_navigation_msgs
+)
 ament_package()
