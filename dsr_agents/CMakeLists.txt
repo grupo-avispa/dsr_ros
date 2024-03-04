@@ -30,7 +30,6 @@ find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
-
 find_package(auto_docking_interfaces REQUIRED)
 find_package(semantic_navigation_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
@@ -48,18 +47,8 @@ include_directories(
 set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
 set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 
-# Set headers
-set(HEADERS
-  include/${PROJECT_NAME}/agent_node.hpp
-)
-
-# Set sources
-set(SOURCES
-  src/agent_node.cpp
-)
-
 # Set common dependencies
-set(COMMON_DEPENDENCIES
+set(common_dependencies
   rclcpp
   Eigen3
   Qt5
@@ -68,83 +57,73 @@ set(COMMON_DEPENDENCIES
   nav2_util
 )
 
-## Qt Moc
-qt5_wrap_cpp(agent_moc ${HEADERS}
-  OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
-)
-
 ###################
 ## TOPIC AGENT ##
 ###################
 
 # Executable node
-add_executable(topic_agent ${SOURCES} src/agents/topic_agent.cpp)
+add_executable(topic_agent src/topic_agent.cpp)
 ament_target_dependencies(topic_agent
-  ${COMMON_DEPENDENCIES}
+  ${common_dependencies}
   sensor_msgs
 )
 target_link_libraries(topic_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(topic_agent PRIVATE ${agent_moc})
 
 ######################
 ## NAVIGATION AGENT ##
 ######################
 
 # Executable node
-add_executable(nav_agent ${SOURCES} src/agents/nav_agent.cpp)
+add_executable(nav_agent src/nav_agent.cpp)
 ament_target_dependencies(nav_agent
-  ${COMMON_DEPENDENCIES}
+  ${common_dependencies}
   geometry_msgs
   tf2
   auto_docking_interfaces
   semantic_navigation_msgs
 )
 target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(nav_agent PRIVATE ${agent_moc})
 
 ##################
 ## PERSON AGENT ##
 ##################
 
 # Executable node
-add_executable(person_agent ${SOURCES} src/agents/person_agent.cpp)
+add_executable(person_agent src/person_agent.cpp)
 ament_target_dependencies(person_agent
-  ${COMMON_DEPENDENCIES}
+  ${common_dependencies}
   geometry_msgs
   tf2
   vision_msgs
 )
 target_link_libraries(person_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(person_agent PRIVATE ${agent_moc})
 
 ##############
 ## TF AGENT ##
 ##############
 
 # Executable node
-add_executable(tf_agent ${SOURCES} src/agents/tf_agent.cpp)
+add_executable(tf_agent src/tf_agent.cpp)
 ament_target_dependencies(tf_agent
-  ${COMMON_DEPENDENCIES}
+  ${common_dependencies}
   geometry_msgs
   tf2_msgs
   tf2_sensor_msgs
   tf2_geometry_msgs
 )
 target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(tf_agent PRIVATE ${agent_moc})
 
 ################
 ## DSR BRIDGE ##
 ################
 
 # Executable node
-add_executable(dsr_bridge ${SOURCES} src/dsr_bridge.cpp)
+add_executable(dsr_bridge src/dsr_bridge.cpp)
 ament_target_dependencies(dsr_bridge
-  ${COMMON_DEPENDENCIES}
+  ${common_dependencies}
   geometry_msgs
 )
 target_link_libraries(dsr_bridge ${DSR_LIBRARIES} ${QT_LIBRARIES})
-target_sources(dsr_bridge PRIVATE ${agent_moc})
 
 #############
 ## Install ##

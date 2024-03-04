@@ -19,6 +19,10 @@ find_package(rclcpp REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
+find_package(fastrtps REQUIRED)
+find_package(fastcdr REQUIRED)
+find_package(nav2_util REQUIRED)
+find_package(dsr_interfaces REQUIRED)
 
 # ##########
 # # Build ##
@@ -35,11 +39,13 @@ set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
 
 # Set headers
 set(HEADERS
+  include/${PROJECT_NAME}/agent_node.hpp
   include/${PROJECT_NAME}/qt_executor.hpp
 )
 
 # Set sources
 set(SOURCES
+  src/agent_node.cpp
   src/qt_executor.cpp
 )
 
@@ -47,6 +53,8 @@ set(dependencies
   rclcpp
   Eigen3
   Qt5
+  nav2_util
+  dsr_interfaces
 )
 
 # # Qt Moc

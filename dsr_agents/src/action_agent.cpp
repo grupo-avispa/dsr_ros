@@ -11,7 +11,7 @@
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/agents/action_agent.hpp"
+#include "dsr_agents/action_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 ActionAgent::ActionAgent(): AgentNode("action_agent"){

@@ -23,7 +23,7 @@
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/agents/topic_agent.hpp"
+#include "dsr_agents/topic_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 TopicAgent::TopicAgent(): AgentNode("generic_agent"){

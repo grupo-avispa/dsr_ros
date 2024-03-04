@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
- * This file is part of dsr_agents.
+ * This file is part of dsr_util.
  * 
  * All rights reserved.
  *
@@ -13,7 +13,7 @@
 #include "nav2_util/node_utils.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-#include "dsr_agents/agent_node.hpp"
+#include "dsr_util/agent_node.hpp"
 
 /* Initialize */
 AgentNode::AgentNode(std::string ros_node_name): rclcpp::Node(ros_node_name){

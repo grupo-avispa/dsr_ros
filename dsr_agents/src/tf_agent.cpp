@@ -14,7 +14,7 @@
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/agents/tf_agent.hpp"
+#include "dsr_agents/tf_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 TFAgent::TFAgent(): AgentNode("tf_agent"){

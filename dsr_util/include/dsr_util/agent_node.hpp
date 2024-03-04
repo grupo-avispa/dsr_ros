@@ -3,14 +3,14 @@
  *
  * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
  * 
- * This file is part of dsr_agents.
+ * This file is part of dsr_util.
  * 
  * All rights reserved.
  *
  */
 
-#ifndef DSR_AGENTS__AGENT_NODE_HPP_
-#define DSR_AGENTS__AGENT_NODE_HPP_
+#ifndef DSR_UTIL__AGENT_NODE_HPP_
+#define DSR_UTIL__AGENT_NODE_HPP_
 
 // C++
 #include <string>
@@ -466,4 +466,4 @@ class AgentNode: public QObject, public rclcpp::Node{
 		std::string dsr_input_file_;
 };
 
-#endif  // DSR_AGENT__AGENT_NODE_HPP_
+#endif  // DSR_UTIL__AGENT_NODE_HPP_

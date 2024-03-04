@@ -6,7 +6,8 @@ Changelog for package dsr_util
 ------------------
 * Initial release.
 * Create README.md.
-* Added qt executor class (.hpp and .cpp files).
+* Added qt_executor class (.hpp and .cpp files).
+* Added agent_node class (.hpp and .cpp files).
 * Added ros_to_dsr_types.hpp.
 * Added worlds.
 * Contributors: Alberto Tudela

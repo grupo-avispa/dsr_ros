@@ -24,7 +24,7 @@
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/agents/person_agent.hpp"
+#include "dsr_agents/person_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 PersonAgent::PersonAgent(): AgentNode("person_agent"){

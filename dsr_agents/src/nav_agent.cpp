@@ -28,7 +28,7 @@
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/agents/nav_agent.hpp"
+#include "dsr_agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */
 NavigationAgent::NavigationAgent(): AgentNode("navigation_agent"), current_zone_(""){
