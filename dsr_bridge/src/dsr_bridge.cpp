@@ -356,15 +356,10 @@ void DSRBridge::modify_attributes(TYPE & elem, std::vector <std::string>& att_st
 
 		// Add the attribute to the element
 		DSR::Attribute new_att =  string_to_attribute(att_value, std::stoi(att_type));
-		if (G_->runtime_checked_add_attrib_local(elem, att_name, new_att)){
-			RCLCPP_DEBUG(this->get_logger(), 
-				"Updating attribute [%s] = [%s] with type [%ld]",
-				att_name.c_str(), att_value.c_str(), new_att.value().index());
-		}else{
-			RCLCPP_WARN(this->get_logger(), 
-				"The type [%d] of the attribute [%s] = [%s] is not compatible with the element",
-				att_type, att_name.c_str(), att_value.c_str());
-		}
+		elem.attrs().insert_or_assign(att_name, new_att);
+		RCLCPP_DEBUG(this->get_logger(), 
+			"Updating attribute [%s] = [%s] with type [%ld]",
+			att_name.c_str(), att_value.c_str(), new_att.value().index());
 	}
 }
 
@@ -482,6 +477,10 @@ DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value, int 
 			break;
 		}
 		case 6:{
+			new_att.value(std::stoull(att_value));
+			break;
+		}
+		case 7:{
 			new_att.value(std::stoull(att_value));
 			break;
 		}
