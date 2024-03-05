@@ -65,6 +65,7 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 		trf.child_frame_id = (trf.child_frame_id  == "map") ? "world" : trf.child_frame_id;
 	});
 
+	// First, insert all the nodes
 	for (auto trf : sorted_trf.transforms){
 		// Get the parent and child frames
 		std::string parent_frame = trf.header.frame_id;
@@ -76,17 +77,42 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 
 		// Create the parent node
 		if (!parent_node.has_value()){
-			add_node_with_edge<transform_node_type, RT_edge_type>(parent_frame, "");
+			auto new_node = G_->create_node_with_priority<transform_node_type>(
+				parent_frame, 0, source_);
+			if (auto id = G_->insert_node(new_node); id.has_value()){
+				RCLCPP_DEBUG(this->get_logger(), "Insert node [%s]", parent_frame.c_str());
+			}else{
+				RCLCPP_ERROR(this->get_logger(), "The node [%s] could not be inserted", 
+					parent_frame.c_str());
+			}
 		}
 
 		// Create the child node
-		if (!child_node.has_value()){
-			add_node_with_edge<transform_node_type, RT_edge_type>(child_frame, parent_frame);
+		if (parent_node.has_value() && !child_node.has_value()){
+			auto new_node = G_->create_node_with_pose<transform_node_type, RT_edge_type>(
+				child_frame, parent_frame, 0, source_);
+			if (auto id = G_->insert_node(new_node); id.has_value()){
+				RCLCPP_DEBUG(this->get_logger(), "Insert node [%s]", child_frame.c_str());
+			}else{
+				RCLCPP_ERROR(this->get_logger(), "The node [%s] could not be inserted", 
+					child_frame.c_str());
+			}
 		}
+	}
+
+	// Second, insert all the edges
+	for (auto trf : sorted_trf.transforms){
+		// Get the parent and child frames
+		std::string parent_frame = trf.header.frame_id;
+		std::string child_frame = trf.child_frame_id;
+
+		// Get the nodes
+		auto parent_node = G_->get_node(parent_frame);
+		auto child_node = G_->get_node(child_frame);
 
 		// Update the RT attributes
-		if (auto parent_node = G_->get_node(parent_frame); parent_node.has_value()){
-			if (auto child_node = G_->get_node(child_frame); child_node.has_value()){
+		if (auto edge = G_->get_edge(parent_frame, child_frame, "RT"); !edge.has_value()){
+			if (edge = add_edge<RT_edge_type>(parent_frame, child_frame); edge.has_value()){
 				update_rt_attributes(parent_node.value(), child_node.value(), trf.transform);
 				RCLCPP_DEBUG(this->get_logger(), 
 					"Update edge [%s] -> [%s]", parent_frame.c_str(), child_frame.c_str());
