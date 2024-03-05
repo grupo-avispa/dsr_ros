@@ -60,6 +60,9 @@ Node that receives the messages from the DSR side and creates the corresponding 
 
 ## Future work
 - [ ] Convert nodes to LifeCycleNodes.
+- [ ] Store the edges if the nodes are not available. and re-send them when the nodes are available.
+- [ ] Add filtering options for the nodes / edges.
+- [ ] Add resync function.
 
 
 [Ubuntu]: https://ubuntu.com/

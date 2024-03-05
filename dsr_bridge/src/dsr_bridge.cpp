@@ -378,7 +378,7 @@ std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
 		case 3:{
 			std::string att_str;
 			for (const auto &value: std::get<std::vector<float>>(att.value())){
-				att_str = std::to_string(value) + std::string(";");
+				att_str += std::to_string(value) + std::string(",");
 			}
 			att_str.pop_back();
 			return att_str;
@@ -389,7 +389,7 @@ std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
 		case 5:{
 			std::string att_str;
 			for (const auto &value: std::get<std::vector<uint8_t>>(att.value())){
-				att_str = std::to_string(value) + std::string(";");
+				att_str += std::to_string(value) + std::string(",");
 			}
 			att_str.pop_back();
 			return att_str;
