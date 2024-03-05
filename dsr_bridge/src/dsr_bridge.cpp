@@ -164,13 +164,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 			// Create the message
 			auto node_msg = create_msg_node(dsr_node.value().name(), dsr_node.value().type());
 			// Get all the attributes
-			for (const auto& [att_name, att_value] : dsr_node.value().attrs()){
-				std::string att_str = attribute_to_string(att_value);
-				node_msg.attributes.push_back(att_name);
-				node_msg.attributes.push_back(att_str);
-				RCLCPP_DEBUG(this->get_logger(), 
-					"Attribute node [%s] = [%s]", att_name.c_str(), att_str.c_str());
-			}
+			node_msg.attributes = attributes_to_string(dsr_node.value().attrs());
 			// Publish the message
 			node_to_ros_pub_->publish(node_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
@@ -190,16 +184,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 			// Mark the node as updated
 			node_msg.updated = true;
 			// Get all the updated attributes
-			for (const auto &att_name : att_names){
-				auto search = dsr_node.value().attrs().find(att_name);
-				if (search != dsr_node.value().attrs().end()){
-					std::string att_value = attribute_to_string(search->second);
-					node_msg.attributes.push_back(att_name);
-					node_msg.attributes.push_back(att_value);
-					RCLCPP_DEBUG(this->get_logger(), 
-						"Attribute node [%s] = [%s]", att_name.c_str(), att_value.c_str());
-				}
-			}
+			node_msg.attributes = attributes_updated_to_string(dsr_node.value(), att_names);
 			// Publish the message
 			node_to_ros_pub_->publish(node_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
@@ -217,13 +202,7 @@ void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::st
 			// Create the message
 			auto edge_msg = create_msg_edge(from, to, type);
 			// Get all the attributes
-			for (const auto& [att_name, att_value] : dsr_edge.value().attrs()){
-				std::string att_str = attribute_to_string(att_value);
-				edge_msg.attributes.push_back(att_name);
-				edge_msg.attributes.push_back(att_str);
-				RCLCPP_DEBUG(this->get_logger(), 
-					"Attribute edge [%s] = [%s]", att_name.c_str(), att_str.c_str());
-			}
+			edge_msg.attributes = attributes_to_string(dsr_edge.value().attrs());
 			// Publish the message
 			edge_to_ros_pub_->publish(edge_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
@@ -244,16 +223,7 @@ void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to,
 			// Mark the node as updated
 			edge_msg.updated = true;
 			// Get all the updated attributes
-			for (const auto &att_name : att_names){
-				auto search = dsr_edge.value().attrs().find(att_name);
-				if (search != dsr_edge.value().attrs().end()){
-					std::string att_value = attribute_to_string(search->second);
-					edge_msg.attributes.push_back(att_name);
-					edge_msg.attributes.push_back(att_value);
-					RCLCPP_DEBUG(this->get_logger(), 
-						"Attribute edge [%s] = [%s]", att_name.c_str(), att_value.c_str());
-				}
-			}
+			edge_msg.attributes = attributes_updated_to_string(dsr_edge.value(), att_names);
 			// Publish the message
 			edge_to_ros_pub_->publish(edge_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
@@ -345,26 +315,21 @@ dsr_interfaces::msg::Edge DSRBridge::create_msg_edge(
 // Helper functions
 template <typename TYPE>
 void DSRBridge::modify_attributes(TYPE & elem, std::vector <std::string>& att_str){
-	for (unsigned int i = 0; i < att_str.size(); i+=2){
+	for (unsigned int i = 0; i < att_str.size(); i+=3){
 		std::string att_name = att_str[i];
 		std::string att_value = att_str[i+1];
+		std::string att_type = att_str[i+2];
 
-		DSR::Attribute new_att;
-		// Exceptions with uint64_t
-		if (att_name == "parent"){
-			new_att.value(std::stoull(att_value));
-		}else{
-			new_att = string_to_attribute(att_value);
-		}
 		// Add the attribute to the element
+		DSR::Attribute new_att =  string_to_attribute(att_value, std::stoi(att_type));
 		if (G_->runtime_checked_add_attrib_local(elem, att_name, new_att)){
 			RCLCPP_DEBUG(this->get_logger(), 
 				"Updating attribute [%s] = [%s] with type [%ld]",
 				att_name.c_str(), att_value.c_str(), new_att.value().index());
 		}else{
-			RCLCPP_ERROR(this->get_logger(), 
+			/*RCLCPP_WARN(this->get_logger(), 
 				"The type [%d] of the attribute [%s] = [%s] is not compatible with the element",
-				parse_type(att_value), att_name.c_str(), att_value.c_str());
+				parse_type(att_value), att_name.c_str(), att_value.c_str());*/
 		}
 	}
 }
@@ -414,19 +379,50 @@ std::string DSRBridge::attribute_to_string(const DSR::Attribute &att){
 	}
 }
 
-DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value){
+std::vector<std::string> DSRBridge::attributes_to_string(
+	const std::map <std::string, DSR::Attribute> &atts){
+	std::vector<std::string> att_vector_str;
+	for (const auto& [att_name, att_value] : atts){
+		std::string att_str = attribute_to_string(att_value);
+		att_vector_str.push_back(att_name);
+		att_vector_str.push_back(att_str);
+		att_vector_str.push_back(get_type_from_attribute(att_value));
+		RCLCPP_DEBUG(this->get_logger(), 
+			"Attribute [%s] = [%s]", att_name.c_str(), att_str.c_str());
+	}
+	return att_vector_str;
+}
+
+template <typename TYPE>
+std::vector<std::string> DSRBridge::attributes_updated_to_string(TYPE & elem, 
+	const std::vector<std::string> &atts){
+	std::vector<std::string> att_vector_str;
+	for (const auto &att_name : atts){
+		auto search = elem.attrs().find(att_name);
+		if (search != elem.attrs().end()){
+			std::string att_value = attribute_to_string(search->second);
+			att_vector_str.push_back(att_name);
+			att_vector_str.push_back(att_value);
+			att_vector_str.push_back(get_type_from_attribute(search->second));
+			RCLCPP_DEBUG(this->get_logger(), 
+				"Attribute updated [%s] = [%s]", att_name.c_str(), att_value.c_str());
+		}
+	}
+	return att_vector_str;
+}
+
+DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value, int att_type){
 	DSR::Attribute new_att;
-	DSR::Types att_type = parse_type(att_value);
 	switch (att_type) {
-		case DSR::Types::STRING:{
+		case 0:{
 			new_att.value(std::string(att_value));
 			break;
 		}
-		case DSR::Types::INT:{
+		case 1:{
 			new_att.value(std::stoi(att_value));
 			break;
 		}
-		case DSR::Types::FLOAT:{
+		case 2:{
 			if (att_value == "nan"){
 				new_att.value(std::numeric_limits<float>::quiet_NaN());
 			}else{
@@ -434,7 +430,7 @@ DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value){
 			}
 			break;
 		}
-		case DSR::Types::FLOAT_VEC:{
+		case 3:{
 			std::vector<std::string> values = nav2_util::split(att_value, ',');
 			std::vector<float> float_values;
 			for (const auto &value: values){
@@ -447,11 +443,11 @@ DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value){
 			new_att.value(float_values);
 			break;
 		}
-		case DSR::Types::BOOL:{
+		case 4:{
 			new_att.value(att_value == "true");
 			break;
 		}
-		case DSR::Types::UINT64:{
+		case 6:{
 			new_att.value(std::stoull(att_value));
 			break;
 		}
@@ -461,62 +457,8 @@ DSR::Attribute DSRBridge::string_to_attribute(const std::string &att_value){
 	return new_att;
 }
 
-DSR::Types DSRBridge::parse_type(const std::string &type){
-	std::istringstream iss(type);
-
-	// TODO: Fix parse uint64_t
-
-	// Try to convert to int
-	int int_result;
-	iss >> int_result;
-	if (!iss.fail() && iss.eof()) {
-		return DSR::Types::INT;
-	}
-	// Clear the state of iss and reset the read pointer
-	iss.clear();
-	iss.seekg(0);
-
-	// Try to convert to float
-	float float_result;
-	iss >> float_result;
-	if (!iss.fail() && iss.eof()) {
-		if (float_result == static_cast<int>(float_result)) {
-			return DSR::Types::INT;
-		} else {
-			return DSR::Types::FLOAT;
-		}
-	}
-	iss.clear();
-	iss.seekg(0);
-
-	// Try to convert to vector of float (separated by comma)
-	char comma;
-	std::vector<float> vector_result;
-	while (iss >> float_result >> comma) {
-		// Check if the delimitator is a comma except at the end
-		if (comma != ',' && !iss.eof()) {
-			return DSR::Types::STRING;
-		}
-		vector_result.push_back(float_result);
-	}
-	if (iss.eof()) {
-		return DSR::Types::FLOAT_VEC;
-	}
-	iss.clear();
-	iss.seekg(0);
-
-	// Try to convert to bool ("true" or "false")
-	bool bool_result;
-	iss >> std::boolalpha >> bool_result;
-	if (!iss.fail() && iss.eof()) {
-		return DSR::Types::BOOL;
-	}
-	// Check if it is a nan
-	if (type == "nan") {
-		return DSR::Types::FLOAT;
-	}
-	// In other case, return a string
-	return DSR::Types::STRING;
+std::string DSRBridge::get_type_from_attribute(const DSR::Attribute &att){
+	return std::to_string(att.value().index());
 }
 
 int main(int argc, char** argv){
