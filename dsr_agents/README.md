@@ -3,20 +3,18 @@
 
 ## Overview
 
-This package provides ROS2 agents and tools for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS2 middleware.
+This package provides ROS 2 agents for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS 2 middleware.
 
 This package feature two templates for creating agents that can be used to publish data in the DSR:
 * **`Topic agent:`** which allows the user to subscribe to a generic topic and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
-* **`Action agent:`** which allows the user to communicate with the DSR using ROS2 actions.
+* **`Action agent:`** which allows the user to communicate with the DSR using ROS 2 actions.
 
-You must update the `ros_to_dsr_types.hpp` file to add the new DSR types and add the conversion from ROS to DSR in the corresponding agent file. By default all nodes created with this templates will have the priority 0. This means that the nodes will only publish if there are no other nodes with the same name and priority 1 or higher. The user can also specify the priority of the nodes by update the `priority` attribute to the message.
+By default all nodes created with this templates will have the priority 0. This means that the nodes will only publish if there are no other nodes with the same name and priority 1 or higher. The user can also specify the priority of the nodes by update the `priority` attribute to the message.
 
 Along with the templates mentioned above, this package also provides three agents that can be used to publish data in the DSR:
 * **`Navigation agent:`**  which allows the user to publish the navigation data in the DSR.
 * **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
 * **`Person agent:`** which publishes the detected people in the DSR.
-
-Besides the agents, this package also provides a DSR viewer. This viewer allows the user to visualize the DSR graph in a graphical interface.
 
 **Keywords:** ROS2, cortex, dsr, deep space representation
 
@@ -33,10 +31,6 @@ Next, launch the package using the provided launch file `default.launch.py`. Thi
 	ros2 launch dsr_agent default.launch.py
 
 The package comes with an example configuration file called `robot_params.yaml` located in the `params` directory and an example launch file called `robot.launch.py` located in the launch directory. These files can be used as a starting point for creating custom configurations and launch files.
-
-The viewer can be launched using the following command:
-
-	ros2 launch dsr_agent dsr_viewer.launch.py
 
 ## Nodes
 
