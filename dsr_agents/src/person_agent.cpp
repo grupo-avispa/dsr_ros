@@ -44,8 +44,8 @@ PersonAgent::PersonAgent(): AgentNode("person_agent"){
 		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
 		std::bind(&PersonAgent::person_callback, this, std::placeholders::_1));
 
-	// Timer to remove people from DSR if they are missed more then 30s
-	timer_ = this->create_wall_timer(5000ms, std::bind(&PersonAgent::timer_callback, this));
+	// Timer to remove people from DSR if they are missed more then timeout
+	timer_ = this->create_wall_timer(5000ms, std::bind(&PersonAgent::remove_callback, this));
 }
 
 /* Initialize ROS parameters */
@@ -86,6 +86,11 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 		// Check if the detected person is already in the DSR graph
 		std::string person_id = detection.id;
 		auto person_nodes = G_->get_nodes_by_type("person");
+		// Skip the person if the id is empty
+		if (person_id.empty()){
+			RCLCPP_WARN(this->get_logger(), "Person detected with empty id");
+			continue;
+		}
 		auto it = std::find_if(person_nodes.begin(), person_nodes.end(), 
 			[this, &person_id](auto node) { 
 				auto identifier = G_->get_attrib_by_name<identifier_att>(node);
@@ -98,6 +103,7 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 		// If the person is not in the DSR graph, add them to the DSR graph
 		if (it == person_nodes.end() ){
 			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
+			// TODO: ¿Queremos que pasen personas sin identificar al DSR?
 			if (!std::isdigit(person_id[0])){ 
 				auto [person_node, edge] = add_node_with_edge<person_node_type, is_with_edge_type>(
 					person_id, source_, false);
@@ -117,28 +123,41 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 			}
 		}else{
 			// If the person is already in the DSR graph, update their pose
-			G_->add_or_modify_attrib_local<pose_x_att>(*it, static_cast<float>(center_point.pose.position.x));
-			G_->add_or_modify_attrib_local<pose_y_att>(*it, static_cast<float>(center_point.pose.position.y));
-			G_->add_or_modify_attrib_local<pose_angle_att>(*it, static_cast<float>(center_point.pose.position.z));
-			G_->add_or_modify_attrib_local<timestamp_att>(*it, static_cast<int>(msg->header.stamp.sec));
+			G_->add_or_modify_attrib_local<pose_x_att>(*it, 
+				static_cast<float>(center_point.pose.position.x));
+			G_->add_or_modify_attrib_local<pose_y_att>(*it, 
+				static_cast<float>(center_point.pose.position.y));
+			G_->add_or_modify_attrib_local<pose_angle_att>(*it, 
+				static_cast<float>(center_point.pose.position.z));
+			G_->add_or_modify_attrib_local<timestamp_att>(*it, 
+				static_cast<int>(msg->header.stamp.sec));
 			G_->update_node(*it);
 		}
 		RCLCPP_DEBUG(this->get_logger(), "Time stamp set to: [%d]", msg->header.stamp.sec);
 	}
 }
 
-void PersonAgent::timer_callback(){
+void PersonAgent::remove_callback(){
 	// Get person nodes
 	auto person_nodes = G_->get_nodes_by_type("person");
-	// Check all timestamps and if the node has been more than 30s without updates delete it
+	// Check all timestamps and if the node has been more than timeout without updates delete it
 	for (const auto& person: person_nodes){
-		// Get ROS time
+		// Skip the person if they are interacting
+		auto interact_edge = G_->get_edge(source_, person.name(), "interacting");
+		if (interact_edge.has_value()){
+			RCLCPP_WARN(this->get_logger(), 
+				"The person [%s] is interacting, so it will not be removed", 
+				person.name().c_str());
+			continue;
+		}
+		// Remove the person if the timestamp is older than timeout
 		rclcpp::Time now = this->get_clock()->now();
 		auto timestamp = G_->get_attrib_by_name<timestamp_att>(person);
 		if (timestamp.has_value() && (now.seconds() - timestamp.value()) >= timeout_){
-			if (auto iw_edge = G_->get_edge(source_, person.name(), "is_with"); !iw_edge.has_value()){
-				G_->delete_node(person);
-			}
+			G_->delete_node(person);
+			RCLCPP_INFO(this->get_logger(), 
+				"The person [%s] has been removed from the DSR graph", 
+				person.name().c_str());
 		}
 	}
 	RCLCPP_DEBUG(this->get_logger(), "Timer callback done...");

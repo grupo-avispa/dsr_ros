@@ -54,7 +54,7 @@ class PersonAgent: public AgentNode{
 		/// Person detection callback
 		void person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg);
 		/// Timeout callback for delete people from DSR
-		void timer_callback();
+		void remove_callback();
 };
 
 #endif  // DSR_AGENT__PERSON_AGENT_HPP_
