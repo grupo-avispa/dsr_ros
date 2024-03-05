@@ -24,7 +24,6 @@ find_package(fastcdr REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(dsr_interfaces REQUIRED)
 find_package(dsr_util REQUIRED)
-find_package(dsr_agents REQUIRED)
 
 # ##########
 # # Build ##
@@ -47,7 +46,6 @@ set(dependencies
   nav2_util
   dsr_interfaces
   dsr_util
-  dsr_agents
 )
 
 # Executable node
