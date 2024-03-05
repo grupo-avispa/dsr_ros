@@ -92,8 +92,12 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	if (!msg->deleted && !msg->updated){
 		auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type);
 		modify_attributes(new_edge.value(), msg->attributes);
-		if (!G_->insert_or_assign_edge(new_edge.value())){
-			RCLCPP_ERROR(this->get_logger(), 
+		if (G_->insert_or_assign_edge(new_edge.value())){
+			RCLCPP_DEBUG(this->get_logger(), 
+				"Inserted edge [%s->%s] of type [%s] in the DSR",
+				msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+		}else{
+			RCLCPP_WARN(this->get_logger(), 
 				"The edge [%s->%s] of type [%s] could not be inserted in the DSR",
 				msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
 		}
@@ -102,8 +106,12 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	else if (!msg->deleted && msg->updated){
 		if (auto edge = G_->get_edge(msg->parent, msg->child, msg->type); edge.has_value()){
 			modify_attributes(edge.value(), msg->attributes);
-			if (!G_->insert_or_assign_edge(edge.value())) {
-				RCLCPP_ERROR(this->get_logger(), 
+			if (G_->insert_or_assign_edge(edge.value())) {
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Updated edge [%s->%s] of type [%s] in the DSR",
+					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+			}else{
+				RCLCPP_WARN(this->get_logger(), 
 					"The edge [%s->%s] of type [%s] could not be updated in the DSR",
 					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
 			}
@@ -111,7 +119,17 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	}
 	// Delete the current edge
 	else if (msg->deleted){
-		delete_edge(msg->parent, msg->child, msg->type);
+		if (auto edge = G_->get_edge(msg->parent, msg->child, msg->type); edge.has_value()){
+			if (G_->delete_edge(msg->parent, msg->child, msg->type)){
+				RCLCPP_INFO(this->get_logger(), 
+					"Deleted edge [%s->%s] successfully of type [%s]", 
+					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+			}else{
+				RCLCPP_WARN(this->get_logger(), 
+					"The edge [%s->%s] of type [%s] couldn't be deleted",
+					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+			}
+		}
 	}
 	// Error
 	else{
@@ -131,23 +149,39 @@ void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPt
 	if (!msg->deleted){
 		if (auto node = G_->get_node(msg->name); node.has_value()){
 			modify_attributes(node.value(), msg->attributes);
-			if (!G_->update_node(node.value())){
-				RCLCPP_ERROR(this->get_logger(), 
-					"The node [%s] could not be updated in the DSR", msg->name.c_str());
+			if (G_->update_node(node.value())){
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Updated [%s] node successfully of type [%s] in the DSR",
+					msg->name.c_str(), msg->type.c_str());
+			}else{
+				RCLCPP_WARN(this->get_logger(), 
+					"The node [%s] couldn't be updated in the DSR", msg->name.c_str());
 			}
 		}else{
 			auto new_node = create_dsr_node(msg->name, msg->type);
 			modify_attributes(new_node.value(), msg->attributes);
-			if (auto id = G_->insert_node(new_node.value()); !id.has_value()){
-				RCLCPP_ERROR(this->get_logger(), 
-					"The node [%s] could not be inserted in the DSR", msg->name.c_str());
+			if (auto id = G_->insert_node(new_node.value()); id.has_value()){
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Inserted [%s] node successfully of type [%s] in the DSR", 
+					msg->name.c_str(), msg->type.c_str());
+			}else{
+				RCLCPP_WARN(this->get_logger(), 
+					"The node [%s] couldn't be inserted in the DSR", msg->name.c_str());
 			}
 		}
 	}
 	// Delete the node
 	else if (msg->deleted){
 		if (auto node = G_->get_node(msg->name); node.has_value()){
-			G_->delete_node(node.value().name());
+			if (G_->delete_node(node.value().name())){
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Deleted [%s] node successfully of type [%s] in the DSR",
+					msg->name.c_str(), msg->type.c_str());
+			}else{
+				RCLCPP_ERROR(this->get_logger(), 
+					"The node [%s] couldn't be deleted in the DSR", msg->name.c_str());
+			}
+
 		}else{
 			RCLCPP_ERROR(this->get_logger(), 
 				"The node [%s] could not be deleted in the DSR", msg->name.c_str());
@@ -168,7 +202,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 			// Publish the message
 			node_to_ros_pub_->publish(node_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
-				"Inserted [%s] node successfully of type [%s] in the DSR", 
+				"The new node [%s] of type [%s] has been published through ROS",
 				node_msg.name.c_str(), node_msg.type.c_str());
 		}
 	}
@@ -188,7 +222,7 @@ void DSRBridge::node_attributes_updated(uint64_t id, const std::vector<std::stri
 			// Publish the message
 			node_to_ros_pub_->publish(node_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
-				"Updated [%s] node successfully of type [%s] in the DSR", 
+				"The updated node [%s] of type [%s] has been published through ROS",
 				node_msg.name.c_str(), node_msg.type.c_str());
 		}
 	}
@@ -206,7 +240,7 @@ void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::st
 			// Publish the message
 			edge_to_ros_pub_->publish(edge_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
-				"The edge [%s->%s] of type [%s] has been created in the DSR",
+				"The new edge [%s->%s] of type [%s] has been published through ROS",
 				edge_msg.parent.c_str(), edge_msg.child.c_str(), edge_msg.type.c_str());
 		}
 	}
@@ -227,7 +261,7 @@ void DSRBridge::edge_attributes_updated(std::uint64_t from, std::uint64_t to,
 			// Publish the message
 			edge_to_ros_pub_->publish(edge_msg);
 			RCLCPP_DEBUG(this->get_logger(), 
-				"The edge [%s->%s] of type [%s] has been updated in the DSR",
+				"The updated edge [%s->%s] of type [%s] has been published through ROS",
 				edge_msg.parent.c_str(), edge_msg.child.c_str(), edge_msg.type.c_str());
 		}
 	}
@@ -241,7 +275,7 @@ void DSRBridge::node_deleted(const DSR::Node &node){
 	// Publish the message
 	node_to_ros_pub_->publish(node_msg);
 	RCLCPP_DEBUG(this->get_logger(), 
-		"The node [%s] of type [%s] has been deleted in the DSR",
+		"The deleted node [%s] of type [%s] has been published through ROS",
 		node_msg.name.c_str(), node_msg.type.c_str());
 }
 
@@ -253,7 +287,7 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
 	// Publish the message
 	edge_to_ros_pub_->publish(edge_msg);
 	RCLCPP_DEBUG(this->get_logger(), 
-		"The edge [%s->%s] of type [%s] has been deleted in the DSR",
+		"The deleted edge [%s->%s] of type [%s] has been published through ROS",
 		edge_msg.parent.c_str(), edge_msg.child.c_str(), edge_msg.type.c_str());
 }
 
@@ -327,9 +361,9 @@ void DSRBridge::modify_attributes(TYPE & elem, std::vector <std::string>& att_st
 				"Updating attribute [%s] = [%s] with type [%ld]",
 				att_name.c_str(), att_value.c_str(), new_att.value().index());
 		}else{
-			/*RCLCPP_WARN(this->get_logger(), 
+			RCLCPP_WARN(this->get_logger(), 
 				"The type [%d] of the attribute [%s] = [%s] is not compatible with the element",
-				parse_type(att_value), att_name.c_str(), att_value.c_str());*/
+				att_type, att_name.c_str(), att_value.c_str());
 		}
 	}
 }
