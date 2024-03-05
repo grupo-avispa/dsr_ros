@@ -102,9 +102,6 @@ void TopicAgent::deserialize_and_update_attributes(
 		add_node_with_edge<NODE_TYPE, EDGE_TYPE>(node_name, new_parent_name);
 	}
 
-	// Add the edge if it does not exist
-	add_edge<EDGE_TYPE>(new_parent_name, node_name);
-
 	// Update the attributes of the node only if its priority is 0
 	if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()){
 		if (G_->get_priority(dsr_node.value()) == 0){
