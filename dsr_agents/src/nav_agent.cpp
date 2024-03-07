@@ -82,11 +82,11 @@ void NavigationAgent::node_attributes_updated(uint64_t id,
 void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
 	// Check if the robot wants to abort or cancel the navigation: robot ---(abort)--> move
 	if (type == "abort" || type == "cancel"){
-		RCLCPP_INFO(this->get_logger(), "Starting to %s the navigation", type.c_str());
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == source_
 			&& move_node.has_value() && move_node.value().type() == "move"){
+			RCLCPP_INFO(this->get_logger(), "Starting to %s the navigation", type.c_str());
 			// Remove the move node from the DSR graph
 			if (G_->delete_node(move_node.value())){
 				cancel_goal();
@@ -96,11 +96,11 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 	}
 	// Check if the robot wants to start the navigation: robot ---(wants_to)--> move
 	else if (type == "wants_to"){
-		RCLCPP_INFO(this->get_logger(), "Starting the navigation");
 		auto robot_node = G_->get_node(from);
 		auto move_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == source_
 			&& move_node.has_value() && move_node.value().type() == "move"){
+			RCLCPP_INFO(this->get_logger(), "Starting the navigation");
 			// Get the attributes from the move node
 			auto goal_x = G_->get_attrib_by_name<goal_x_att>(move_node.value());
 			auto goal_y = G_->get_attrib_by_name<goal_y_att>(move_node.value());
