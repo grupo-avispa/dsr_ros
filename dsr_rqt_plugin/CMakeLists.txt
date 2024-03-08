@@ -63,10 +63,22 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
+############
+## VIEWER ##
+############
+
+# Executable node
+add_executable(viewer src/dsr_rqt_plugin/viewer.cpp)
+ament_target_dependencies(viewer
+  Eigen3
+  Qt5
+)
+target_link_libraries(viewer ${DSR_LIBRARIES} ${QT_LIBRARIES})
+
 #############
 ## Install ##
 #############
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} viewer
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
