@@ -12,7 +12,7 @@
  */
 
 #include <string>
-
+#include<iterator>
 // ROS
 #include "nav2_util/node_utils.hpp"
 #include "nav2_util/string_utils.hpp"
@@ -90,13 +90,16 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 	}
 	// Create the current edge
 	if (!msg->deleted && !msg->updated){
-		auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type);
-		modify_attributes(new_edge.value(), msg->attributes);
-		if (G_->insert_or_assign_edge(new_edge.value())){
-			RCLCPP_DEBUG(this->get_logger(), 
-				"Inserted edge [%s->%s] of type [%s] in the DSR",
-				msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
-		}else{
+		auto new_edge = create_dsr_edge(msg->parent, msg->child, msg->type, msg->attributes);
+		if(new_edge.has_value()){
+			modify_attributes(new_edge.value(), msg->attributes);
+			if (G_->insert_or_assign_edge(new_edge.value())){
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Inserted edge [%s->%s] of type [%s] in the DSR",
+					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+			}
+		}
+		else{
 			RCLCPP_WARN(this->get_logger(), 
 				"The edge [%s->%s] of type [%s] could not be inserted in the DSR",
 				msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
@@ -128,6 +131,20 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 				RCLCPP_WARN(this->get_logger(), 
 					"The edge [%s->%s] of type [%s] couldn't be deleted",
 					msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
+			}
+		}
+		else{
+			lost_edge lost;
+			lost = edge_to_struct(msg->parent, msg->child, msg->type, msg->attributes);
+			auto it = std::find_if(lost_edges.begin(), lost_edges.end(), [this, lost](auto edge){ 
+				if (edge == lost){
+					return true;
+				}
+				return false;
+			});
+			if(it != lost_edges.end()){
+				lost_edges.erase(it);
+				RCLCPP_INFO(this->get_logger(), "Deleted edge from lost_edges vector");
 			}
 		}
 	}
@@ -205,6 +222,35 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 				"The new node [%s] of type [%s] has been published through ROS",
 				node_msg.name.c_str(), node_msg.type.c_str());
 		}
+	}
+	// Retry to insert lost edges
+	std::vector<std::vector<lost_edge>::iterator> delete_lost_edges;
+	unsigned int i = 0;
+	for(auto &edge: lost_edges){
+		auto parent_node = G_->get_node(edge.from);
+		auto child_node = G_->get_node(edge.to);
+		if (parent_node.has_value() && child_node.has_value()){
+			DSR::Edge new_edge;
+			new_edge.from(parent_node.value().id());
+			new_edge.to(child_node.value().id());
+			new_edge.type(edge.type);
+			modify_attributes(new_edge, edge.atts);
+			if (G_->insert_or_assign_edge(new_edge)){
+				RCLCPP_DEBUG(this->get_logger(), 
+					"Inserted edge [%s->%s] of type [%s] in the DSR",
+					edge.from.c_str(), edge.to.c_str(), edge.type.c_str());
+				auto it = (lost_edges.begin() + i);
+				delete_lost_edges.push_back(it);
+			}else{
+				RCLCPP_WARN(this->get_logger(), 
+					"The edge [%s->%s] of type [%s] could not be inserted in the DSR",
+					edge.from.c_str(), edge.to.c_str(), edge.type.c_str());
+			}
+		}
+		i++;
+	}
+	for(auto it: delete_lost_edges){
+		lost_edges.erase(it);
 	}
 }
 
@@ -292,6 +338,18 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
 }
 
 // Converter functions
+DSRBridge::lost_edge DSRBridge::edge_to_struct(std::string from, std::string to, const std::string &type, 
+								std::vector <std::string> &atts){
+	lost_edge lost;
+	lost.from = from;
+	lost.to = to;
+	lost.type = type;
+	for(auto att: atts){
+		lost.atts.push_back(att);
+	}
+	return lost;
+}
+
 std::optional<DSR::Node> DSRBridge::create_dsr_node(std::string name, std::string type){
 	if (!node_types::check_type(type)) {
 		throw std::runtime_error("Error, [" + type + "] is not a valid node type");
@@ -303,7 +361,7 @@ std::optional<DSR::Node> DSRBridge::create_dsr_node(std::string name, std::strin
 }
 
 std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
-	std::string from, std::string to, const std::string &type){
+	std::string from, std::string to, const std::string &type, std::vector <std::string> &atts){
 	if (!edge_types::check_type(type)) {
 		throw std::runtime_error("Error, [" + type + "] is not a valid edge type");
 	}
@@ -314,8 +372,12 @@ std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
 		new_edge.from(parent_node.value().id());
 		new_edge.to(child_node.value().id());
 		new_edge.type(type);
+		return new_edge;
 	}
-	return new_edge;
+	lost_edge lost;
+	lost = edge_to_struct(from, to, type, atts);
+	lost_edges.push_back(lost);
+	return {};
 }
 
 dsr_interfaces::msg::Node DSRBridge::create_msg_node(std::string name, std::string type){

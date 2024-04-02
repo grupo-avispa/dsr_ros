@@ -39,7 +39,17 @@ class DSRBridge: public AgentNode{
 		rclcpp::Publisher<dsr_interfaces::msg::Edge>::SharedPtr edge_to_ros_pub_;
 		rclcpp::Publisher<dsr_interfaces::msg::Node>::SharedPtr node_to_ros_pub_;
 		std::string edge_topic_, node_topic_;
-
+		// Struct and vector to store edges when nodes are not created yet
+		struct lost_edge{
+			std::string from;
+			std::string to;
+			std::string type;
+			std::vector <std::string> atts;
+			bool operator==(const lost_edge& other_edge) const {
+        		return (from == other_edge.from) && (to == other_edge.to) && (type == other_edge.type);
+			}
+		};
+		std::vector<lost_edge> lost_edges;
 		void get_params();
 
 		// ROS callbacks
@@ -56,9 +66,11 @@ class DSRBridge: public AgentNode{
 		void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string &edge_tag);
 
 		// Converter functions
+		lost_edge edge_to_struct(std::string from, std::string to, const std::string &type, 
+								std::vector <std::string> &atts);
 		std::optional<DSR::Node> create_dsr_node(std::string name, std::string type);
 		std::optional<DSR::Edge> create_dsr_edge(
-			std::string from, std::string to, const std::string &type);
+			std::string from, std::string to, const std::string &type, std::vector <std::string> &atts);
 		dsr_interfaces::msg::Node create_msg_node(std::string name, std::string type);
 		dsr_interfaces::msg::Edge create_msg_edge(
 			std::uint64_t from, std::uint64_t to, const std::string &type);
