@@ -134,15 +134,8 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 			}
 		}
 		else{
-			lost_edge lost;
-			lost = edge_to_struct(msg->parent, msg->child, msg->type, msg->attributes);
-			auto it = std::find_if(lost_edges.begin(), lost_edges.end(), [this, lost](auto edge){ 
-				if (edge == lost){
-					return true;
-				}
-				return false;
-			});
-			if(it != lost_edges.end()){
+			lost_edge lost(msg->parent, msg->child, msg->type, msg->attributes);
+			if(auto it = std::find(lost_edges.begin(), lost_edges.end(), lost); it != lost_edges.end()){
 				lost_edges.erase(it);
 				RCLCPP_INFO(this->get_logger(), "Deleted edge from lost_edges vector");
 			}
@@ -338,18 +331,6 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
 }
 
 // Converter functions
-DSRBridge::lost_edge DSRBridge::edge_to_struct(std::string from, std::string to, const std::string &type, 
-								std::vector <std::string> &atts){
-	lost_edge lost;
-	lost.from = from;
-	lost.to = to;
-	lost.type = type;
-	for(auto att: atts){
-		lost.atts.push_back(att);
-	}
-	return lost;
-}
-
 std::optional<DSR::Node> DSRBridge::create_dsr_node(std::string name, std::string type){
 	if (!node_types::check_type(type)) {
 		throw std::runtime_error("Error, [" + type + "] is not a valid node type");
@@ -374,8 +355,7 @@ std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
 		new_edge.type(type);
 		return new_edge;
 	}
-	lost_edge lost;
-	lost = edge_to_struct(from, to, type, atts);
+	lost_edge lost(from, to, type, atts);
 	lost_edges.push_back(lost);
 	return {};
 }
