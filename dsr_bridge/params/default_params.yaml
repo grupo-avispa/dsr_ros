@@ -2,7 +2,7 @@ dsr_bridge_nuc:
   ros__parameters:
     agent_id: 106
     dsr_input_file: ''
-    source: nuc
+    source: brain
 dsr_bridge_robot:
   ros__parameters:
     agent_id: 106

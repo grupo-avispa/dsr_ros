@@ -45,18 +45,18 @@ DSRBridge::DSRBridge(): AgentNode("dsr_bridge"){
 
 	// Publisher to the other DSR bridge
 	edge_to_ros_pub_ = this->create_publisher<dsr_interfaces::msg::Edge>(
-		edge_topic_, 1);
+		edge_topic_, 10);
 	node_to_ros_pub_ = this->create_publisher<dsr_interfaces::msg::Node>(
-		node_topic_, 1);
+		node_topic_, 10);
 
 	// Subscriber to the external DSR graph
 	edge_from_ros_sub_ = this->create_subscription<dsr_interfaces::msg::Edge>(
 		edge_topic_, 
-		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
+		10, 
 		std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
 	node_from_ros_sub_ = this->create_subscription<dsr_interfaces::msg::Node>(
 		node_topic_, 
-		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
+		10, 
 		std::bind(&DSRBridge::node_from_ros_callback, this, std::placeholders::_1));
 }
 
@@ -150,6 +150,9 @@ void DSRBridge::edge_from_ros_callback(const dsr_interfaces::msg::Edge::SharedPt
 void DSRBridge::node_from_ros_callback(const dsr_interfaces::msg::Node::SharedPtr msg){
 	RCLCPP_INFO_ONCE(this->get_logger(), 
 		"Subscribed to nodes topic from [%s]", msg->header.frame_id.c_str());
+	RCLCPP_DEBUG(this->get_logger(), 
+		"Node name [%s] and Frame ID [%s]", 
+		msg->name.c_str(), msg->header.frame_id.c_str());
 	// The message comes from the same name, ignore it
 	if (msg->header.frame_id == source_){
 		return;
@@ -230,13 +233,13 @@ void DSRBridge::node_created(std::uint64_t id, const std::string &type){
 			modify_attributes(new_edge, edge.atts);
 			if (G_->insert_or_assign_edge(new_edge)){
 				RCLCPP_DEBUG(this->get_logger(), 
-					"Inserted edge [%s->%s] of type [%s] in the DSR",
+					"Inserted edge losted [%s->%s] of type [%s] in the DSR",
 					edge.from.c_str(), edge.to.c_str(), edge.type.c_str());
 				auto it = (lost_edges.begin() + i);
 				delete_lost_edges.push_back(it);
 			}else{
 				RCLCPP_WARN(this->get_logger(), 
-					"The edge [%s->%s] of type [%s] could not be inserted in the DSR",
+					"The edge losted [%s->%s] of type [%s] could not be inserted in the DSR",
 					edge.from.c_str(), edge.to.c_str(), edge.type.c_str());
 			}
 		}
