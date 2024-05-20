@@ -12,7 +12,6 @@
   <build_depend>qtbase5-dev</build_depend>
   <depend>rclcpp</depend>
   <depend>eigen</depend>
-  <depend>Qt5</depend>
   <depend>fastcdr</depend>
   <depend>fastrtps</depend>
   <depend>rqt_gui</depend>
