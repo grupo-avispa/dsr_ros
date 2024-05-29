@@ -19,4 +19,4 @@ person_agent:
     agent_id: 103
     source: robot
     ros_topic: object_detection/detections/matched_detections
-    timeout: 90
+    timeout: 60

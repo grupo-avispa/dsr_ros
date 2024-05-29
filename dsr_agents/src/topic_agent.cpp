@@ -51,7 +51,7 @@ TopicAgent::TopicAgent(): AgentNode("generic_agent"){
 	auto data = rclcpp::Node::get_topic_names_and_types();
 	for (auto type : data[ros_topic_]){
 		generic_sub_ = create_generic_subscription(
-			ros_topic_, type, rclcpp::QoS(rclcpp::SensorDataQoS()),
+			ros_topic_, type, rclcpp::QoS(rclcpp::SystemDefaultsQoS()),
 			std::bind(&TopicAgent::serial_callback, this, std::placeholders::_1));
 	}
 }

@@ -46,12 +46,12 @@ void DSRView::shutdownPlugin(){
 	G_.reset();
 }
 
-void DSRView::saveSettings(qt_gui_cpp::Settings& plugin_settings, 
-	qt_gui_cpp::Settings& instance_settings) const{
+void DSRView::saveSettings(qt_gui_cpp::Settings& /*plugin_settings*/, 
+	qt_gui_cpp::Settings& /*instance_settings*/) const{
 }
 
-void DSRView::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, 
-	const qt_gui_cpp::Settings& instance_settings){
+void DSRView::restoreSettings(const qt_gui_cpp::Settings& /*plugin_settings*/, 
+	const qt_gui_cpp::Settings& /*instance_settings*/){
 }
 }
 

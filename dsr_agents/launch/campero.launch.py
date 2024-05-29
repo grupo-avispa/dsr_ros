@@ -30,18 +30,6 @@ def generate_launch_description():
         description = 'Full path to the ROS2 parameters file with dsr agent configuration'
     )
 
-    # Create our own temporary YAML files that include substitutions
-    param_substitutions = {
-        'dsr_input_file': os.path.join(dsr_util_dir, 'worlds', 'empty.json')
-    }
-
-    configured_params = RewrittenYaml(
-        source_file = params_file,
-        root_key = '',
-        param_rewrites = param_substitutions,
-        convert_types = True
-    )
-
     declare_log_level_arg = DeclareLaunchArgument(
         name = 'log-level',
         default_value = 'info',
@@ -54,12 +42,12 @@ def generate_launch_description():
         namespace = '',
         executable = 'tf_agent',
         name = 'tf_agent',
-        parameters = [configured_params],
+        parameters = [params_file],
         emulate_tty = True,
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['tf_agent:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['tf_agent:=', log_level]]
     )
 
     nav_agent_node = Node(
@@ -67,12 +55,12 @@ def generate_launch_description():
         namespace = '',
         executable = 'nav_agent',
         name = 'nav_agent',
-        parameters = [configured_params],
+        parameters = [params_file],
         emulate_tty = True,
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['nav_agent:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['nav_agent:=', log_level]]
     )
 
     battery_agent_node = Node(
@@ -80,12 +68,12 @@ def generate_launch_description():
         namespace = '',
         executable = 'topic_agent',
         name = 'battery_agent',
-        parameters = [configured_params],
+        parameters = [params_file],
         emulate_tty = True,
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['battery_agent:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['battery_agent:=', log_level]]
     )
 
     person_agent_node = Node(
@@ -93,12 +81,12 @@ def generate_launch_description():
         namespace = '',
         executable = 'person_agent',
         name = 'person_agent',
-        parameters = [configured_params],
+        parameters = [params_file],
         emulate_tty = True,
         output = 'screen', 
         arguments = [
             '--ros-args', 
-            '--log-level', ['person_agent:=', LaunchConfiguration('log-level')]]
+            '--log-level', ['person_agent:=', log_level]]
     )
 
     return LaunchDescription([
