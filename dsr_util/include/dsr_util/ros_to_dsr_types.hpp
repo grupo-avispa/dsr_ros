@@ -49,6 +49,7 @@ REGISTER_NODE_TYPE(show)
 REGISTER_NODE_TYPE(update_bbdd)
 REGISTER_NODE_TYPE(tracking)
 REGISTER_NODE_TYPE(bring_water)
+REGISTER_NODE_TYPE(dock)
 
 REGISTER_EDGE_TYPE(stopped)
 REGISTER_EDGE_TYPE(is)
@@ -61,6 +62,7 @@ REGISTER_EDGE_TYPE(aborting)
 REGISTER_EDGE_TYPE(cancel)
 REGISTER_EDGE_TYPE(failed)
 REGISTER_EDGE_TYPE(navigating)
+REGISTER_EDGE_TYPE(docking)
 
 // General types
 REGISTER_TYPE(priority, int, false)

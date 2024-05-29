@@ -75,6 +75,19 @@ def generate_launch_description():
             '--log-level', ['nav_agent:=', LaunchConfiguration('log-level')]]
     )
 
+    docking_agent_node = Node(
+        package = 'dsr_agents',
+        namespace = '',
+        executable = 'docking_agent',
+        name = 'docking_agent',
+        parameters = [configured_params],
+        emulate_tty = True,
+        output = 'screen', 
+        arguments = [
+            '--ros-args', 
+            '--log-level', ['docking_agent:=', LaunchConfiguration('log-level')]]
+    )
+
     battery_agent_node = Node(
         package = 'dsr_agents',
         namespace = '',
@@ -132,6 +145,7 @@ def generate_launch_description():
         declare_log_level_arg,
         tf_agent_node,
         nav_agent_node,
+        docking_agent_node,
         battery_agent_node, 
         laser_agent_node,
         rgb_agent_node,

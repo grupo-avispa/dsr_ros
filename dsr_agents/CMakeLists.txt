@@ -30,7 +30,8 @@ find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
-find_package(auto_docking_interfaces REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(opennav_docking_msgs REQUIRED)
 find_package(semantic_navigation_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
 
@@ -79,10 +80,27 @@ ament_target_dependencies(nav_agent
   ${common_dependencies}
   geometry_msgs
   tf2
-  auto_docking_interfaces
+  nav2_msgs
+  opennav_docking_msgs
   semantic_navigation_msgs
 )
 target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+
+# #####################
+# # DOCKING AGENT ##
+# #####################
+
+# Executable node
+add_executable(docking_agent src/docking_agent.cpp)
+ament_target_dependencies(docking_agent
+  ${common_dependencies}
+  geometry_msgs
+  tf2
+  nav2_msgs
+  opennav_docking_msgs
+  semantic_navigation_msgs
+)
+target_link_libraries(docking_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
 # #################
 # # PERSON AGENT ##
@@ -116,7 +134,7 @@ target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 # ############
 # # Install ##
 # ############
-install(TARGETS topic_agent person_agent tf_agent nav_agent
+install(TARGETS topic_agent person_agent tf_agent nav_agent docking_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

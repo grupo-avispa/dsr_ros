@@ -25,10 +25,8 @@
 #include "tf2_ros/transform_listener.h"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
-#include "auto_docking_interfaces/action/dock.hpp"
-#include "auto_docking_interfaces/action/undock.hpp"
-#include "semantic_navigation_msgs/srv/semantic_goals.hpp"
-#include "semantic_navigation_msgs/srv/semantic_regions.hpp"
+#include "semantic_navigation_msgs/srv/generate_random_goals.hpp"
+#include "semantic_navigation_msgs/srv/list_all_regions.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
@@ -40,17 +38,11 @@ class NavigationAgent: public AgentNode{
 
 	private:
 		using NavigateToPose = nav2_msgs::action::NavigateToPose;
-		using Dock = auto_docking_interfaces::action::Dock;
-		using Undock = auto_docking_interfaces::action::Undock;
-		using SemanticGoals = semantic_navigation_msgs::srv::SemanticGoals;
-		using SemanticRegions = semantic_navigation_msgs::srv::SemanticRegions;
+		using SemanticGoals = semantic_navigation_msgs::srv::GenerateRandomGoals;
+		using SemanticRegions = semantic_navigation_msgs::srv::ListAllRegions;
 		using GoalHandleNavigateToPose = rclcpp_action::ClientGoalHandle<NavigateToPose>;
-		using GoalHandleDock = rclcpp_action::ClientGoalHandle<Dock>;
-		using GoalHandleUndock = rclcpp_action::ClientGoalHandle<Undock>;
 
 		rclcpp_action::Client<NavigateToPose>::SharedPtr navigation_client_;
-		rclcpp_action::Client<Dock>::SharedPtr dock_client_;
-		rclcpp_action::Client<Undock>::SharedPtr undock_client_;
 		rclcpp::Client<SemanticGoals>::SharedPtr goals_generator_client_;
 		rclcpp::Client<SemanticRegions>::SharedPtr semantic_regions_client_;
 		std::shared_ptr<GoalHandleNavigateToPose> goal_handle_;
@@ -63,27 +55,13 @@ class NavigationAgent: public AgentNode{
 		void send_to_goal(geometry_msgs::msg::Pose goal_pose);
 		void get_zones();
 		void update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose);
-		void cancel_goal();
-		void start_docking();
-		void start_undocking();
+		void cancel_action();
 
 		// Navigation action callbacks
 		void nav_goal_response_callback(const GoalHandleNavigateToPose::SharedPtr & goal_handle);
 		void nav_feedback_callback(GoalHandleNavigateToPose::SharedPtr, 
 			const std::shared_ptr<const NavigateToPose::Feedback> feedback);
 		void nav_result_callback(const GoalHandleNavigateToPose::WrappedResult & result);
-
-		// Docking action callbacks
-		void dock_goal_response_callback(const GoalHandleDock::SharedPtr & goal_handle);
-		void dock_feedback_callback(GoalHandleDock::SharedPtr, 
-							const std::shared_ptr<const Dock::Feedback> feedback);
-		void dock_result_callback(const GoalHandleDock::WrappedResult & result);
-
-		// Undocking action callbacks
-		void undock_goal_response_callback(const GoalHandleUndock::SharedPtr & goal_handle);
-		void undock_feedback_callback(GoalHandleUndock::SharedPtr, 
-							const std::shared_ptr<const Undock::Feedback> feedback);
-		void undock_result_callback(const GoalHandleUndock::WrappedResult & result);
 
 		// DSR callbacks
 		void node_updated(std::uint64_t id, const std::string &type);
