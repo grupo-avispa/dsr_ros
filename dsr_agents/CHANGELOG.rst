@@ -2,7 +2,7 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-X.X.X (XX-02-2024)
+X.X.X (XX-XX-2024)
 ------------------
 * Improve DSR documentation.
 * Better information and refactor in navAgent.
@@ -17,6 +17,10 @@ X.X.X (XX-02-2024)
 * Move ros_to_dsr_types.hpp to dsr_util.
 * Move agent_node.hpp to dsr_util and move agents.
 * Skip the removal of person if they are interacting.
+
+0.7.0 (19-06-2024)
+------------------
+* Split the navigation agent into three agents: nav, dock and semantic.
 
 0.6.2 (23-01-2024)
 ------------------

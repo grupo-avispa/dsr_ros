@@ -81,8 +81,6 @@ ament_target_dependencies(nav_agent
   geometry_msgs
   tf2
   nav2_msgs
-  opennav_docking_msgs
-  semantic_navigation_msgs
 )
 target_link_libraries(nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
@@ -96,11 +94,24 @@ ament_target_dependencies(docking_agent
   ${common_dependencies}
   geometry_msgs
   tf2
-  nav2_msgs
   opennav_docking_msgs
-  semantic_navigation_msgs
 )
 target_link_libraries(docking_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+
+
+# ##############################
+# # SEMANTIC NAVIGATION AGENT ##
+# ##############################
+
+# Executable node
+add_executable(semantic_nav_agent src/semantic_nav_agent.cpp)
+ament_target_dependencies(semantic_nav_agent
+  ${common_dependencies}
+  geometry_msgs
+  tf2
+  semantic_navigation_msgs
+)
+target_link_libraries(semantic_nav_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
 # #################
 # # PERSON AGENT ##
@@ -134,7 +145,7 @@ target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 # ############
 # # Install ##
 # ############
-install(TARGETS topic_agent person_agent tf_agent nav_agent docking_agent
+install(TARGETS topic_agent person_agent tf_agent nav_agent docking_agent semantic_nav_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

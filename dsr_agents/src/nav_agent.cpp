@@ -12,10 +12,6 @@
 // C++
 #include <chrono>
 #include <thread>
-#include <random>
-
-// BOOST
-#include <boost/algorithm/string/join.hpp>
 
 // ROS
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -31,7 +27,7 @@
 #include "dsr_agents/nav_agent.hpp"
 
 /* Initialize the publishers and subscribers */
-NavigationAgent::NavigationAgent(): AgentNode("navigation_agent"), current_zone_(""){
+NavigationAgent::NavigationAgent(): AgentNode("navigation_agent"){
 	// Add connection signals
 	QObject::connect(G_.get(), 
 		&DSR::DSRGraph::update_node_signal, this, &NavigationAgent::node_updated);
@@ -57,9 +53,6 @@ NavigationAgent::NavigationAgent(): AgentNode("navigation_agent"), current_zone_
 	if (auto nav_node = G_->get_node("navigation"); !nav_node.has_value()){
 		add_node_with_edge<navigation_node_type, stopped_edge_type>("navigation", source_);
 	}
-
-	// Get the list of the zones
-	get_zones();
 }
 
 void NavigationAgent::node_updated(std::uint64_t id, const std::string &type){
@@ -73,10 +66,6 @@ void NavigationAgent::node_updated(std::uint64_t id, const std::string &type){
 		// Update the pose of the robot into the DSR graph
 		update_robot_pose_in_dsr(robot_pose.pose);
 	}
-}
-
-void NavigationAgent::node_attributes_updated(uint64_t id, 
-	const std::vector<std::string>& att_names){
 }
 
 void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const std::string &type){
@@ -105,7 +94,6 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 			auto goal_x = G_->get_attrib_by_name<goal_x_att>(move_node.value());
 			auto goal_y = G_->get_attrib_by_name<goal_y_att>(move_node.value());
 			auto goal_angle = G_->get_attrib_by_name<goal_angle_att>(move_node.value());
-			auto zone = G_->get_attrib_by_name<zone_att>(move_node.value());
 			// Check if the goal is a point or a room and send the robot
 			if (goal_x.has_value() && goal_y.has_value() && goal_angle.has_value()){
 				send_to_goal(geometry_msgs::build<geometry_msgs::msg::Pose>()
@@ -115,34 +103,11 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,  const 
 						goal_angle.value()))));
 				RCLCPP_INFO(this->get_logger(), "Navigation started to goal [%f, %f]", 
 					goal_x.value(), goal_y.value());
-			}else if (zone.has_value()){
-				// Send the robot to the room
-				send_to_room(zone.value());
-				RCLCPP_INFO(this->get_logger(), "Navigation started to room [%s]", 
-					zone.value().c_str());
-				// Update the zone into the DSR graph
-				if (auto nav_node = G_->get_node("navigation"); nav_node.has_value()){
-					if (G_->get_priority(nav_node.value()) == 0){
-						G_->add_or_modify_attrib_local<zone_att>(nav_node.value(), zone.value());
-						G_->update_node(nav_node.value());
-					}
-				}
 			}else{
 				RCLCPP_WARN(this->get_logger(), "Goal or zone not found in the move node");
 			}
 		}
 	}
-}
-
-void NavigationAgent::edge_attributes_updated(std::uint64_t from, std::uint64_t to, 
-	const std::string &type, const std::vector<std::string>& att_names){
-}
-
-void NavigationAgent::node_deleted(std::uint64_t id){
-}
-
-void NavigationAgent::edge_deleted(std::uint64_t from, std::uint64_t to, 
-	const std::string &edge_tag){
 }
 
 void NavigationAgent::nav_goal_response_callback(const GoalHandleNavigateToPose::SharedPtr 
@@ -201,44 +166,6 @@ void NavigationAgent::nav_result_callback(const GoalHandleNavigateToPose::Wrappe
 	}
 }
 
-void NavigationAgent::send_to_room(std::string room_name, int n_goals){
-	// Create the clients for the semantic navigation services
-	goals_generator_client_ = this->create_client<SemanticGoals>("generate_random_goals");
-	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(5))) {
-		if (!rclcpp::ok()) {
-			RCLCPP_ERROR(this->get_logger(), 
-				"Interrupted while waiting for the service. Exiting.");
-			return;
-		}
-		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
-	}
-
-	// Pick a random room if the room_name is 'all'
-	if (room_name == "all"){
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_int_distribution<int> distr(0, zones_.size() - 1);
-		room_name = zones_[distr(gen)];
-	}
-
-	// Send the request and wait for the response
-	geometry_msgs::msg::PoseArray goals;
-	auto request = std::make_shared<SemanticGoals::Request>();
-	request->n = n_goals;
-	request->region_name = room_name;
-	request->orientation = SemanticGoals::Request::INSIDE;
-	request->border = 0.1;
-	auto result = goals_generator_client_->async_send_request(request, 
-		[this](rclcpp::Client<SemanticGoals>::SharedFuture result){
-			if (result.get()->goals.poses.size() > 0){
-				// Send goals to the navigation stack
-				send_to_goal(result.get()->goals.poses[0]);
-			}else{
-				RCLCPP_ERROR(this->get_logger(), "Couldn't send the goal.");
-			}
-	});
-}
-
 void NavigationAgent::send_to_goal(geometry_msgs::msg::Pose goal_pose){
 	using namespace std::placeholders;
 	navigation_client_ = rclcpp_action::create_client<NavigateToPose>(
@@ -293,38 +220,6 @@ void NavigationAgent::cancel_action(){
 	} catch (const rclcpp_action::exceptions::UnknownGoalHandleError &) {
 		RCLCPP_ERROR(this->get_logger(), "Failed to cancel goal: Unknown goal handle");
 	}
-}
-
-void NavigationAgent::get_zones(){
-	// Create the clients for the semantic navigation services
-	semantic_regions_client_ = this->create_client<SemanticRegions>("list_all_regions");
-	while (!semantic_regions_client_->wait_for_service(std::chrono::seconds(1))) {
-		if (!rclcpp::ok()) {
-			RCLCPP_ERROR(this->get_logger(), 
-				"Interrupted while waiting for the service. Exiting.");
-			return;
-		}
-		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
-	}
-
-	// Send the request to get the list of the zones
-	auto request = std::make_shared<SemanticRegions::Request>();
-	auto result = semantic_regions_client_->async_send_request(request, 
-		[this](rclcpp::Client<SemanticRegions>::SharedFuture result){
-			zones_ = result.get()->region_names;
-
-			// Add the list of the zones to the DSR graph
-			if (auto world_node = G_->get_node("world"); world_node.has_value()){
-				if (G_->get_priority(world_node.value()) == 0){
-					std::vector<std::string> zones_expanded(zones_);
-					zones_expanded.push_back("all");
-					zones_expanded.push_back("dock");
-					std::string zones_joined = boost::algorithm::join(zones_expanded, ",");
-					G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
-					G_->update_node(world_node.value());
-				}
-			}
-	});
 }
 
 void NavigationAgent::update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose){
