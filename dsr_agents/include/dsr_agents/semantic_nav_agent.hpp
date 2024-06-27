@@ -34,14 +34,14 @@ class SemanticNavigationAgent: public AgentNode{
 		SemanticNavigationAgent();
 
 	private:
-		using SemanticGoals = semantic_navigation_msgs::srv::GenerateRandomGoals;
-		using SemanticRegions = semantic_navigation_msgs::srv::ListAllRegions;
+		using GenerateRandomGoals = semantic_navigation_msgs::srv::GenerateRandomGoals;
+		using ListAllRegions = semantic_navigation_msgs::srv::ListAllRegions;
 
-		rclcpp::Client<SemanticGoals>::SharedPtr goals_generator_client_;
-		rclcpp::Client<SemanticRegions>::SharedPtr semantic_regions_client_;
+		rclcpp::Client<GenerateRandomGoals>::SharedPtr goals_generator_client_;
+		rclcpp::Client<ListAllRegions>::SharedPtr semantic_regions_client_;
 		std::vector<std::string> zones_;
 
-		geometry_msgs::msg::Pose generate_goal(std::string room_name, int n_goals = 1);
+		void generate_goal(uint64_t node_id, std::string room_name, int n_goals = 1);
 		void get_zones();
 
 		// DSR callbacks

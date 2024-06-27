@@ -76,15 +76,7 @@ void SemanticNavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,
 			auto zone = G_->get_attrib_by_name<zone_att>(get_random_goal_node.value());
 			if (zone.has_value()){
 				// Generate the goal
-				geometry_msgs::msg::Pose goal = generate_goal(zone.value());
-				// Add the goal to the DSR graph
-				G_->add_or_modify_attrib_local<goal_x_att>(
-					get_random_goal_node.value(), static_cast<float>(goal.position.x));
-				G_->add_or_modify_attrib_local<goal_y_att>(
-					get_random_goal_node.value(), static_cast<float>(goal.position.y));
-				G_->add_or_modify_attrib_local<goal_angle_att>(
-					get_random_goal_node.value(), static_cast<float>(tf2::getYaw(goal.orientation)));
-				G_->update_node(get_random_goal_node.value());
+				generate_goal(get_random_goal_node.value().id(), zone.value());
 			}else{
 				RCLCPP_WARN(this->get_logger(), "Goal or zone not found in the move node");
 			}
@@ -92,63 +84,73 @@ void SemanticNavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,
 	}
 }
 
-geometry_msgs::msg::Pose SemanticNavigationAgent::generate_goal(std::string room_name, int n_goals){
+void SemanticNavigationAgent::generate_goal(uint64_t node_id, std::string room_name, int n_goals){
 	// Create the clients for the semantic navigation services
-	goals_generator_client_ = this->create_client<SemanticGoals>("generate_random_goals");
+	goals_generator_client_ = this->create_client<GenerateRandomGoals>("generate_random_goals");
 	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(5))) {
 		if (!rclcpp::ok()) {
-			RCLCPP_ERROR(this->get_logger(), 
-				"Interrupted while waiting for the service. Exiting.");
-			return geometry_msgs::msg::Pose();
+			RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+			return;
 		}
 		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
 	}
 
 	// Pick a random room if the room_name is 'all'
+	std::string random_room_name = room_name;
 	if (room_name == "all"){
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_int_distribution<int> distr(0, zones_.size() - 1);
-		room_name = zones_[distr(gen)];
+		random_room_name = zones_[distr(gen)];
 	}
+	RCLCPP_INFO(this->get_logger(), "... to the zone: %s", random_room_name.c_str());
 
 	// Send the request and wait for the response
-	geometry_msgs::msg::PoseArray goals;
-	auto request = std::make_shared<SemanticGoals::Request>();
+	auto request = std::make_shared<GenerateRandomGoals::Request>();
 	request->n = n_goals;
-	request->region_name = room_name;
-	request->orientation = SemanticGoals::Request::INSIDE;
+	request->region_name = random_room_name;
+	request->orientation = GenerateRandomGoals::Request::INSIDE;
 	request->border = 0.1;
+
+	// Send the request to get the goal
 	auto result = goals_generator_client_->async_send_request(request, 
-		[this](rclcpp::Client<SemanticGoals>::SharedFuture result){
-			if (result.get()->goals.poses.size() > 0){
-				// Send goals to the navigation stack
-				return result.get()->goals.poses[0];
+		[this, &node_id](rclcpp::Client<GenerateRandomGoals>::SharedFuture future){
+			if (future.get()->goals.poses.size() > 0){
+				auto goal = future.get()->goals.poses[0];
+				RCLCPP_INFO(this->get_logger(), "Goal generated (%f, %f)", 
+					goal.position.x, goal.position.y);
+				// Update the goal node in the DSR graph
+				if (auto node = G_->get_node(node_id); node.has_value()){
+					G_->add_or_modify_attrib_local<goal_x_att>(node.value(), static_cast<float>(goal.position.x));
+					G_->add_or_modify_attrib_local<goal_y_att>(node.value(), static_cast<float>(goal.position.y));
+					G_->add_or_modify_attrib_local<goal_angle_att>(node.value(), 
+						static_cast<float>(tf2::getYaw(goal.orientation)));
+					G_->update_node(node.value());
+					// Replace the 'wants_to' edge with a 'finished' edge between robot and get_random_goal
+					replace_edge<finished_edge_type>(source_, "get_random_goal", "wants_to");
+				}
 			}else{
 				RCLCPP_ERROR(this->get_logger(), "Couldn't send the goal.");
 			}
 	});
-
-	return geometry_msgs::msg::Pose();
 }
 
 void SemanticNavigationAgent::get_zones(){
 	// Create the clients for the semantic navigation services
-	semantic_regions_client_ = this->create_client<SemanticRegions>("list_all_regions");
+	semantic_regions_client_ = this->create_client<ListAllRegions>("list_all_regions");
 	while (!semantic_regions_client_->wait_for_service(std::chrono::seconds(1))) {
 		if (!rclcpp::ok()) {
-			RCLCPP_ERROR(this->get_logger(), 
-				"Interrupted while waiting for the service. Exiting.");
+			RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
 			return;
 		}
 		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
 	}
 
 	// Send the request to get the list of the zones
-	auto request = std::make_shared<SemanticRegions::Request>();
+	auto request = std::make_shared<ListAllRegions::Request>();
 	auto result = semantic_regions_client_->async_send_request(request, 
-		[this](rclcpp::Client<SemanticRegions>::SharedFuture result){
-			zones_ = result.get()->region_names;
+		[this](rclcpp::Client<ListAllRegions>::SharedFuture future){
+			zones_ = future.get()->region_names;
 
 			// Add the list of the zones to the DSR graph
 			if (auto world_node = G_->get_node("world"); world_node.has_value()){
