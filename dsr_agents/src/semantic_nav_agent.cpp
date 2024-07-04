@@ -82,10 +82,30 @@ void SemanticNavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,
 			}
 		}
 	}
+	// Check if there an object in the world: object ---(in)--> world
+	else if (type == "in"){
+		auto object_node = G_->get_node(from);
+		auto world_node = G_->get_node(to);
+		if (world_node.has_value() && object_node.has_value()){
+			// Get the pose of teh object
+			auto pose_x = G_->get_attrib_by_name<pose_x_att>(object_node.value());
+			auto pose_y = G_->get_attrib_by_name<pose_y_att>(object_node.value());
+			auto pose_angle = G_->get_attrib_by_name<pose_angle_att>(object_node.value());
+			if (pose_x.has_value() && pose_y.has_value() && pose_angle.has_value()){
+				// Get the zone of the object and change its edge
+				geometry_msgs::msg::Point point;
+				point.x = pose_x.value();
+				point.y = pose_y.value();
+				get_zone(object_node.value().id(), point);
+			}else{
+				RCLCPP_WARN(this->get_logger(), "The object doesn't have a pose");
+			}
+		}
+	}
 }
 
 void SemanticNavigationAgent::generate_goal(uint64_t node_id, std::string room_name, int n_goals){
-	// Create the clients for the semantic navigation services
+	// Create the client for the semantic navigation service
 	goals_generator_client_ = this->create_client<GenerateRandomGoals>("generate_random_goals");
 	while (!goals_generator_client_->wait_for_service(std::chrono::seconds(5))) {
 		if (!rclcpp::ok()) {
@@ -136,7 +156,7 @@ void SemanticNavigationAgent::generate_goal(uint64_t node_id, std::string room_n
 }
 
 void SemanticNavigationAgent::get_zones(){
-	// Create the clients for the semantic navigation services
+	// Create the client for the semantic navigation service
 	semantic_regions_client_ = this->create_client<ListAllRegions>("list_all_regions");
 	while (!semantic_regions_client_->wait_for_service(std::chrono::seconds(1))) {
 		if (!rclcpp::ok()) {
@@ -154,6 +174,7 @@ void SemanticNavigationAgent::get_zones(){
 
 			// Add the list of the zones to the DSR graph
 			if (auto world_node = G_->get_node("world"); world_node.has_value()){
+				// Add the zones as attributes to the world node
 				if (G_->get_priority(world_node.value()) == 0){
 					std::vector<std::string> zones_expanded(zones_);
 					zones_expanded.push_back("all");
@@ -162,6 +183,38 @@ void SemanticNavigationAgent::get_zones(){
 					G_->add_or_modify_attrib_local<zones_att>(world_node.value(), zones_joined);
 					G_->update_node(world_node.value());
 				}
+				// Also add the zones as nodes
+				for (auto zone : zones_){
+					add_node_with_edge<room_node_type, in_edge_type>(zone, "world");
+				}
+			}
+	});
+}
+
+void SemanticNavigationAgent::get_zone(uint64_t node_id, const geometry_msgs::msg::Point & point){
+	// Create the client for the semantic navigation service
+	region_name_client_ = this->create_client<GetRegionName>("get_region_name");
+	while (!region_name_client_->wait_for_service(std::chrono::seconds(1))) {
+		if (!rclcpp::ok()) {
+			RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+			return;
+		}
+		RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+	}
+
+	// Send the request to get the region name
+	auto request = std::make_shared<GetRegionName::Request>();
+	request->position = point;
+
+	auto result = region_name_client_->async_send_request(request, 
+		[this, &node_id](rclcpp::Client<GetRegionName>::SharedFuture future){
+			if (future.get()->region_name != GetRegionName::Response::UNKNOWN){
+				auto region_name = future.get()->region_name;
+				RCLCPP_INFO(this->get_logger(), "The object is in the zone: %s", region_name.c_str());
+				// Change the edge from the object to the world to the object to the zone
+				auto object_node = G_->get_node(node_id);
+				delete_edge(object_node.value().name(), "world", "in");
+				add_edge<in_edge_type>(object_node.value().name(), region_name);
 			}
 	});
 }
