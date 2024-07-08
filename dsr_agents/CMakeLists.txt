@@ -34,6 +34,7 @@ find_package(nav2_msgs REQUIRED)
 find_package(opennav_docking_msgs REQUIRED)
 find_package(semantic_navigation_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
+find_package(person_msgs REQUIRED)
 
 # ##########
 # # Build ##
@@ -124,6 +125,7 @@ ament_target_dependencies(person_agent
   geometry_msgs
   tf2
   vision_msgs
+  person_msgs
 )
 target_link_libraries(person_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
@@ -145,7 +147,7 @@ target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 # ############
 # # Install ##
 # ############
-install(TARGETS topic_agent person_agent tf_agent nav_agent docking_agent semantic_nav_agent
+install(TARGETS topic_agent person_agent tf_agent nav_agent semantic_nav_agent docking_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

@@ -26,5 +26,5 @@ person_agent:
   ros__parameters:
     agent_id: 105
     source: robot
-    ros_topic: object_detection/detections/matched_detections
+    ros_topic: object_detection/detections_3d/managed_detections
     timeout: 60

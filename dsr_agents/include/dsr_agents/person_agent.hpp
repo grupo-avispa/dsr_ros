@@ -24,6 +24,8 @@
 #include "vision_msgs/msg/detection3_d_array.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+#include "person_msgs/msg/person.hpp"
+#include "person_msgs/msg/person_array.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
@@ -34,7 +36,7 @@ class PersonAgent: public AgentNode{
 		PersonAgent();
 
 	private:
-		rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr person_sub_;
+		rclcpp::Subscription<person_msgs::msg::PersonArray>::SharedPtr person_sub_;
 		std::string ros_topic_;
 
 		/// The buffer of the transformations tree.
@@ -52,7 +54,7 @@ class PersonAgent: public AgentNode{
 		/// Get ROS params
 		void get_params();
 		/// Person detection callback
-		void person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg);
+		void person_callback(const person_msgs::msg::PersonArray::SharedPtr msg);
 		/// Timeout callback for delete people from DSR
 		void remove_callback();
 };

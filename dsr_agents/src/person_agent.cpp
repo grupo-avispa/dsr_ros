@@ -39,7 +39,7 @@ PersonAgent::PersonAgent(): AgentNode("person_agent"){
 	tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
 	// Subscriber to the detection 3D topic
-	person_sub_ = this->create_subscription<vision_msgs::msg::Detection3DArray>(
+	person_sub_ = this->create_subscription<person_msgs::msg::PersonArray>(
 		ros_topic_, 
 		rclcpp::QoS(rclcpp::SystemDefaultsQoS()), 
 		std::bind(&PersonAgent::person_callback, this, std::placeholders::_1));
@@ -68,9 +68,9 @@ void PersonAgent::get_params(){
 		"The parameter timeout is set to: [%d]", timeout_);
 }
 
-void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::SharedPtr msg){
+void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr msg){
 	// Get the persons from the detections
-	for (auto detection : msg->detections){
+	for (auto detection : msg->people){
 		// Transform the center point from camera to world target
 		geometry_msgs::msg::PoseStamped center_point;
 		center_point.header = msg->header;
@@ -105,8 +105,8 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
 			// TODO: ¿Queremos que pasen personas sin identificar al DSR?
 			if (!std::isdigit(person_id[0])){ 
-				auto [person_node, edge] = add_node_with_edge<person_node_type, is_with_edge_type>(
-					person_id, source_, false);
+				auto [person_node, edge] = add_node_with_edge<person_node_type, in_edge_type>(
+					person_id, "world", false);
 				if (person_node.has_value()){
 					// Add attributes to the node
 					G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
@@ -118,6 +118,9 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 						static_cast<float>(tf2::getYaw(center_point.pose.orientation)));
 					G_->add_or_modify_attrib_local<timestamp_att>(person_node.value(), 
 						static_cast<int>(msg->header.stamp.sec));
+					G_->add_or_modify_attrib_local<initstamp_att>(person_node.value(), 
+						static_cast<int>(msg->header.stamp.sec));
+					G_->add_or_modify_attrib_local<posture_att>(person_node.value(), detection.posture);
 					G_->update_node(person_node.value());
 				}
 			}
@@ -131,6 +134,7 @@ void PersonAgent::person_callback(const vision_msgs::msg::Detection3DArray::Shar
 				static_cast<float>(center_point.pose.position.z));
 			G_->add_or_modify_attrib_local<timestamp_att>(*it, 
 				static_cast<int>(msg->header.stamp.sec));
+			G_->add_or_modify_attrib_local<posture_att>(*it, detection.posture);
 			G_->update_node(*it);
 		}
 		RCLCPP_DEBUG(this->get_logger(), "Time stamp set to: [%d]", msg->header.stamp.sec);
