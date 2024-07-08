@@ -71,6 +71,8 @@ REGISTER_TYPE(result_code, std::string, false)
 REGISTER_TYPE(number, int, false)
 REGISTER_TYPE(source, std::string, false)
 REGISTER_TYPE(timestamp, int, false)
+REGISTER_TYPE(initstamp, int, false)
+REGISTER_TYPE(posture, std::string, false)
 
 // Navigation types
 REGISTER_TYPE(pose_x, float, false)
