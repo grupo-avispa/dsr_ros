@@ -27,6 +27,7 @@
   <depend>opennav_docking_msgs</depend>
   <depend>semantic_navigation_msgs</depend>
   <depend>vision_msgs</depend>
+  <depend>person_msgs</depend>
   <exec_depend>libqt5-core</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
