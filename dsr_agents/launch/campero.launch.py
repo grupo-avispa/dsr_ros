@@ -115,6 +115,19 @@ def generate_launch_description():
             '--log-level', ['person_agent:=', log_level]]
     )
 
+    whisper_agent_node = Node(
+        package = 'dsr_agents',
+        namespace = '',
+        executable = 'whisper_agent',
+        name = 'whisper_agent',
+        parameters = [params_file],
+        emulate_tty = True,
+        output = 'screen', 
+        arguments = [
+            '--ros-args', 
+            '--log-level', ['whisper_agent:=', LaunchConfiguration('log-level')]]
+    )
+
     return LaunchDescription([
         declare_params_file_arg,
         declare_log_level_arg,
@@ -123,5 +136,6 @@ def generate_launch_description():
         docking_agent_node,
         semantic_nav_agent_node,
         battery_agent_node,
-        person_agent_node
+        person_agent_node,
+        whisper_agent_node
     ])

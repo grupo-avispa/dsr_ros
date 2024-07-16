@@ -129,6 +129,21 @@ ament_target_dependencies(person_agent
 )
 target_link_libraries(person_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 
+# #################
+# # WHISPER AGENT ##
+# #################
+
+# Executable node
+add_executable(whisper_agent src/whisper_agent.cpp)
+ament_target_dependencies(whisper_agent
+  ${common_dependencies}
+  geometry_msgs
+  tf2
+  vision_msgs
+  std_msgs
+)
+target_link_libraries(whisper_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
+
 # #############
 # # TF AGENT ##
 # #############
@@ -147,7 +162,7 @@ target_link_libraries(tf_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
 # ############
 # # Install ##
 # ############
-install(TARGETS topic_agent person_agent tf_agent nav_agent semantic_nav_agent docking_agent
+install(TARGETS topic_agent person_agent whisper_agent tf_agent nav_agent docking_agent semantic_nav_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

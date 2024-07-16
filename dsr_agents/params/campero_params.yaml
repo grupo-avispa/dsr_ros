@@ -28,3 +28,8 @@ person_agent:
     source: robot
     ros_topic: object_detection/detections_3d/managed_detections
     timeout: 60
+whisper_agent:
+  ros__parameters:
+    agent_id: 106
+    source: robot
+    ros_topic: /whisper/text
