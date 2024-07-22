@@ -86,6 +86,7 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 		// Check if the detected person is already in the DSR graph
 		std::string person_id = detection.id;
 		auto person_nodes = G_->get_nodes_by_type("person");
+		auto world_node = G_->get_node("world");
 		// Skip the person if the id is empty
 		if (person_id.empty()){
 			RCLCPP_WARN(this->get_logger(), "Person detected with empty id");
@@ -105,23 +106,28 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
 			// TODO: ¿Queremos que pasen personas sin identificar al DSR?
 			if (!std::isdigit(person_id[0])){ 
-				auto [person_node, edge] = add_node_with_edge<person_node_type, in_edge_type>(
-					person_id, "world", false);
-				if (person_node.has_value()){
-					// Add attributes to the node
-					G_->add_or_modify_attrib_local<identifier_att>(person_node.value(), person_id);
-					G_->add_or_modify_attrib_local<pose_x_att>(person_node.value(), 
-						static_cast<float>(center_point.pose.position.x));
-					G_->add_or_modify_attrib_local<pose_y_att>(person_node.value(), 
-						static_cast<float>(center_point.pose.position.y));
-					G_->add_or_modify_attrib_local<pose_angle_att>(person_node.value(), 
-						static_cast<float>(tf2::getYaw(center_point.pose.orientation)));
-					G_->add_or_modify_attrib_local<timestamp_att>(person_node.value(), 
-						static_cast<int>(msg->header.stamp.sec));
-					G_->add_or_modify_attrib_local<initstamp_att>(person_node.value(), 
-						static_cast<int>(msg->header.stamp.sec));
-					G_->add_or_modify_attrib_local<posture_att>(person_node.value(), detection.posture);
-					G_->update_node(person_node.value());
+				auto person_node = DSR::Node::create<person_node_type>(person_id);
+				// Add attributes to the node
+				G_->add_or_modify_attrib_local<identifier_att>(person_node, person_id);
+				G_->add_or_modify_attrib_local<pose_x_att>(person_node, 
+					static_cast<float>(center_point.pose.position.x));
+				G_->add_or_modify_attrib_local<pose_y_att>(person_node, 
+					static_cast<float>(center_point.pose.position.y));
+				G_->add_or_modify_attrib_local<pose_angle_att>(person_node, 
+					static_cast<float>(tf2::getYaw(center_point.pose.orientation)));
+				G_->add_or_modify_attrib_local<timestamp_att>(person_node, 
+					static_cast<int>(msg->header.stamp.sec));
+				G_->add_or_modify_attrib_local<initstamp_att>(person_node, 
+					static_cast<int>(msg->header.stamp.sec));
+				G_->add_or_modify_attrib_local<posture_att>(person_node, detection.posture);
+				G_->add_or_modify_attrib_local<source_att>(person_node, 
+					static_cast<std::string>("robot"));
+				if (auto id = G_->insert_node(person_node); id.has_value()){
+					auto edge = DSR::Edge::create<in_edge_type>(person_node.id(), world_node.value().id());
+					G_->add_or_modify_attrib_local<source_att>(edge, static_cast<std::string>("robot"));
+					if (G_->insert_or_assign_edge(edge)) {
+						RCLCPP_INFO(this->get_logger(), "Inserted node person in world");
+					}
 				}
 			}
 		}else{

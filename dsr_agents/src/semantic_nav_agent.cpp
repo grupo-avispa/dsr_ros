@@ -86,7 +86,8 @@ void SemanticNavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,
 	else if (type == "in"){
 		auto object_node = G_->get_node(from);
 		auto world_node = G_->get_node(to);
-		if (world_node.has_value() && object_node.has_value()){
+		if (world_node.has_value() && world_node.value().name() == "world" 
+			&& object_node.has_value()){
 			// Get the pose of teh object
 			auto pose_x = G_->get_attrib_by_name<pose_x_att>(object_node.value());
 			auto pose_y = G_->get_attrib_by_name<pose_y_att>(object_node.value());
@@ -207,7 +208,7 @@ void SemanticNavigationAgent::get_zone(uint64_t node_id, const geometry_msgs::ms
 	request->position = point;
 
 	auto result = region_name_client_->async_send_request(request, 
-		[this, &node_id](rclcpp::Client<GetRegionName>::SharedFuture future){
+		[this, node_id](rclcpp::Client<GetRegionName>::SharedFuture future){
 			if (future.get()->region_name != GetRegionName::Response::UNKNOWN){
 				auto region_name = future.get()->region_name;
 				RCLCPP_INFO(this->get_logger(), "The object is in the zone: %s", region_name.c_str());
