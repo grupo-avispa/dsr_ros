@@ -131,7 +131,7 @@ def generate_launch_description():
     return LaunchDescription([
         declare_params_file_arg,
         declare_log_level_arg,
-        tf_agent_node,
+        # tf_agent_node,
         nav_agent_node,
         docking_agent_node,
         semantic_nav_agent_node,
