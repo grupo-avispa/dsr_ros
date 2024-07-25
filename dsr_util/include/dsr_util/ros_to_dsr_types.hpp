@@ -109,6 +109,7 @@ REGISTER_TYPE(reminder, bool, false)
 REGISTER_TYPE(activities, std::string, false)
 REGISTER_TYPE(tracking_enable, bool, false)
 REGISTER_TYPE(neuron, bool, false)
+REGISTER_TYPE(track_id, std::string, false)
 
 // BBDD types
 REGISTER_TYPE(bbdd_agent, std::string, false)

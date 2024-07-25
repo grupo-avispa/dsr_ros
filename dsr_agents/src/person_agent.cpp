@@ -74,7 +74,7 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 		// Transform the center point from camera to world target
 		geometry_msgs::msg::PoseStamped center_point;
 		center_point.header = msg->header;
-		center_point.pose.position = detection.bbox.center.position;
+		center_point.pose.position = detection.pose.position;
 		try{
 			geometry_msgs::msg::TransformStamped transform = tf_buffer_->lookupTransform(
 				"map", msg->header.frame_id, tf2::TimePointZero);
@@ -85,6 +85,8 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 		}
 		// Check if the detected person is already in the DSR graph
 		std::string person_id = detection.id;
+		std::string person_name = detection.name;
+		std::string node_name = "person_" + person_id;
 		auto person_nodes = G_->get_nodes_by_type("person");
 		auto world_node = G_->get_node("world");
 		// Skip the person if the id is empty
@@ -94,21 +96,22 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 		}
 		auto it = std::find_if(person_nodes.begin(), person_nodes.end(), 
 			[this, &person_id](auto node) { 
-				auto identifier = G_->get_attrib_by_name<identifier_att>(node);
-				if (identifier.has_value() && identifier.value() == person_id){
+				auto track_id_ = G_->get_attrib_by_name<track_id_att>(node);
+				if (track_id_.has_value() && track_id_.value() == person_id){
 					return true;
 				}
 				return false;
 			});
-
 		// If the person is not in the DSR graph, add them to the DSR graph
 		if (it == person_nodes.end() ){
-			RCLCPP_DEBUG(this->get_logger(), "Person detected: [%s]", person_id.c_str());
+			RCLCPP_INFO(this->get_logger(), "Person detected [%s] with id [%s]", 
+											person_name.c_str(), person_id.c_str());
 			// TODO: ¿Queremos que pasen personas sin identificar al DSR?
-			if (!std::isdigit(person_id[0])){ 
-				auto person_node = DSR::Node::create<person_node_type>(person_id);
+			if (!std::isdigit(person_name[0])){ 
+				auto person_node = DSR::Node::create<person_node_type>(node_name);
 				// Add attributes to the node
-				G_->add_or_modify_attrib_local<identifier_att>(person_node, person_id);
+				G_->add_or_modify_attrib_local<identifier_att>(person_node, person_name);
+				G_->add_or_modify_attrib_local<track_id_att>(person_node, person_id);
 				G_->add_or_modify_attrib_local<pose_x_att>(person_node, 
 					static_cast<float>(center_point.pose.position.x));
 				G_->add_or_modify_attrib_local<pose_y_att>(person_node, 
@@ -131,7 +134,9 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 				}
 			}
 		}else{
-			// If the person is already in the DSR graph, update their pose
+			// If the person is already in the DSR graph update their pose, name and posture
+			G_->add_or_modify_attrib_local<identifier_att>(*it,  
+				static_cast<std::string>(person_name));
 			G_->add_or_modify_attrib_local<pose_x_att>(*it, 
 				static_cast<float>(center_point.pose.position.x));
 			G_->add_or_modify_attrib_local<pose_y_att>(*it, 
@@ -140,7 +145,8 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 				static_cast<float>(center_point.pose.position.z));
 			G_->add_or_modify_attrib_local<timestamp_att>(*it, 
 				static_cast<int>(msg->header.stamp.sec));
-			G_->add_or_modify_attrib_local<posture_att>(*it, detection.posture);
+			G_->add_or_modify_attrib_local<posture_att>(*it,  
+				static_cast<std::string>(detection.posture));
 			G_->update_node(*it);
 		}
 		RCLCPP_DEBUG(this->get_logger(), "Time stamp set to: [%d]", msg->header.stamp.sec);
