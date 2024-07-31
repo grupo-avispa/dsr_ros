@@ -69,6 +69,9 @@ void PersonAgent::get_params(){
 }
 
 void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr msg){
+	// Get nodes from DSR
+	auto world_node = G_->get_node("world");
+	auto robot_node = G_->get_node("robot");
 	// Get the persons from the detections
 	for (auto detection : msg->people){
 		// Transform the center point from camera to world target
@@ -88,7 +91,6 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 		std::string person_name = detection.name;
 		std::string node_name = "person_" + person_id;
 		auto person_nodes = G_->get_nodes_by_type("person");
-		auto world_node = G_->get_node("world");
 		// Skip the person if the id is empty
 		if (person_id.empty()){
 			RCLCPP_WARN(this->get_logger(), "Person detected with empty id");
@@ -107,7 +109,7 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 			RCLCPP_INFO(this->get_logger(), "Person detected [%s] with id [%s]", 
 											person_name.c_str(), person_id.c_str());
 			// TODO: ¿Queremos que pasen personas sin identificar al DSR?
-			if (!std::isdigit(person_name[0])){ 
+			if (!person_name.empty()){
 				auto person_node = DSR::Node::create<person_node_type>(node_name);
 				// Add attributes to the node
 				G_->add_or_modify_attrib_local<identifier_att>(person_node, person_name);
@@ -126,17 +128,23 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 				G_->add_or_modify_attrib_local<source_att>(person_node, 
 					static_cast<std::string>("robot"));
 				if (auto id = G_->insert_node(person_node); id.has_value()){
-					auto edge = DSR::Edge::create<in_edge_type>(person_node.id(), world_node.value().id());
-					G_->add_or_modify_attrib_local<source_att>(edge, static_cast<std::string>("robot"));
-					if (G_->insert_or_assign_edge(edge)) {
-						RCLCPP_INFO(this->get_logger(), "Inserted node person in world");
+					// Create both edges, in world and with robot
+					auto edge_in = DSR::Edge::create<in_edge_type>(person_node.id(), world_node.value().id());
+					G_->add_or_modify_attrib_local<source_att>(edge_in, static_cast<std::string>("robot"));
+					// TODO: Quitar enlaces with robot de los códigos
+					auto edge_with = DSR::Edge::create<is_with_edge_type>(person_node.id(), robot_node.value().id());
+					G_->add_or_modify_attrib_local<source_att>(edge_with, static_cast<std::string>("robot"));
+					if (G_->insert_or_assign_edge(edge_in) && G_->insert_or_assign_edge(edge_with)) {
+						RCLCPP_INFO(this->get_logger(), "Inserted node person in world and with robot");
 					}
 				}
 			}
 		}else{
 			// If the person is already in the DSR graph update their pose, name and posture
-			G_->add_or_modify_attrib_local<identifier_att>(*it,  
-				static_cast<std::string>(person_name));
+			if (!person_name.empty()){
+				G_->add_or_modify_attrib_local<identifier_att>(*it,  
+					static_cast<std::string>(person_name));
+			}
 			G_->add_or_modify_attrib_local<pose_x_att>(*it, 
 				static_cast<float>(center_point.pose.position.x));
 			G_->add_or_modify_attrib_local<pose_y_att>(*it, 
