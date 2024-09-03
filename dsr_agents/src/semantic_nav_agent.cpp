@@ -71,7 +71,6 @@ void SemanticNavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to,
 		auto get_random_goal_node = G_->get_node(to);
 		if (robot_node.has_value() &&  robot_node.value().name() == source_
 			&& get_random_goal_node.has_value() && get_random_goal_node.value().type() == "get_random_goal"){
-			RCLCPP_INFO(this->get_logger(), "Getting the goal...");
 			// Get the attributes from the node
 			auto zone = G_->get_attrib_by_name<zone_att>(get_random_goal_node.value());
 			if (zone.has_value()){
@@ -124,7 +123,7 @@ void SemanticNavigationAgent::generate_goal(uint64_t node_id, std::string room_n
 		std::uniform_int_distribution<int> distr(0, zones_.size() - 1);
 		random_room_name = zones_[distr(gen)];
 	}
-	RCLCPP_INFO(this->get_logger(), "... to the zone: %s", random_room_name.c_str());
+	RCLCPP_INFO(this->get_logger(), "Getting the goal to the zone: %s", random_room_name.c_str());
 
 	// Send the request and wait for the response
 	auto request = std::make_shared<GenerateRandomGoals::Request>();
@@ -135,7 +134,7 @@ void SemanticNavigationAgent::generate_goal(uint64_t node_id, std::string room_n
 
 	// Send the request to get the goal
 	auto result = goals_generator_client_->async_send_request(request, 
-		[this, &node_id](rclcpp::Client<GenerateRandomGoals>::SharedFuture future){
+		[this, node_id](rclcpp::Client<GenerateRandomGoals>::SharedFuture future){
 			if (future.get()->goals.poses.size() > 0){
 				auto goal = future.get()->goals.poses[0];
 				RCLCPP_INFO(this->get_logger(), "Goal generated (%f, %f)", 

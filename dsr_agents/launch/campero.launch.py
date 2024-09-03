@@ -137,5 +137,5 @@ def generate_launch_description():
         semantic_nav_agent_node,
         battery_agent_node,
         person_agent_node,
-        whisper_agent_node
+        # whisper_agent_node
     ])
