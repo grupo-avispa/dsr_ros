@@ -22,6 +22,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 option(COVERAGE_ENABLED "Enable code coverage" FALSE)
+
 if(COVERAGE_ENABLED)
   add_compile_options(--coverage)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
@@ -58,12 +59,6 @@ find_package(tf2_geometry_msgs REQUIRED)
 # ##########
 # # Build ##
 # ##########
-# # Specify additional locations of header files
-# # Your package locations should be listed before other locations
-include_directories(
-  include
-)
-
 set(library_name ${PROJECT_NAME})
 
 # Set QT libraries and DSR libraries
@@ -82,23 +77,28 @@ set(sources
   src/qt_executor.cpp
 )
 
-set(dependencies
-  dsr_msgs
-  Eigen3
-  geometry_msgs
-  Qt5
-  rclcpp
-  tf2_geometry_msgs
-)
-
 # # Qt Moc
 qt5_wrap_cpp(qt_moc ${headers}
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 
 add_library(${library_name} SHARED ${sources})
-ament_target_dependencies(${library_name} ${dependencies})
-target_link_libraries(${library_name} ${DSR_LIBRARIES} ${QT_LIBRARIES})
+target_include_directories(${library_name} PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+target_link_libraries(${library_name}
+  PUBLIC
+  ${dsr_msgs_TARGETS}
+  fastrtps
+  fastcdr
+  ${geometry_msgs_TARGETS}
+  rclcpp::rclcpp
+  ${DSR_LIBRARIES}
+  ${QT_LIBRARIES}
+  PRIVATE
+  ${tf2_geometry_msgs_TARGETS}
+)
 target_sources(${library_name} PRIVATE ${qt_moc})
 
 # ############
@@ -119,19 +119,38 @@ install(DIRECTORY worlds
   DESTINATION share/${PROJECT_NAME}/
 )
 
+install(FILES test/test_dsr.json
+  DESTINATION share/${PROJECT_NAME}/test
+)
+
+
 # ###########
 # Testing  ##
 # ###########
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_index_cpp REQUIRED)
 
   # the following line skips the linter which checks for copyrights
   set(ament_cmake_copyright_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
-  #add_subdirectory(test)
+
+  add_subdirectory(test)
 endif()
 
+# Export old-style CMake variables
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_libraries(dsr_util)
-ament_export_dependencies(${dependencies})
+ament_export_dependencies(
+  dsr_msgs
+  Eigen3
+  geometry_msgs
+  Qt5
+  rclcpp
+  tf2_geometry_msgs
+)
+
+# Export modern CMake targets
+ament_export_targets(${library_name})
+
 ament_package()

@@ -6,6 +6,7 @@ X.Y.Z (DD-MM-YYYY)
 ------------------
 * Update license to Apache 2.0.
 * Improve formating.
+* CMakeLists.txt use modern idioms.
 
 0.1.0 (04-03-2024)
 ------------------

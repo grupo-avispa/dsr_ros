@@ -60,8 +60,9 @@ public:
    *
    * @tparam node_type The type of the DSR node. Defined in ros_to_dsr_types.hpp.
    * @param name Name of the DSR node.
-   * @param priority Priority value.
-   * @param source Value of the source to indicate the origin of the node (default: "robot").
+   * @param priority Priority value attribute (default: 0).
+   * @param source Value of the source attribute to indicate the origin of the node,
+   * (default: "robot").
    * @return Node The created DSR node.
    */
   template<typename node_type>
@@ -70,6 +71,12 @@ public:
   {
     // Create the node
     auto new_node = DSR::Node::create<node_type>(name);
+    // Add level value
+    add_or_modify_attrib_local<level_att>(new_node, 0);
+    // Add random position values
+    const auto &[random_x, random_y] = get_random_position_to_draw_in_graph();
+    add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
+    add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
     // Add priority value
     add_or_modify_attrib_local<priority_att>(new_node, priority);
     // Add source value
@@ -84,8 +91,9 @@ public:
    * @tparam edge_type The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
    * @param name Name of the DSR node.
    * @param parent_node Name of the parent DSR node.
-   * @param priority Priority value.
-   * @param source Value of the source to indicate the origin of the node (default: "robot").
+   * @param priority Priority value attribute (default: 0).
+   * @param source Value of the source attribute to indicate the origin of the node,
+   * (default: "robot").
    * @return Node The created DSR node.
    */
   template<typename node_type, typename edge_type>
@@ -104,16 +112,14 @@ public:
       relative_node.has_value() ? get_node_level(relative_node.value()).value() + 1 : 0;
     add_or_modify_attrib_local<parent_att>(new_node, relative_attribute_value);
     add_or_modify_attrib_local<level_att>(new_node, level_attribute_value);
-    // Draw the node in the graph: by level if RT edge and parent, random if not
+    // Draw the node in the graph by level if RT edge and parent
     std::tuple<float, float> graph_pos;
     if (relative_node.has_value() && std::is_same<edge_type, RT_edge_type>::value) {
       graph_pos = get_position_by_level_in_graph(relative_node.value());
-    } else {
-      graph_pos = get_random_position_to_draw_in_graph();
+      add_or_modify_attrib_local<pos_x_att>(new_node, std::get<0>(graph_pos));
+      add_or_modify_attrib_local<pos_y_att>(new_node, std::get<1>(graph_pos));
     }
-    const auto &[random_x, random_y] = graph_pos;
-    add_or_modify_attrib_local<pos_x_att>(new_node, random_x);
-    add_or_modify_attrib_local<pos_y_att>(new_node, random_y);
+
     return new_node;
   }
 
@@ -123,7 +129,8 @@ public:
    * @tparam edge_type The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
    * @param from Id of the parent DSR node.
    * @param to Id of the child DSR node.
-   * @param source Value of the source to indicate the origin of the edge (default: "robot").
+   * @param source Value of the source attribute to indicate the origin of the edge,
+   * (default: "robot").
    * @return Edge The created DSR edge.
    */
   template<typename edge_type>

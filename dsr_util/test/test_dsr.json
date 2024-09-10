@@ -1,0 +1,35 @@
+{
+    "DSRModel": {
+        "symbols": {
+            "0": {
+                "attribute": {
+                    "color": {
+                        "type": 0,
+                        "value": "Red"
+                    },
+                    "level": {
+                        "type": 1,
+                        "value": 0
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "0"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 100.0
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -100.0
+                    }
+                },
+                "id": "0",
+                "links": [
+                ],
+                "name": "world",
+                "type": "world"
+            }
+        }
+    }
+}
