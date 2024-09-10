@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>dsr_agents</exec_depend>
   <exec_depend>dsr_bridge</exec_depend>
-  <exec_depend>dsr_interfaces</exec_depend>
+  <exec_depend>dsr_msgs</exec_depend>
   <exec_depend>dsr_rqt_plugin</exec_depend>
   <exec_depend>dsr_util</exec_depend>
   <export>

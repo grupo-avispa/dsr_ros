@@ -1,9 +1,7 @@
-# dsr_interfaces
-
-![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
+# dsr_msgs
 
 ## Overview
-This package provides services to interact with the [dsr_agent](../dsr_agent) package.
+This package contains messages and services to interact with the [dsr_agents](../dsr_agents) package.
 
 ## Messages (.msg)
 * [Edge](msg/Edge.msg): ROS equivalent of the `DSR Edge`.

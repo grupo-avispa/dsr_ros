@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>dsr_interfaces</name>
+  <name>dsr_msgs</name>
   <version>0.2.0</version>
   <description>DSR messages and services</description>
   <maintainer email="ajtudela@gmail.com">Alberto Tudela</maintainer>
@@ -10,7 +10,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>action_msgs</depend>
   <depend>std_msgs</depend>
   <depend>rosidl_default_generators</depend>
 
