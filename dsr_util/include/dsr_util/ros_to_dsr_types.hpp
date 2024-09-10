@@ -1,19 +1,28 @@
-/*
- * ROS TO DSR TYPES NAMES ROS NODE
- *
- * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
- * 
- * This file is part of dsr_util.
- * 
- * All rights reserved.
- *
- */
+// Copyright (c) 2023 Alberto J. Tudela Roldán
+// Copyright (c) 2023 Grupo Avispa, DTE, Universidad de Málaga
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef DSR_UTIL__ROS_TO_DSR_TYPES_HPP_
+#define DSR_UTIL__ROS_TO_DSR_TYPES_HPP_
 
 #include <dsr/core/types/type_checking/dsr_node_type.h>
 #include <dsr/core/types/type_checking/dsr_edge_type.h>
 #include <dsr/core/types/type_checking/dsr_attr_name.h>
+
+// C++
+#include <string>
+#include <vector>
 
 /**
  * sensor_msgs::msg::BatteryState
@@ -36,7 +45,7 @@ REGISTER_TYPE(battery_serial_number, std::string, false)
 
 /**
  * @brief CAMPERO
- * 
+ *
  */
 
 REGISTER_NODE_TYPE(brain)
@@ -95,7 +104,8 @@ REGISTER_TYPE(volume, float, false)
 // Show types
 REGISTER_TYPE(interface, std::string, false)
 
-// Use case types: do_nothing, wandering, charging, menu, music, neuron_up, getme, reminder, announcer
+// Use case types avialable: do_nothing, wandering, charging, menu, music, neuron_up,
+// getme, reminder, announcer
 REGISTER_TYPE(use_case_id, std::string, false)
 REGISTER_TYPE(menu_choices, std::string, false)
 

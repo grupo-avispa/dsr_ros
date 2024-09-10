@@ -11,12 +11,13 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <build_depend>qtbase5-dev</build_depend>
 
-  <depend>dsr_interfaces</depend>
+  <depend>dsr_msgs</depend>
   <depend>eigen</depend>
   <depend>fastcdr</depend>
   <depend>fastrtps</depend>
-  <depend>nav2_util</depend>
+  <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>tf2_geometry_msgs</depend>
 
   <exec_depend>libqt5-core</exec_depend>
 
