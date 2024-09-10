@@ -4,21 +4,23 @@
   <name>dsr_rqt_plugin</name>
   <version>1.1.0</version>
   <description>RQT plugin to visualize a Deep State Representation (DSR) graph.</description>
-  <maintainer email="ajtudela@gmail.com">Alberto J. Tudela Roldán</maintainer>
-  <license>TODO</license>
-  <author email="ajtudela@gmail.com">Alberto J. Tudela Roldán</author>
+  <maintainer email="ajtudela@gmail.com">Alberto Tudela</maintainer>
+  <license>Apache-2.0</license>
+  <author email="ajtudela@gmail.com">Alberto Tudela</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <build_depend>qtbase5-dev</build_depend>
-  <depend>rclcpp</depend>
   <depend>eigen</depend>
   <depend>fastcdr</depend>
   <depend>fastrtps</depend>
+  <depend>rclcpp</depend>
   <depend>rqt_gui</depend>
   <depend>rqt_gui_cpp</depend>
   <depend>qt_gui_cpp</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
