@@ -48,16 +48,6 @@ private:
     const std::string & node_name, const std::string & parent_name);
 
   void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
-
-  void node_updated(std::uint64_t /*id*/, const std::string & /*type*/) {}
-  void node_attr_updated(uint64_t /*id*/, const std::vector<std::string> & /*att_names*/) {}
-  void edge_updated(std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*type*/) {}
-  void edge_attr_updated(
-    std::uint64_t /*from*/, std::uint64_t /*to*/,
-    const std::string & /*type*/, const std::vector<std::string> & /*att_names*/) {}
-  void node_deleted(std::uint64_t /*id*/) {}
-  void edge_deleted(
-    std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*edge_tag*/) {}
 };
 
 #endif  // DSR_AGENTS__TOPIC_AGENT_HPP_

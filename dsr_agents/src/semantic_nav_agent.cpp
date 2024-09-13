@@ -36,24 +36,6 @@
 SemanticNavigationAgent::SemanticNavigationAgent()
 : dsr_util::AgentNode("semantic_navigation_agent")
 {
-  // Add connection signals
-  QObject::connect(
-    G_.get(),
-    &DSR::DSRGraph::update_node_signal, this, &SemanticNavigationAgent::node_updated);
-  QObject::connect(
-    G_.get(),
-    &DSR::DSRGraph::update_node_attr_signal, this, &SemanticNavigationAgent::node_attr_updated);
-  QObject::connect(
-    G_.get(),
-    &DSR::DSRGraph::update_edge_signal, this, &SemanticNavigationAgent::edge_updated);
-  QObject::connect(
-    G_.get(),
-    &DSR::DSRGraph::update_edge_attr_signal, this, &SemanticNavigationAgent::edge_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &SemanticNavigationAgent::edge_deleted);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal, this, &SemanticNavigationAgent::node_deleted);
-
   // Wait until the DSR graph is ready
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 

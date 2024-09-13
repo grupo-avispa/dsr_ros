@@ -25,6 +25,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 
 // ROS
 #include "geometry_msgs/msg/transform.hpp"
@@ -495,6 +496,61 @@ private:
   void save_dsr(
     const std::shared_ptr<dsr_msgs::srv::SaveDSR::Request> request,
     std::shared_ptr<dsr_msgs::srv::SaveDSR::Response> response);
+
+  /**
+   * @brief Callback executed when a node is updated in the DSR graph.
+   *
+   * @param id The id of the node.
+   * @param type The type of the node.
+   */
+  virtual void node_updated(std::uint64_t /*id*/, const std::string & /*type*/) {}
+
+  /**
+   * @brief Callback executed when a node attribute is updated in the DSR graph.
+   *
+   * @param id The id of the node.
+   * @param att_names The names of the attributes updated.
+   */
+  virtual void node_attr_updated(uint64_t /*id*/, const std::vector<std::string> & /*att_names*/) {}
+
+  /**
+   * @brief Callback executed when an edge is updated in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param type The type of the edge.
+   */
+  virtual void edge_updated(
+    std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*type*/) {}
+
+  /**
+   * @brief Callback executed when an edge attribute is updated in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param type The type of the edge.
+   * @param att_names The names of the attributes updated.
+   */
+  virtual void edge_attr_updated(
+    std::uint64_t /*from*/, std::uint64_t /*to*/,
+    const std::string & /*type*/, const std::vector<std::string> & /*att_names*/) {}
+
+  /**
+   * @brief Callback executed when a node is deleted in the DSR graph.
+   *
+   * @param id The id of the node.
+   */
+  virtual void node_deleted(std::uint64_t /*id*/) {}
+
+  /**
+   * @brief Callback executed when an edge is deleted in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param edge_tag The type of the edge.
+   */
+  virtual void edge_deleted(
+    std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*edge_tag*/) {}
 
   /**
    * @brief Service to save the DSR graph into a file.

@@ -26,20 +26,6 @@
 DockingAgent::DockingAgent()
 : dsr_util::AgentNode("docking_agent")
 {
-  // Add connection signals
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_signal, this, &DockingAgent::node_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &DockingAgent::node_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &DockingAgent::edge_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &DockingAgent::edge_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &DockingAgent::edge_deleted);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal, this, &DockingAgent::node_deleted);
-
   // Wait until the DSR graph is ready
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }

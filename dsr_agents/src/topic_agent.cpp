@@ -19,7 +19,6 @@
 
 // ROS
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
-#include "nav2_util/node_utils.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
@@ -35,20 +34,6 @@ TopicAgent::TopicAgent()
 {
   // Get ROS parameters
   get_params();
-
-  // Add connection signals
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_signal, this, &TopicAgent::node_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &TopicAgent::node_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &TopicAgent::edge_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &TopicAgent::edge_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &TopicAgent::edge_deleted);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal, this, &TopicAgent::node_deleted);
 
   // Wait until the DSR graph is ready
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));

@@ -20,7 +20,6 @@
 // ROS
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "nav2_util/node_utils.hpp"
 #include "nav2_util/robot_utils.hpp"
 #include "tf2/utils.h"
 #include "tf2/LinearMath/Quaternion.h"
@@ -34,20 +33,6 @@
 NavigationAgent::NavigationAgent()
 : dsr_util::AgentNode("navigation_agent")
 {
-  // Add connection signals
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_signal, this, &NavigationAgent::node_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &NavigationAgent::node_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &NavigationAgent::edge_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &NavigationAgent::edge_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &NavigationAgent::edge_deleted);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal, this, &NavigationAgent::node_deleted);
-
   // Initialize transform buffer and listener
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);

@@ -24,20 +24,6 @@ ActionAgent::ActionAgent()
   // Get ROS parameters
   get_params();
 
-  // Add connection signals
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_signal, this, &ActionAgent::node_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &ActionAgent::node_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &ActionAgent::edge_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &ActionAgent::edge_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &ActionAgent::edge_deleted);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal, this, &ActionAgent::node_deleted);
-
   // Wait until the DSR graph is ready
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -60,15 +46,6 @@ void ActionAgent::get_params()
     "The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 }
 
-void ActionAgent::node_updated(std::uint64_t id, const std::string & type)
-{
-}
-
-void ActionAgent::node_attr_updated(
-  uint64_t id, const std::vector<std::string> & att_names)
-{
-}
-
 void ActionAgent::edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type)
 {
   // Check if the robot wants to start the action: robot ---(wants_to)--> action
@@ -85,21 +62,6 @@ void ActionAgent::edge_updated(std::uint64_t from, std::uint64_t to, const std::
 
   // Check if the robot wants to abort the action
   // if (type == "abort") {}
-}
-
-void ActionAgent::edge_attr_updated(
-  std::uint64_t from, std::uint64_t to,
-  const std::string & type, const std::vector<std::string> & att_names)
-{
-}
-
-void ActionAgent::node_deleted(std::uint64_t id)
-{
-}
-
-void ActionAgent::edge_deleted(
-  std::uint64_t from, std::uint64_t to, const std::string & edge_tag)
-{
 }
 
 void ActionAgent::goal_response_callback(const GoalHandleActionT::SharedPtr & goal_handle)

@@ -45,6 +45,20 @@ AgentNode::AgentNode(std::string ros_node_name)
   qRegisterMetaType<DSR::Node>("Node");
   qRegisterMetaType<DSR::Edge>("Edge");
   qRegisterMetaType<DSR::SignalInfo>("DSR::SignalInfo");
+
+  // Add connection signals
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::update_node_signal, this, &AgentNode::node_updated);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &AgentNode::node_attr_updated);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &AgentNode::edge_updated);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &AgentNode::edge_attr_updated);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &AgentNode::edge_deleted);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::del_node_signal, this, &AgentNode::node_deleted);
 }
 
 AgentNode::~AgentNode()
@@ -61,7 +75,10 @@ void AgentNode::get_common_params()
     rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The id of the agent")
     .set__integer_range(
-      {rcl_interfaces::msg::IntegerRange().set__step(1)}
+      {rcl_interfaces::msg::IntegerRange()
+        .set__from_value(0)
+        .set__to_value(1000)
+        .set__step(1)}
   ));
   this->get_parameter("agent_id", agent_id_);
   RCLCPP_INFO(this->get_logger(), "The parameter agent_id is set to: [%d]", agent_id_);

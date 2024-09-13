@@ -15,18 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <string>
-#include <vector>
-
-// TF
-#include "tf2/utils.h"
-
-// ROS
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "nav2_util/node_utils.hpp"
-
 // DSR
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/whisper_agent.hpp"
@@ -52,7 +40,7 @@ WhisperAgent::WhisperAgent()
 void WhisperAgent::get_params()
 {
   // ROS parameters
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "ros_topic",
     rclcpp::ParameterValue("/whisper/text"),
     rcl_interfaces::msg::ParameterDescriptor()
@@ -66,8 +54,7 @@ void WhisperAgent::get_params()
 void WhisperAgent::whisper_callback(const std_msgs::msg::String::SharedPtr msg)
 {
   std::cout << "Text received = " << msg->data << std::endl;
-  auto new_node = G_->create_node_with_priority<whisper_node_type>(
-    "whisper", 0, source_);
+  auto new_node = G_->create_node_with_priority<whisper_node_type>("whisper", 0, source_);
   // Insert the node into the DSR graph
   if (auto id = G_->insert_node(new_node); id.has_value()) {
     G_->add_or_modify_attrib_local<text_att>(new_node, msg->data);

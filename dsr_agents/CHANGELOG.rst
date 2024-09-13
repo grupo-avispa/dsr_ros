@@ -19,6 +19,8 @@ X.X.X (XX-XX-2024)
 * Skip the removal of person if they are interacting.
 * Add the rooms to the DSR and the edges between them and the objects.
 * Improve formating.
+* Update license to Apache 2.0.
+* Move DSR callback functions to agent_node.
 
 0.7.0 (19-06-2024)
 ------------------
