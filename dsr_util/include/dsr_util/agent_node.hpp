@@ -552,19 +552,13 @@ private:
   virtual void edge_deleted(
     std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*edge_tag*/) {}
 
-  /**
-   * @brief Service to save the DSR graph into a file.
-   */
+  // Service to save the DSR graph into a file.
   rclcpp::Service<dsr_msgs::srv::SaveDSR>::SharedPtr save_dsr_service_;
 
-  /**
-   * @brief Id of the DSR agent.
-   */
+  // Id of the DSR agent.
   int agent_id_;
 
-  /**
-   * @brief Name of the input file to load the DSR graph from.
-   */
+  // Name of the input file to load the DSR graph from.
   std::string dsr_input_file_;
 };
 

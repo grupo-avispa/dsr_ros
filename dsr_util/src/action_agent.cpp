@@ -14,10 +14,11 @@
 // limitations under the License.
 
 // DSR
-#include "dsr_util/qt_executor.hpp"
-#include "dsr_agents/action_agent.hpp"
+#include "dsr_util/action_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_util
+{
+
 ActionAgent::ActionAgent()
 : dsr_util::AgentNode("action_agent")
 {
@@ -31,7 +32,6 @@ ActionAgent::ActionAgent()
   add_node_with_edge<navigation_node_type, stopped_edge_type>(dsr_node_name_, source_);
 }
 
-/* Initialize ROS parameters */
 void ActionAgent::get_params()
 {
   // ROS parameters
@@ -107,18 +107,4 @@ void ActionAgent::result_callback(const GoalHandleActionT::WrappedResult & resul
   }
 }
 
-int main(int argc, char ** argv)
-{
-  QCoreApplication app(argc, argv);
-  rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<ActionAgent>();
-
-  dsr_util::QtExecutor exe;
-  exe.add_node(node);
-  exe.start();
-
-  auto res = app.exec();
-  rclcpp::shutdown();
-  return res;
-}
+}  // namespace dsr_util

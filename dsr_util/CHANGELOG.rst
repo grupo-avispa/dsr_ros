@@ -8,6 +8,7 @@ X.Y.Z (DD-MM-YYYY)
 * Improve formating.
 * CMakeLists.txt use modern idioms.
 * Move DSR callback functions to agent_node.
+* Move action_agent to dsr_util.
 
 0.1.0 (04-03-2024)
 ------------------
