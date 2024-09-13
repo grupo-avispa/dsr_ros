@@ -22,7 +22,7 @@ find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(nav2_util REQUIRED)
-find_package(dsr_interfaces REQUIRED)
+find_package(dsr_msgs REQUIRED)
 find_package(dsr_util REQUIRED)
 
 # ##########
@@ -44,7 +44,7 @@ set(dependencies
   Eigen3
   Qt5
   nav2_util
-  dsr_interfaces
+  dsr_msgs
   dsr_util
 )
 
@@ -73,11 +73,14 @@ install(DIRECTORY launch params
   DESTINATION share/${PROJECT_NAME}/
 )
 
-# ############
-# # Testing ##
-# ############
+# ###########
+# Testing  ##
+# ###########
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+
+  # the following line skips the linter which checks for copyrights
+  set(ament_cmake_copyright_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 

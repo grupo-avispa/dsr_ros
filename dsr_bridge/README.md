@@ -1,18 +1,10 @@
 # dsr_bridge
-![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
 
 ## Overview
 
 This package provides a communication bridge between two instances of the Deep Space Representation (DSR) using ROS 2. The bridge is able to capture the signals from the DSR, create the corresponding nodes / edges messages and publish them through ROS 2. The other side of the bridge is able to receive the nodes / edges messages and create the corresponding nodes / edges in the DSR.
 
 ![Bridge Design](./doc/bridge_design.png)
-
-
-**Keywords:** ROS2, cortex, dsr, deep space representation
-
-**Author: Alberto Tudela<br />**
-
-The dsr_bridge package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 ## Usage
 
