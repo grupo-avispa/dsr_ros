@@ -11,7 +11,7 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <build_depend>qtbase5-dev</build_depend>
 
-  <depend>dsr_interfaces</depend>
+  <depend>dsr_msgs</depend>
   <depend>dsr_util</depend>
   <depend>eigen</depend>
   <depend>fastcdr</depend>
@@ -35,6 +35,7 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_index_cpp</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

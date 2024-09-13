@@ -1,18 +1,32 @@
 #!/usr/bin/env python3
 
-'''
-    Launches the DSR agents for robot.
-'''
+# Copyright (c) 2023 Alberto J. Tudela Roldán
+# Copyright (c) 2023 Grupo Avispa, DTE, Universidad de Málaga
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Launches the DSR agents for robot."""
+
 import os
 
 from ament_index_python import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler
-from launch.event_handlers import OnProcessStart
-from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
+
 
 def generate_launch_description():
     # Getting directories and launch-files
@@ -26,8 +40,8 @@ def generate_launch_description():
 
     declare_params_file_arg = DeclareLaunchArgument(
         'params_file',
-        default_value = default_params_file,
-        description = 'Full path to the ROS2 parameters file with dsr agent configuration'
+        default_value=default_params_file,
+        description='Full path to the ROS2 parameters file with dsr agent configuration'
     )
 
     # Create our own temporary YAML files that include substitutions
@@ -36,108 +50,108 @@ def generate_launch_description():
     }
 
     configured_params = RewrittenYaml(
-        source_file = params_file,
-        root_key = '',
-        param_rewrites = param_substitutions,
-        convert_types = True
+        source_file=params_file,
+        root_key='',
+        param_rewrites=param_substitutions,
+        convert_types=True
     )
 
     declare_log_level_arg = DeclareLaunchArgument(
-        name = 'log-level',
-        default_value = 'info',
-        description = 'Logging level (info, debug, ...)'
+        name='log-level',
+        default_value='info',
+        description='Logging level (info, debug, ...)'
     )
 
     # Prepare the nodes
     tf_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'tf_agent',
-        name = 'tf_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['tf_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='tf_agent',
+        name='tf_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['tf_agent:=', log_level]]
     )
 
     nav_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'nav_agent',
-        name = 'nav_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['nav_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='nav_agent',
+        name='nav_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['nav_agent:=', log_level]]
     )
 
     docking_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'docking_agent',
-        name = 'docking_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['docking_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='docking_agent',
+        name='docking_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['docking_agent:=', log_level]]
     )
 
     battery_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'topic_agent',
-        name = 'battery_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['battery_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='topic_agent',
+        name='battery_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['battery_agent:=', log_level]]
     )
 
     laser_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'topic_agent',
-        name = 'laser_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['laser_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='topic_agent',
+        name='laser_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['laser_agent:=', log_level]]
     )
 
     rgb_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'topic_agent',
-        name = 'rgb_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['rgb_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='topic_agent',
+        name='rgb_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['rgb_agent:=', log_level]]
     )
 
     depth_agent_node = Node(
-        package = 'dsr_agents',
-        namespace = '',
-        executable = 'topic_agent',
-        name = 'rgbd_agent',
-        parameters = [configured_params],
-        emulate_tty = True,
-        output = 'screen', 
-        arguments = [
-            '--ros-args', 
-            '--log-level', ['rgbd_agent:=', LaunchConfiguration('log-level')]]
+        package='dsr_agents',
+        namespace='',
+        executable='topic_agent',
+        name='rgbd_agent',
+        parameters=[configured_params],
+        emulate_tty=True,
+        output='screen',
+        arguments=[
+            '--ros-args',
+            '--log-level', ['rgbd_agent:=', log_level]]
     )
 
     return LaunchDescription([
@@ -146,7 +160,7 @@ def generate_launch_description():
         tf_agent_node,
         nav_agent_node,
         docking_agent_node,
-        battery_agent_node, 
+        battery_agent_node,
         laser_agent_node,
         rgb_agent_node,
         depth_agent_node

@@ -21,7 +21,7 @@ find_package(Eigen3 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
-find_package(dsr_interfaces REQUIRED)
+find_package(dsr_msgs REQUIRED)
 find_package(dsr_util REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -54,7 +54,7 @@ set(common_dependencies
   rclcpp
   Eigen3
   Qt5
-  dsr_interfaces
+  dsr_msgs
   dsr_util
   nav2_util
 )
@@ -98,7 +98,6 @@ ament_target_dependencies(docking_agent
   opennav_docking_msgs
 )
 target_link_libraries(docking_agent ${DSR_LIBRARIES} ${QT_LIBRARIES})
-
 
 # ##############################
 # # SEMANTIC NAVIGATION AGENT ##
@@ -179,11 +178,14 @@ install(DIRECTORY launch params
   DESTINATION share/${PROJECT_NAME}/
 )
 
-# ############
-# # Testing ##
-# ############
+# ###########
+# Testing  ##
+# ###########
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+
+  # the following line skips the linter which checks for copyrights
+  set(ament_cmake_copyright_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 
