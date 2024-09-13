@@ -155,6 +155,12 @@ void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr
 				static_cast<int>(msg->header.stamp.sec));
 			G_->add_or_modify_attrib_local<posture_att>(*it,  
 				static_cast<std::string>(detection.posture));
+			// Check if person posture has changed
+			auto person_posture = G_->get_attrib_by_name<posture_att>(*it);
+			if(person_posture.has_value() && person_posture.value() != detection.posture){
+				G_->add_or_modify_attrib_local<initstamp_att>(*it, 
+					static_cast<int>(msg->header.stamp.sec));
+			}
 			G_->update_node(*it);
 		}
 		RCLCPP_DEBUG(this->get_logger(), "Time stamp set to: [%d]", msg->header.stamp.sec);
