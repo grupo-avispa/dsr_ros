@@ -51,12 +51,10 @@ set(CMAKE_AUTOMOC ON)
 # # Find ament macros and libraries
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(eigen3_cmake_module REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
+find_package(Qt5 REQUIRED COMPONENTS Core OpenGL Widgets)
 find_package(qt_gui_cpp REQUIRED)
 find_package(rqt_gui_cpp REQUIRED)
 
@@ -66,9 +64,10 @@ find_package(rqt_gui_cpp REQUIRED)
 set(executable_name viewer)
 set(library_name ${PROJECT_NAME})
 
-# Set QT libraries and DSR libraries
-set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
-set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
+# Set DSR, FastRTPS, and Qt libraries
+set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
+set(fastrtps_LIBRARIES fastrtps fastcdr)
+set(qt_LIBRARIES Qt5::Core Qt5::OpenGL Qt5::Widgets)
 
 # Library
 add_library(${library_name} SHARED
@@ -84,8 +83,9 @@ target_link_libraries(${library_name}
   rqt_gui_cpp::rqt_gui_cpp
   rclcpp::rclcpp
   PRIVATE
-  ${DSR_LIBRARIES}
-  ${QT_LIBRARIES}
+  ${dsr_LIBRARIES}
+  ${fastrtps_LIBRARIES}
+  ${qt_LIBRARIES}
 )
 
 # Executable node
@@ -96,8 +96,9 @@ target_include_directories(${executable_name} PUBLIC
 )
 target_link_libraries(${executable_name}
   PRIVATE
-  ${DSR_LIBRARIES}
-  ${QT_LIBRARIES}
+  ${dsr_LIBRARIES}
+  ${fastrtps_LIBRARIES}
+  ${qt_LIBRARIES}
 )
 
 # ############

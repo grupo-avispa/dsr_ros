@@ -8,20 +8,18 @@
   <license>Apache-2.0</license>
   <author email="ajtudela@gmail.com">Alberto Tudela</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>eigen3_cmake_module</buildtool_depend>
-  <build_depend>qtbase5-dev</build_depend>
 
   <depend>dsr_msgs</depend>
   <depend>dsr_util</depend>
-  <depend>eigen</depend>
   <depend>fastcdr</depend>
   <depend>fastrtps</depend>
   <depend>geometry_msgs</depend>
-  <depend>nav2_util</depend>
   <depend>nav2_msgs</depend>
+  <depend>nav2_util</depend>
   <depend>opennav_docking_msgs</depend>
   <depend>person_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
   <depend>semantic_navigation_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
@@ -29,8 +27,6 @@
   <depend>tf2_sensor_msgs</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>vision_msgs</depend>
-
-  <exec_depend>libqt5-core</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

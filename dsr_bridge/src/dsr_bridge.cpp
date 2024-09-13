@@ -20,7 +20,6 @@
 #include <string>
 
 // ROS
-#include "nav2_util/node_utils.hpp"
 #include "nav2_util/string_utils.hpp"
 
 // DSR
@@ -37,14 +36,6 @@ DSRBridge::DSRBridge()
   // Add connection signals
   QObject::connect(
     G_.get(), &DSR::DSRGraph::create_node_signal, this, &DSRBridge::node_created);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &DSRBridge::node_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &DSRBridge::edge_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &DSRBridge::edge_attr_updated);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &DSRBridge::edge_deleted);
   QObject::connect(
     G_.get(), &DSR::DSRGraph::del_node_signal_by_node, this, &DSRBridge::node_deleted);
 
@@ -66,7 +57,7 @@ DSRBridge::DSRBridge()
 void DSRBridge::get_params()
 {
   // ROS parameters
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "edge_topic",
     rclcpp::ParameterValue("edges"),
     rcl_interfaces::msg::ParameterDescriptor()
@@ -76,7 +67,7 @@ void DSRBridge::get_params()
     this->get_logger(),
     "The parameter edge_topic is set to: [%s]", edge_topic_.c_str());
 
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "node_topic",
     rclcpp::ParameterValue("nodes"),
     rcl_interfaces::msg::ParameterDescriptor()

@@ -47,12 +47,10 @@ endif()
 # # Find ament macros and libraries
 find_package(ament_cmake REQUIRED)
 find_package(dsr_msgs REQUIRED)
-find_package(eigen3_cmake_module REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets OpenGL)
+find_package(Qt5 REQUIRED COMPONENTS Core)
 find_package(rclcpp REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
@@ -61,9 +59,10 @@ find_package(tf2_geometry_msgs REQUIRED)
 # ##########
 set(library_name ${PROJECT_NAME})
 
-# Set QT libraries and DSR libraries
-set(QT_LIBRARIES Qt5::Widgets Qt5::OpenGL Qt5::Core)
-set(DSR_LIBRARIES dsr_api dsr_core dsr_gui fastcdr fastrtps)
+# Set DSR, FastRTPS, and Qt libraries
+set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
+set(fastrtps_LIBRARIES fastrtps fastcdr)
+set(qt_LIBRARIES Qt5::Core)
 
 # Set headers
 set(headers
@@ -73,6 +72,7 @@ set(headers
 
 # Set sources
 set(sources
+  #src/action_agent.cpp
   src/agent_node.cpp
   src/qt_executor.cpp
 )
@@ -90,13 +90,12 @@ target_include_directories(${library_name} PUBLIC
 target_link_libraries(${library_name}
   PUBLIC
   ${dsr_msgs_TARGETS}
-  fastrtps
-  fastcdr
+  ${dsr_LIBRARIES}
   ${geometry_msgs_TARGETS}
-  rclcpp::rclcpp
-  ${DSR_LIBRARIES}
-  ${QT_LIBRARIES}
+  ${qt_LIBRARIES}
   PRIVATE
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
   ${tf2_geometry_msgs_TARGETS}
 )
 target_sources(${library_name} PRIVATE ${qt_moc})
@@ -123,7 +122,6 @@ install(FILES test/test_dsr.json
   DESTINATION share/${PROJECT_NAME}/test
 )
 
-
 # ###########
 # Testing  ##
 # ###########
@@ -143,9 +141,8 @@ ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_libraries(dsr_util)
 ament_export_dependencies(
   dsr_msgs
-  Eigen3
   geometry_msgs
-  Qt5
+  Qt5Core
   rclcpp
   tf2_geometry_msgs
 )
