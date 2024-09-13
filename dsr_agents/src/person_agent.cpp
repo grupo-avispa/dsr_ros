@@ -58,25 +58,23 @@ PersonAgent::PersonAgent()
 void PersonAgent::get_params()
 {
   // ROS parameters
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "ros_topic",
     rclcpp::ParameterValue("detections_3d"),
     rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The ROS topic to subscribe to"));
   this->get_parameter("ros_topic", ros_topic_);
   RCLCPP_INFO(
-    this->get_logger(),
-    "The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
+    this->get_logger(), "The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
 
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "timeout",
     rclcpp::ParameterValue(30),
     rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The timeout for removing person from DSR"));
   this->get_parameter("timeout", timeout_);
   RCLCPP_INFO(
-    this->get_logger(),
-    "The parameter timeout is set to: [%d]", timeout_);
+    this->get_logger(), "The parameter timeout is set to: [%d]", timeout_);
 }
 
 void PersonAgent::person_callback(const person_msgs::msg::PersonArray::SharedPtr msg)

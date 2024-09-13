@@ -44,15 +44,6 @@ DockingAgent::DockingAgent()
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
-void DockingAgent::node_updated(std::uint64_t id, const std::string & type)
-{
-}
-
-void DockingAgent::node_attr_updated(
-  uint64_t id, const std::vector<std::string> & att_names)
-{
-}
-
 void DockingAgent::edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type)
 {
   // Check if the robot wants to abort or cancel the docking process: robot ---(abort)--> dock
@@ -62,7 +53,7 @@ void DockingAgent::edge_updated(std::uint64_t from, std::uint64_t to, const std:
     if (robot_node.has_value() && robot_node.value().name() == source_ &&
       dock_node.has_value() && dock_node.value().type() == "dock")
     {
-      RCLCPP_INFO(this->get_logger(), "Starting to docking", type.c_str());
+      RCLCPP_INFO(this->get_logger(), "Starting to docking");
       // Redock the dock node from the DSR graph
       if (G_->delete_node(dock_node.value())) {
         cancel_action();
@@ -82,20 +73,6 @@ void DockingAgent::edge_updated(std::uint64_t from, std::uint64_t to, const std:
   }
 }
 
-void DockingAgent::edge_attr_updated(
-  std::uint64_t from, std::uint64_t to,
-  const std::string & type, const std::vector<std::string> & att_names)
-{
-}
-
-void DockingAgent::node_deleted(std::uint64_t id)
-{
-}
-
-void DockingAgent::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag)
-{
-}
-
 void DockingAgent::dock_goal_response_callback(const GoalHandleDock::SharedPtr & goal_handle)
 {
   goal_handle_ = goal_handle;
@@ -112,7 +89,7 @@ void DockingAgent::dock_goal_response_callback(const GoalHandleDock::SharedPtr &
 }
 
 void DockingAgent::dock_feedback_callback(
-  GoalHandleDock::SharedPtr, const std::shared_ptr<const Dock::Feedback> feedback)
+  GoalHandleDock::SharedPtr, const std::shared_ptr<const Dock::Feedback>/*feedback*/)
 {
   // Replace the 'stopped' edge with a 'docking' edge between robot and navigation
   auto stopped_edge = G_->get_edge(source_, "navigation", "stopped");
@@ -161,7 +138,7 @@ void DockingAgent::undock_goal_response_callback(const GoalHandleUndock::SharedP
 }
 
 void DockingAgent::undock_feedback_callback(
-  GoalHandleUndock::SharedPtr, const std::shared_ptr<const Undock::Feedback> feedback)
+  GoalHandleUndock::SharedPtr, const std::shared_ptr<const Undock::Feedback>/*feedback*/)
 {
 }
 

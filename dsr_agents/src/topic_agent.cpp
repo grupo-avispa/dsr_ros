@@ -66,7 +66,7 @@ TopicAgent::TopicAgent()
 void TopicAgent::get_params()
 {
   // ROS parameters
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "ros_topic",
     rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The ROS topic to subscribe to"));
@@ -76,7 +76,7 @@ void TopicAgent::get_params()
     "The parameter ros_topic is set to: [%s]", ros_topic_.c_str());
 
   // DSR parameters
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "dsr_node_name",
     rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The name of the node in the DSR graph"));
@@ -85,7 +85,7 @@ void TopicAgent::get_params()
     this->get_logger(),
     "The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
 
-  nav2_util::declare_parameter_if_not_declared(
+  declare_parameter_if_not_declared(
     this, "dsr_parent_node_name",
     rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The name of the parent node in the DSR graph"));

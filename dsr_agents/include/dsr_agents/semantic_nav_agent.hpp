@@ -16,9 +16,6 @@
 #ifndef DSR_AGENTS__SEMANTIC_NAV_AGENT_HPP_
 #define DSR_AGENTS__SEMANTIC_NAV_AGENT_HPP_
 
-// Qt
-#include <QObject>
-
 // C++
 #include <string>
 #include <vector>

@@ -16,9 +16,6 @@
 #ifndef DSR_AGENTS__NAV_AGENT_HPP_
 #define DSR_AGENTS__NAV_AGENT_HPP_
 
-// Qt
-#include <QObject>
-
 // C++
 #include <memory>
 #include <string>

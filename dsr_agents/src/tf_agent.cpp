@@ -79,30 +79,30 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 
   for (auto trf : sorted_trf.transforms) {
     // Get the parent and child frames
-    std::string parent_frame = trf.header.frame_id;
-    std::string child_frame = trf.child_frame_id;
+    std::string new_parent_frame = trf.header.frame_id;
+    std::string new_child_frame = trf.child_frame_id;
 
     // Get the nodes
-    std::optional<DSR::Node> parent_node = G_->get_node(parent_frame);
-    std::optional<DSR::Node> child_node = G_->get_node(child_frame);
+    std::optional<DSR::Node> parent_node = G_->get_node(new_parent_frame);
+    std::optional<DSR::Node> child_node = G_->get_node(new_child_frame);
 
     // Create the parent node
     if (!parent_node.has_value()) {
-      add_node_with_edge<transform_node_type, RT_edge_type>(parent_frame, "");
+      add_node_with_edge<transform_node_type, RT_edge_type>(new_parent_frame, "");
     }
 
     // Create the child node
     if (!child_node.has_value()) {
-      add_node_with_edge<transform_node_type, RT_edge_type>(child_frame, parent_frame);
+      add_node_with_edge<transform_node_type, RT_edge_type>(new_child_frame, new_parent_frame);
     }
 
     // Update the RT attributes
-    if (auto parent_node = G_->get_node(parent_frame); parent_node.has_value()) {
-      if (auto child_node = G_->get_node(child_frame); child_node.has_value()) {
-        update_rt_attributes(parent_node.value(), child_node.value(), trf.transform);
+    if (auto new_parent_node = G_->get_node(new_parent_frame); new_parent_node.has_value()) {
+      if (auto new_child_node = G_->get_node(new_child_frame); new_child_node.has_value()) {
+        update_rt_attributes(new_parent_node.value(), new_child_node.value(), trf.transform);
         RCLCPP_DEBUG(
           this->get_logger(),
-          "Update edge [%s] -> [%s]", parent_frame.c_str(), child_frame.c_str());
+          "Update edge [%s] -> [%s]", new_parent_frame.c_str(), new_child_frame.c_str());
       }
     }
   }
