@@ -1,6 +1,12 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package dsr_rqt_plugins
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package dsr_rqt_plugin
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+X.Y.Z (DD-MM-YYYY)
+------------------
+* Update license to Apache 2.0.
+* Improve formating.
+* CMakeLists.txt use modern idioms.
 
 1.1.0 (08-03-2024)
 ------------------
