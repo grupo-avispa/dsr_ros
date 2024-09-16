@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     container:
-      image: grupoavispa/cortex:latest
+      image: grupoavispa/cortex:development-ros-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4.1.6
