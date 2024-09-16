@@ -29,7 +29,7 @@ The dsr_rqt_plugin package has been tested under [ROS2] Humble on [Ubuntu] 22.04
 #### Dependencies
 
 - [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics)
-- [Cortex](hhttps://github.com/robocomp/cortex) (DSR library)
+- [Cortex](https://github.com/grupo-avispa/cortex) (DSR library)
 - [FAST-DDS](https://github.com/eProsima/Fast-DDS) (eprosima Fast DDS)
 
 #### Building
