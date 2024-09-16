@@ -32,7 +32,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/semantic_nav_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 SemanticNavigationAgent::SemanticNavigationAgent()
 : dsr_util::AgentNode("semantic_navigation_agent")
 {
@@ -135,19 +137,15 @@ void SemanticNavigationAgent::generate_goal(uint64_t node_id, std::string room_n
       if (future.get()->goals.poses.size() > 0) {
         auto goal = future.get()->goals.poses[0];
         RCLCPP_INFO(
-          this->get_logger(), "Goal generated (%f, %f)",
-          goal.position.x, goal.position.y);
+          this->get_logger(), "Goal generated (%f, %f)", goal.position.x, goal.position.y);
         // Update the goal node in the DSR graph
         if (auto node = G_->get_node(node_id); node.has_value()) {
           G_->add_or_modify_attrib_local<goal_x_att>(
-            node.value(),
-            static_cast<float>(goal.position.x));
+            node.value(), static_cast<float>(goal.position.x));
           G_->add_or_modify_attrib_local<goal_y_att>(
-            node.value(),
-            static_cast<float>(goal.position.y));
+            node.value(), static_cast<float>(goal.position.y));
           G_->add_or_modify_attrib_local<goal_angle_att>(
-            node.value(),
-            static_cast<float>(tf2::getYaw(goal.orientation)));
+            node.value(), static_cast<float>(tf2::getYaw(goal.orientation)));
           G_->update_node(node.value());
           // Replace the 'wants_to' edge with a 'finished' edge between robot and get_random_goal
           replace_edge<finished_edge_type>(source_, "get_random_goal", "wants_to");
@@ -226,12 +224,14 @@ void SemanticNavigationAgent::get_zone(uint64_t node_id, const geometry_msgs::ms
     });
 }
 
+}  // namespace dsr_agents
+
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<SemanticNavigationAgent>();
+  auto node = std::make_shared<dsr_agents::SemanticNavigationAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

@@ -30,7 +30,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/person_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 PersonAgent::PersonAgent()
 : dsr_util::AgentNode("person_agent")
 {
@@ -207,12 +209,14 @@ void PersonAgent::remove_callback()
   RCLCPP_DEBUG(this->get_logger(), "Timer callback done...");
 }
 
+}  // namespace dsr_agents
+
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<PersonAgent>();
+  auto node = std::make_shared<dsr_agents::PersonAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

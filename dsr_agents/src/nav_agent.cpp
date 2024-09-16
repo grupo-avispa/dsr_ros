@@ -29,7 +29,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/nav_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 NavigationAgent::NavigationAgent()
 : dsr_util::AgentNode("navigation_agent")
 {
@@ -97,10 +99,7 @@ void NavigationAgent::edge_updated(std::uint64_t from, std::uint64_t to, const s
             geometry_msgs::build<geometry_msgs::msg::Point>()
             .x(goal_x.value()).y(goal_y.value()).z(0))
           .orientation(
-            tf2::toMsg(
-              tf2::Quaternion(
-                tf2::Vector3(0, 0, 1),
-                goal_angle.value()))));
+            tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), goal_angle.value()))));
         RCLCPP_INFO(
           this->get_logger(), "Navigation started to goal [%f, %f]",
           goal_x.value(), goal_y.value());
@@ -121,8 +120,7 @@ void NavigationAgent::nav_goal_response_callback(
     // Replace the 'wants_to' edge with a 'is_performing' edge between robot and move
     if (replace_edge<is_performing_edge_type>(source_, "move", "wants_to")) {
       RCLCPP_INFO(
-        this->get_logger(),
-        "Navigation goal accepted by server, waiting for result");
+        this->get_logger(), "Navigation goal accepted by server, waiting for result");
     }
   }
 }
@@ -237,25 +235,24 @@ void NavigationAgent::update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose)
   if (auto robot_node = G_->get_node(source_); robot_node.has_value()) {
     if (G_->get_priority(robot_node.value()) == 0) {
       G_->add_or_modify_attrib_local<pose_x_att>(
-        robot_node.value(),
-        static_cast<float>(pose.position.x));
+        robot_node.value(), static_cast<float>(pose.position.x));
       G_->add_or_modify_attrib_local<pose_y_att>(
-        robot_node.value(),
-        static_cast<float>(pose.position.y));
+        robot_node.value(), static_cast<float>(pose.position.y));
       G_->add_or_modify_attrib_local<pose_angle_att>(
-        robot_node.value(),
-        static_cast<float>(tf2::getYaw(pose.orientation)));
+        robot_node.value(), static_cast<float>(tf2::getYaw(pose.orientation)));
       G_->update_node(robot_node.value());
     }
   }
 }
+
+}  // namespace dsr_agents
 
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<NavigationAgent>();
+  auto node = std::make_shared<dsr_agents::NavigationAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

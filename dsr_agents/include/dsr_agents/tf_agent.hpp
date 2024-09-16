@@ -28,6 +28,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
+namespace dsr_agents
+{
+
 class TFAgent : public dsr_util::AgentNode
 {
 public:
@@ -38,5 +41,7 @@ private:
 
   void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg);
 };
+
+}  // namespace dsr_agents
 
 #endif  // DSR_AGENTS__TF_AGENT_HPP_

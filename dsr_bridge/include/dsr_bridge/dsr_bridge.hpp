@@ -36,6 +36,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
+namespace dsr_bridge
+{
+
 class DSRBridge : public dsr_util::AgentNode
 {
 public:
@@ -102,5 +105,7 @@ private:
   DSR::Attribute string_to_attribute(const std::string & att_value, int att_type);
   std::string get_type_from_attribute(const DSR::Attribute & att);
 };
+
+}  // namespace dsr_bridge
 
 #endif  // DSR_BRIDGE__DSR_BRIDGE_HPP_

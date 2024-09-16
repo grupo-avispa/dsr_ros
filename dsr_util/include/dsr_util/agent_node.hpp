@@ -132,8 +132,7 @@ protected:
       std::string child_name = reversed ? connecting_node_name : name;
       return_edge = add_edge<edge_type>(parent_name, child_name);
     } else {
-      RCLCPP_ERROR(
-        this->get_logger(), "The node [%s] couldn't be inserted", name.c_str());
+      RCLCPP_ERROR(this->get_logger(), "The node [%s] couldn't be inserted", name.c_str());
     }
     return std::make_tuple(return_node, return_edge);
   }
@@ -180,14 +179,12 @@ protected:
       } else {
         RCLCPP_ERROR(
           this->get_logger(),
-          "The edge couldn't be inserted because the child node [%s] doesn't exists",
-          to.c_str());
+          "The edge couldn't be inserted because the child node [%s] doesn't exists", to.c_str());
       }
     } else {
       RCLCPP_ERROR(
         this->get_logger(),
-        "The edge couldn't be inserted because the parent node [%s] doesn't exists",
-        from.c_str());
+        "The edge couldn't be inserted because the parent node [%s] doesn't exists", from.c_str());
     }
     return return_edge;
   }

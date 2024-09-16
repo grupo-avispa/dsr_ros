@@ -33,6 +33,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
+namespace dsr_agents
+{
+
 class NavigationAgent : public dsr_util::AgentNode
 {
 public:
@@ -62,5 +65,7 @@ private:
   void node_updated(std::uint64_t id, const std::string & type) override;
   void edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type) override;
 };
+
+}  // namespace dsr_agents
 
 #endif  // DSR_AGENTS__NAV_AGENT_HPP_

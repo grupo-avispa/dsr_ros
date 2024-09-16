@@ -12,6 +12,8 @@ A ROS 2 stack that contains agents, interfaces and RQT plugins for connecting to
  * [dsr_rqt_plugin]: RQT plugin to visualize a Deep State Representation (DSR) graph.
  * [dsr_util]: utilities to work with DSR graphs.
 
+![Cortex](./doc/cortex.jpg)
+
 **Keywords:** ROS2, DSR, RQT
 
 ### License

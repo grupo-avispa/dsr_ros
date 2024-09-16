@@ -22,7 +22,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/docking_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 DockingAgent::DockingAgent()
 : dsr_util::AgentNode("docking_agent")
 {
@@ -68,8 +70,7 @@ void DockingAgent::dock_goal_response_callback(const GoalHandleDock::SharedPtr &
     // Replace the 'wants_to' edge with a 'is_performing' edge between robot and dock
     if (replace_edge<is_performing_edge_type>(source_, "dock", "wants_to")) {
       RCLCPP_INFO(
-        this->get_logger(),
-        "Docking goal accepted by server, waiting for result");
+        this->get_logger(), "Docking goal accepted by server, waiting for result");
     }
   }
 }
@@ -216,12 +217,14 @@ void DockingAgent::start_undocking()
   }
 }
 
+}  // namespace dsr_agents
+
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<DockingAgent>();
+  auto node = std::make_shared<dsr_agents::DockingAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

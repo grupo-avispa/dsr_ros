@@ -28,7 +28,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/topic_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 TopicAgent::TopicAgent()
 : dsr_util::AgentNode("generic_agent")
 {
@@ -124,18 +126,15 @@ void TopicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage
   if (topic_type == "sensor_msgs/msg/BatteryState") {
     deserialize_and_update_attributes
     <sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>(
-      msg, dsr_node_name_,
-      dsr_parent_node_name_);
+      msg, dsr_node_name_, dsr_parent_node_name_);
   } else if (topic_type == "sensor_msgs/msg/Image") {
     deserialize_and_update_attributes
     <sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>(
-      msg, dsr_node_name_,
-      dsr_parent_node_name_);
+      msg, dsr_node_name_, dsr_parent_node_name_);
   } else if (topic_type == "sensor_msgs/msg/LaserScan") {
     deserialize_and_update_attributes
     <sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>(
-      msg, dsr_node_name_,
-      dsr_parent_node_name_);
+      msg, dsr_node_name_, dsr_parent_node_name_);
   } else {
     RCLCPP_WARN_ONCE(
       this->get_logger(),
@@ -155,8 +154,7 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
   G_->add_or_modify_attrib_local<battery_capacity_att>(node.value(), msg.capacity);
   G_->add_or_modify_attrib_local<battery_design_capacity_att>(node.value(), msg.design_capacity);
   G_->add_or_modify_attrib_local<battery_percentage_att>(
-    node.value(),
-    static_cast<float>(msg.percentage * 100.0));
+    node.value(), static_cast<float>(msg.percentage * 100.0));
   // Convert the power supply status from enum to string
   std::string status;
   switch (msg.power_supply_status) {
@@ -181,11 +179,9 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::BatteryState>(
   }
   G_->add_or_modify_attrib_local<battery_power_supply_status_att>(node.value(), status);
   G_->add_or_modify_attrib_local<battery_power_supply_health_att>(
-    node.value(),
-    static_cast<int>(msg.power_supply_health));
+    node.value(), static_cast<int>(msg.power_supply_health));
   G_->add_or_modify_attrib_local<battery_power_supply_technology_att>(
-    node.value(),
-    static_cast<int>(msg.power_supply_technology));
+    node.value(), static_cast<int>(msg.power_supply_technology));
   G_->add_or_modify_attrib_local<battery_present_att>(node.value(), msg.present);
   G_->add_or_modify_attrib_local<battery_cell_voltage_att>(node.value(), msg.cell_voltage);
   G_->add_or_modify_attrib_local<battery_cell_temperature_att>(node.value(), msg.cell_temperature);
@@ -207,8 +203,7 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::Image>(
   } else if (msg.encoding == sensor_msgs::image_encodings::TYPE_16UC1) {
     G_->add_or_modify_attrib_local<cam_depth_att>(node.value(), msg.data);
     G_->add_or_modify_attrib_local<cam_depth_height_att>(
-      node.value(),
-      static_cast<int>(msg.height));
+      node.value(), static_cast<int>(msg.height));
     G_->add_or_modify_attrib_local<cam_depth_width_att>(node.value(), static_cast<int>(msg.width));
   }
   // Print the attributes of the node
@@ -234,16 +229,17 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
   G_->add_or_modify_attrib_local<laser_dists_att>(node.value(), msg.ranges);
   // Print the attributes of the node
   RCLCPP_DEBUG(
-    this->get_logger(),
-    "Update [%s] node with attributes: ", node.value().name().c_str());
+    this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
 }
+
+}  // namespace dsr_agents
 
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<TopicAgent>();
+  auto node = std::make_shared<dsr_agents::TopicAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

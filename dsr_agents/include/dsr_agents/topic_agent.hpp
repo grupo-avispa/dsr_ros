@@ -30,6 +30,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
+namespace dsr_agents
+{
+
 class TopicAgent : public dsr_util::AgentNode
 {
 public:
@@ -49,5 +52,7 @@ private:
 
   void serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg);
 };
+
+}  // namespace dsr_agents
 
 #endif  // DSR_AGENTS__TOPIC_AGENT_HPP_

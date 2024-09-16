@@ -30,6 +30,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
+namespace dsr_agents
+{
+
 class WhisperAgent : public dsr_util::AgentNode
 {
 public:
@@ -45,5 +48,7 @@ private:
   /// Person detection callback
   void whisper_callback(const std_msgs::msg::String::SharedPtr msg);
 };
+
+}  // namespace dsr_agents
 
 #endif  // DSR_AGENTS__WHISPER_AGENT_HPP_

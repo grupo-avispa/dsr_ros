@@ -20,7 +20,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/tf_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 TFAgent::TFAgent()
 : dsr_util::AgentNode("tf_agent")
 {
@@ -108,12 +110,14 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
   }
 }
 
+}  // namespace dsr_agents
+
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<TFAgent>();
+  auto node = std::make_shared<dsr_agents::TFAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

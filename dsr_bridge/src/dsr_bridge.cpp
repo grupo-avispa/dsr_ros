@@ -26,7 +26,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_bridge/dsr_bridge.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_bridge
+{
+
 DSRBridge::DSRBridge()
 : dsr_util::AgentNode("dsr_bridge")
 {
@@ -580,12 +582,14 @@ std::string DSRBridge::get_type_from_attribute(const DSR::Attribute & att)
   return std::to_string(att.value().index());
 }
 
+}  // namespace dsr_bridge
+
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<DSRBridge>();
+  auto node = std::make_shared<dsr_bridge::DSRBridge>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

@@ -19,7 +19,9 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/whisper_agent.hpp"
 
-/* Initialize the publishers and subscribers */
+namespace dsr_agents
+{
+
 WhisperAgent::WhisperAgent()
 : dsr_util::AgentNode("whisper_agent")
 {
@@ -62,12 +64,14 @@ void WhisperAgent::whisper_callback(const std_msgs::msg::String::SharedPtr msg)
   }
 }
 
+}  // namespace dsr_agents
+
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<WhisperAgent>();
+  auto node = std::make_shared<dsr_agents::WhisperAgent>();
 
   dsr_util::QtExecutor exe;
   exe.add_node(node);

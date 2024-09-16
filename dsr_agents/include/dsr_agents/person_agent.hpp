@@ -34,6 +34,9 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
+namespace dsr_agents
+{
+
 class PersonAgent : public dsr_util::AgentNode
 {
 public:
@@ -62,5 +65,7 @@ private:
   /// Timeout callback for delete people from DSR
   void remove_callback();
 };
+
+}  // namespace dsr_agents
 
 #endif  // DSR_AGENTS__PERSON_AGENT_HPP_
