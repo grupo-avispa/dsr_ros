@@ -48,4 +48,3 @@ colcon build --symlink-install
 [dsr_msgs]: ./dsr_msgs
 [dsr_rqt_plugin]: ./dsr_rqt_plugin
 [dsr_util]: ./dsr_util
-```
