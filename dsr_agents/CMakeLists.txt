@@ -54,16 +54,13 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(opennav_docking_msgs REQUIRED)
-find_package(person_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(semantic_navigation_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(vision_msgs REQUIRED)
 
 # ##########
 # # Build ##
@@ -113,46 +110,6 @@ target_link_libraries(nav_agent
 )
 ament_target_dependencies(nav_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 
-# Person agent executable node
-add_executable(person_agent src/person_agent.cpp)
-target_include_directories(person_agent PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
-)
-target_link_libraries(person_agent
-  PUBLIC
-  ${dsr_LIBRARIES}
-  rclcpp::rclcpp
-  dsr_util::dsr_util
-  PRIVATE
-  ${fastrtps_LIBRARIES}
-  ${geometry_msgs_TARGETS}
-  ${person_msgs_TARGETS}
-  tf2::tf2
-  ${tf2_geometry_msgs_TARGETS}
-  ${vision_msgs_TARGETS}
-)
-ament_target_dependencies(person_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
-
-# Semantic navigation agent executable node
-add_executable(semantic_nav_agent src/semantic_nav_agent.cpp)
-target_include_directories(semantic_nav_agent PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
-)
-target_link_libraries(semantic_nav_agent
-  PUBLIC
-  ${dsr_LIBRARIES}
-  rclcpp::rclcpp
-  dsr_util::dsr_util
-  PRIVATE
-  ${fastrtps_LIBRARIES}
-  ${geometry_msgs_TARGETS}
-  ${semantic_navigation_msgs_TARGETS}
-  tf2::tf2
-  ${tf2_geometry_msgs_TARGETS}
-)
-
 # TF agent executable node
 add_executable(tf_agent src/tf_agent.cpp)
 target_include_directories(tf_agent PUBLIC
@@ -189,26 +146,10 @@ target_link_libraries(topic_agent
   ${sensor_msgs_TARGETS}
 )
 
-# Whisper agent executable node
-add_executable(whisper_agent src/whisper_agent.cpp)
-target_include_directories(whisper_agent PUBLIC
-  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
-)
-target_link_libraries(whisper_agent
-  PUBLIC
-  ${dsr_LIBRARIES}
-  rclcpp::rclcpp
-  dsr_util::dsr_util
-  PRIVATE
-  ${fastrtps_LIBRARIES}
-  ${std_msgs_TARGETS}
-)
-
 # ############
 # # Install ##
 # ############
-install(TARGETS topic_agent person_agent whisper_agent tf_agent nav_agent docking_agent semantic_nav_agent
+install(TARGETS docking_agent nav_agent tf_agent topic_agent
   EXPORT ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -246,16 +187,13 @@ ament_export_dependencies(
   nav2_msgs
   nav2_util
   opennav_docking_msgs
-  person_msgs
   rclcpp
   rclcpp_action
-  semantic_navigation_msgs
   sensor_msgs
   tf2
   tf2_msgs
   tf2_sensor_msgs
   tf2_geometry_msgs
-  vision_msgs
 )
 
 # Export modern CMake targets

@@ -23,6 +23,7 @@ X.X.X (XX-XX-2024)
 * Move DSR callback functions to agent_node.
 * Move action_agent to dsr_util.
 * CMakeLists.txt use modern idioms.
+* Remove agents with private code.
 
 0.7.0 (19-06-2024)
 ------------------

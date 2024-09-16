@@ -12,8 +12,6 @@ By default all nodes created with this templates will have the priority 0. This 
 Along with the template mentioned above, this package also provides the next agents that can be used to publish data in the DSR:
 * **`Docking agent:`** which allows the user to call the docking action from the DSR.
 * **`Navigation agent:`**  which allows the user to call the navigation action from the DSR.
-* **`Person agent:`** which publishes the detected people in the DSR.
-* **`Semantic goals agent:`** which allows the user to call the semantic goals action from the DSR to get random goals from a region of interest.
 * **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
 
 **Keywords:** ROS2, cortex, dsr, deep space representation
@@ -73,43 +71,6 @@ Agent that wait until a `move` node is created in the DSR and then start the nav
 * **`navigate_to_pose`**  ([nav2_msgs/action/NavigateToPose])
 
 	Action to send a navigation goal from the DSR.
-
-### person_agent
-
-Agent that publishes the detected people in the DSR.
-
-#### Subscribed Topics
-
-* **`ros_topic`**  ([vision_msgs/Detection3DArray])
-
-	The detected people in 3D format.
-
-#### Parameters
-
-* **`timeout`** (int default: 30)
-
-	The time in seconds that the agent will wait for a new message before it removes the node from the DSR.
-
-### Common parameters for all nodes
-
-* **`agent_id`** (int, default: 0)
-
-	A unique identifier for the agent.
-
-* **`dsr_input_file`** (string, default: "") (Optional)
-
-	The path to the DSR file that will be loaded.
-
-### semantic_nav_agent
-
-Agent that wait until a `get_random_goal` node is created in the DSR and then call the semantic goals action to get a random goal from a region of interest.The `get_random_goal` node must be created with an attribute called `region` that contains the name of the zone where the robot should navigate.
-
-#### Actions
-
-* **`semantic_goals`**  ([semantic_navigation_msgs/action/GenerateRandomGoals])
-
-	Action to generate a random pose from a region of interest.
-
 ### tf_agent
 
 Agent that publishes the transformations tree as RT nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system. The frame `base_link` is replaced by the `robot` frame in the DSR and the frame `map` is replaced by the `world` frame in the DSR.
@@ -127,13 +88,9 @@ Agent that publishes the transformations tree as RT nodes in the DSR. This allow
 ## Future work
 - [ ] Convert nodes to LifeCycleNodes.
 - [x] Inherit from a generic agent class.
-- [ ] Finish the action agent.
-- [ ] Replace the Detection3DArray message with a custom people message.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/
 [tf2_msgs/TFMessage]: http://docs.ros.org/api/tf2_msgs/html/msg/TFMessage.html
 [nav2_msgs/action/NavigateToPose]: hhttps://github.com/ros-planning/navigation2/blob/main/nav2_msgs/action/NavigateToPose.action
 [opennav_docking_msgs/action/DockRobot]: https://github.com/open-navigation/opennav_docking/blob/main/opennav_docking_msgs/action/DockRobot.action
-[semantic_navigation_msgs/action/GenerateRandomGoals]: https://gitlab.com/grupo-avispa/ros/semantic_navigation/-/blob/dev/semantic_navigation_msgs/srv/GenerateRandomGoals.srv
-[vision_msgs/Detection3DArray]: http://docs.ros.org/api/vision_msgs/html/msg/Detection3DArray.html
