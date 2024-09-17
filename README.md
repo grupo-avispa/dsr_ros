@@ -1,6 +1,8 @@
 # dsr_ros
 
 ![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
+![License](https://img.shields.io/github/license/grupo-avispa/dsr_ros)
+[![Build](https://github.com/grupo-avispa/dsr_ros/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/grupo-avispa/dsr_ros/actions/workflows/build.yml)
 
 ## Overview
 

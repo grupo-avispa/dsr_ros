@@ -218,20 +218,20 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
 {
   // Convert from ROS to DSR
   std::vector<float> angles(msg.ranges.size());
-  angles[0] = msg.angle_min;
-  for (uint i = 1; i < msg.ranges.size() - 1; i++) {
-    angles[i] = angles[i - 1] + msg.angle_increment;
+  if (!angles.empty()) {
+    angles[0] = msg.angle_min;
+    for (uint i = 1; i < msg.ranges.size() - 1; i++) {
+      angles[i] = angles[i - 1] + msg.angle_increment;
+    }
+    angles[msg.ranges.size() - 1] = msg.angle_max;
+
+    // Modify the attributes of the node
+    G_->add_or_modify_attrib_local<laser_angles_att>(node.value(), angles);
+    G_->add_or_modify_attrib_local<laser_dists_att>(node.value(), msg.ranges);
+    // Print the attributes of the node
+    RCLCPP_DEBUG(
+      this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
   }
-  angles[msg.ranges.size() - 1] = msg.angle_max;
-
-  // Modify the attributes of the node
-  G_->add_or_modify_attrib_local<laser_angles_att>(node.value(), angles);
-  G_->add_or_modify_attrib_local<laser_dists_att>(node.value(), msg.ranges);
-  // Print the attributes of the node
-  RCLCPP_DEBUG(
-    this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
-}
-
 }  // namespace dsr_agents
 
 int main(int argc, char ** argv)

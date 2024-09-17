@@ -47,6 +47,8 @@ endif()
 # # Find ament macros and libraries
 find_package(ament_cmake REQUIRED)
 find_package(dsr_msgs REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -86,6 +88,7 @@ add_library(${library_name} SHARED ${sources})
 target_include_directories(${library_name} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  ${Eigen3_INCLUDE_DIRS}
 )
 target_link_libraries(${library_name}
   PUBLIC
@@ -94,6 +97,7 @@ target_link_libraries(${library_name}
   ${geometry_msgs_TARGETS}
   ${qt_LIBRARIES}
   PRIVATE
+  Eigen3::Eigen
   ${fastrtps_LIBRARIES}
   rclcpp::rclcpp
   ${tf2_geometry_msgs_TARGETS}
@@ -141,6 +145,7 @@ ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_libraries(dsr_util)
 ament_export_dependencies(
   dsr_msgs
+  eigen3_cmake_module
   geometry_msgs
   Qt5Core
   rclcpp

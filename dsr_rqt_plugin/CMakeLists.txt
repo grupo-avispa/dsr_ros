@@ -50,12 +50,14 @@ set(CMAKE_AUTOMOC ON)
 # ###############################################
 # # Find ament macros and libraries
 find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core OpenGL Widgets)
 find_package(qt_gui_cpp REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(rqt_gui_cpp REQUIRED)
 
 # ##########
@@ -76,6 +78,7 @@ add_library(${library_name} SHARED
 target_include_directories(${library_name} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  ${Eigen3_INCLUDE_DIRS}
 )
 target_link_libraries(${library_name}
   PUBLIC
@@ -84,6 +87,7 @@ target_link_libraries(${library_name}
   rclcpp::rclcpp
   PRIVATE
   ${dsr_LIBRARIES}
+  Eigen3::Eigen
   ${fastrtps_LIBRARIES}
   ${qt_LIBRARIES}
 )
@@ -93,10 +97,12 @@ add_executable(${executable_name} src/dsr_rqt_plugin/viewer.cpp)
 target_include_directories(${executable_name} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  ${Eigen3_INCLUDE_DIRS}
 )
 target_link_libraries(${executable_name}
   PRIVATE
   ${dsr_LIBRARIES}
+  Eigen3::Eigen
   ${fastrtps_LIBRARIES}
   ${qt_LIBRARIES}
 )
@@ -133,8 +139,9 @@ pluginlib_export_plugin_description_file(rqt_gui "plugin.xml")
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_libraries(${library_name})
 ament_export_dependencies(
-  rclcpp
+  eigen3_cmake_module
   qt_gui_cpp
+  rclcpp
   rqt_gui_cpp
 )
 
