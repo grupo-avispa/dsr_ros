@@ -232,6 +232,7 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
     RCLCPP_DEBUG(
       this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
   }
+}
 }  // namespace dsr_agents
 
 int main(int argc, char ** argv)
