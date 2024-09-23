@@ -31,6 +31,7 @@ public:
 
   void TearDown() override
   {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     G_.reset();
   }
 
@@ -67,14 +68,14 @@ TEST_F(DSRApiExtTest, create_node_with_pose) {
     G_->create_node_with_priority<robot_node_type>("parent_node", 0, "test_source");
 
   if (auto id = G_->insert_node(parent_node); id.has_value()) {
-    auto node = G_->create_node_with_pose<robot_node_type, RT_edge_type>(
+    auto child_node = G_->create_node_with_pose<robot_node_type, RT_edge_type>(
       "test_node", "parent_node", 0, "test_source");
 
-    EXPECT_EQ(node.name(), "test_node");
-    EXPECT_EQ(node.type(), "robot");
+    EXPECT_EQ(child_node.name(), "test_node");
+    EXPECT_EQ(child_node.type(), "robot");
 
     // Check parent and level attributes, not the random position
-    auto attributes = node.attrs();
+    auto attributes = child_node.attrs();
     auto search = attributes.find("parent");
     EXPECT_TRUE(search != attributes.end());
     EXPECT_EQ(std::get<uint64_t>(search->second.value()), id.value());

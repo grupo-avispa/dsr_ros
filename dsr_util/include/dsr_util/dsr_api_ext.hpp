@@ -56,7 +56,7 @@ public:
   ~DSRGraphExt() = default;
 
   /**
-   * @brief Create a node with priority and source.
+   * @brief Create a node with priority and source attributes.
    *
    * @tparam node_type The type of the DSR node. Defined in ros_to_dsr_types.hpp.
    * @param name Name of the DSR node.
@@ -85,7 +85,7 @@ public:
   }
 
   /**
-   * @brief Create a node with the given name and the name of the parent.
+   * @brief Create a node with a position relative to the parent node.
    *
    * @tparam node_type The type of the DSR node. Defined in ros_to_dsr_types.hpp.
    * @tparam edge_type The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
@@ -124,7 +124,7 @@ public:
   }
 
   /**
-   * @brief Create a edge with a source.
+   * @brief Create a edge with a source attribute.
    *
    * @tparam edge_type The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
    * @param from Id of the parent DSR node.
