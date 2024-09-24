@@ -110,11 +110,15 @@ target_link_libraries(${executable_name}
 # ############
 # # Install ##
 # ############
-install(TARGETS ${library_name} ${executable_name}
-  EXPORT export_${PROJECT_NAME}
+install(TARGETS ${library_name}
+  EXPORT ${library_name}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(TARGETS ${executable_name}
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
@@ -146,6 +150,6 @@ ament_export_dependencies(
 )
 
 # Export modern CMake targets
-ament_export_targets(export_${PROJECT_NAME})
+ament_export_targets(${library_name})
 
 ament_package()
