@@ -170,7 +170,7 @@ public:
     return std::string();
   }
 
-private:
+protected:
   /**
    * @brief Get the position by level in graph object.
    *

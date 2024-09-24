@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+// LCOV_EXCL_START
+
 /**
  * sensor_msgs::msg::BatteryState
  */
@@ -124,5 +126,7 @@ REGISTER_TYPE(track_id, std::string, false)
 // BBDD types
 REGISTER_TYPE(bbdd_agent, std::string, false)
 REGISTER_TYPE(changes, std::string, false)
+
+// LCOV_EXCL_STOP
 
 #endif  // DSR_UTIL__ROS_TO_DSR_TYPES_HPP_
