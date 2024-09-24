@@ -65,7 +65,7 @@ public:
    * comes in, execute it, and keep blocking.
    */
   RCLCPP_PUBLIC
-  void spin();
+  void spin() {}
 
   /**
    * @brief Start the executor.
@@ -73,7 +73,7 @@ public:
   RCLCPP_PUBLIC
   void start();
 
-private:
+protected:
   /**
    * @brief Call spin_some() from the QT thread.
    *

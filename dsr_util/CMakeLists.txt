@@ -95,11 +95,11 @@ target_link_libraries(${library_name}
   ${dsr_msgs_TARGETS}
   ${dsr_LIBRARIES}
   ${geometry_msgs_TARGETS}
+  rclcpp::rclcpp
   ${qt_LIBRARIES}
   PRIVATE
   Eigen3::Eigen
   ${fastrtps_LIBRARIES}
-  rclcpp::rclcpp
   ${tf2_geometry_msgs_TARGETS}
 )
 target_sources(${library_name} PRIVATE ${qt_moc})

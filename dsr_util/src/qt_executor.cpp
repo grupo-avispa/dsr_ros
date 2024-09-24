@@ -25,16 +25,14 @@ QtExecutor::QtExecutor(const rclcpp::ExecutorOptions & args)
 {
   QObject::connect(
     this, &QtExecutor::on_new_work, this, &QtExecutor::spin_work,
-    Qt::ConnectionType::BlockingQueuedConnection);
+    Qt::ConnectionType::QueuedConnection);
 }
 
 QtExecutor::~QtExecutor()
 {
-  thread_.join();
-}
-
-void QtExecutor::spin()
-{
+  if (thread_.joinable()) {
+    thread_.join();
+  }
 }
 
 void QtExecutor::start()
@@ -46,7 +44,7 @@ void QtExecutor::start()
         if (rclcpp::ok(this->context_)) {
           // If we are shutting down,
           // we must not call on_new_work because the QT Event loop is closed.
-          on_new_work();
+          emit on_new_work();
         }
       }
       QMetaObject::invokeMethod(

@@ -5,3 +5,10 @@ target_link_libraries(test_dsr_api_ext
   ${library_name}
   ament_index_cpp::ament_index_cpp
 )
+
+# Test for qt executor
+ament_add_gtest(test_qt_executor test_qt_executor.cpp)
+target_link_libraries(test_qt_executor
+  ${fastrtps_LIBRARIES}
+  ${library_name}
+)
