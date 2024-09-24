@@ -14,52 +14,9 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include "dsr_util/dsr_api_ext.hpp"
+#include "test_dsr_setup.hpp"
 
-class DSRGraphExtFixture : public dsr_util::DSRGraphExt
-{
-public:
-  DSRGraphExtFixture(std::string name, uint32_t agent_identifier, std::string input_file)
-  : dsr_util::DSRGraphExt(name, agent_identifier, input_file)
-  {
-  }
-  ~DSRGraphExtFixture() = default;
-
-  std::tuple<float, float> get_position_by_level_in_graph(const DSR::Node & parent)
-  {
-    return dsr_util::DSRGraphExt::get_position_by_level_in_graph(parent);
-  }
-
-  std::tuple<float, float> get_random_position_to_draw_in_graph()
-  {
-    return dsr_util::DSRGraphExt::get_random_position_to_draw_in_graph();
-  }
-};
-
-class DSRApiExtTest : public ::testing::Test
-{
-public:
-  DSRApiExtTest() = default;
-  ~DSRApiExtTest() = default;
-
-  void SetUp() override
-  {
-    auto pkg = ament_index_cpp::get_package_share_directory("dsr_util");
-    G_ = std::make_shared<DSRGraphExtFixture>("test", 2, pkg + "/test/test_dsr.json");
-  }
-
-  void TearDown() override
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    G_.reset();
-  }
-
-protected:
-  std::shared_ptr<DSRGraphExtFixture> G_;
-};
-
-TEST_F(DSRApiExtTest, createNodeWithPriority) {
+TEST_F(DsrUtilTest, apiExtCreateNodeWithPriority) {
   auto node = G_->create_node_with_priority<robot_node_type>("test_node", 5, "test_source");
 
   EXPECT_EQ(node.name(), "test_node");
@@ -83,7 +40,7 @@ TEST_F(DSRApiExtTest, createNodeWithPriority) {
   EXPECT_EQ(G_->get_source(node), "test_source");
 }
 
-TEST_F(DSRApiExtTest, createNodeWithPose) {
+TEST_F(DsrUtilTest, apiExtCreateNodeWithPose) {
   auto parent_node =
     G_->create_node_with_priority<robot_node_type>("parent_node", 0, "test_source");
 
@@ -114,7 +71,7 @@ TEST_F(DSRApiExtTest, createNodeWithPose) {
   }
 }
 
-TEST_F(DSRApiExtTest, createNodeWithPoseNotRT) {
+TEST_F(DsrUtilTest, apiExtCreateNodeWithPoseNotRT) {
   auto parent_node =
     G_->create_node_with_priority<robot_node_type>("parent_node", 0, "test_source");
 
@@ -145,7 +102,7 @@ TEST_F(DSRApiExtTest, createNodeWithPoseNotRT) {
   }
 }
 
-TEST_F(DSRApiExtTest, createNodeWithPoseNotRelative) {
+TEST_F(DsrUtilTest, apiExtCreateNodeWithPoseNotRelative) {
   auto child_node = G_->create_node_with_pose<robot_node_type, RT_edge_type>(
     "test_node", "parent_node", 0, "test_source");
 
@@ -171,7 +128,7 @@ TEST_F(DSRApiExtTest, createNodeWithPoseNotRelative) {
   EXPECT_NE(std::get<float>(search->second.value()), 0);
 }
 
-TEST_F(DSRApiExtTest, createEdgeWithSource) {
+TEST_F(DsrUtilTest, apiExtCreateEdgeWithSource) {
   auto parent_node =
     G_->create_node_with_priority<robot_node_type>("parent_node", 6, "test_source");
   auto child_node =
@@ -189,7 +146,7 @@ TEST_F(DSRApiExtTest, createEdgeWithSource) {
   EXPECT_EQ(std::get<std::string>(search->second.value()), "test_source");
 }
 
-TEST_F(DSRApiExtTest, getPriority) {
+TEST_F(DsrUtilTest, apiExtGetPriority) {
   auto node = G_->create_node_with_priority<robot_node_type>("test_node", 5, "test_source");
   EXPECT_EQ(G_->get_priority(node), 5);
 
@@ -197,7 +154,7 @@ TEST_F(DSRApiExtTest, getPriority) {
   EXPECT_EQ(G_->get_priority(node2), std::numeric_limits<int>::quiet_NaN());
 }
 
-TEST_F(DSRApiExtTest, get_source) {
+TEST_F(DsrUtilTest, apiExtGet_source) {
   auto node = G_->create_node_with_priority<robot_node_type>("test_node", 5, "test_source");
   EXPECT_EQ(G_->get_source(node), "test_source");
 
@@ -205,7 +162,7 @@ TEST_F(DSRApiExtTest, get_source) {
   EXPECT_EQ(G_->get_source(node2), std::string());
 }
 
-TEST_F(DSRApiExtTest, getPositionByLevelInGraph) {
+TEST_F(DsrUtilTest, apiExtGetPositionByLevelInGraph) {
   // Insert a parent and a child node in the graph
   auto parent_node =
     G_->create_node_with_priority<robot_node_type>("parent_node", 0, "test_source");
