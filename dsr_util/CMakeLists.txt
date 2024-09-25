@@ -74,7 +74,7 @@ set(headers
 
 # Set sources
 set(sources
-  #src/action_agent.cpp
+  src/action_agent.cpp
   src/agent_node.cpp
   src/qt_executor.cpp
 )

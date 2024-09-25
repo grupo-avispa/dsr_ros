@@ -40,15 +40,20 @@ namespace dsr_util
  * for the result. The agent also listens to 'abort' and 'cancel' edges to cancel the action.
  *
  * @tparam ActionT The type of the ROS 2 action.
+ * @tparam EdgeT The type of the DSR edge.
  */
-template<typename ActionT>
+template<class ActionT, typename EdgeT>
 class ActionAgent : public dsr_util::AgentNode
 {
 public:
   /**
    * @brief Construct a new Action Agent object.
+   *
+   * @param ros_node_name The name of the ROS 2 node.
+   * @param ros_action_name The name of the ROS 2 action.
+   * @param dsr_action_name The name of the DSR action.
    */
-  ActionAgent();
+  ActionAgent(std::string ros_node_name, std::string ros_action_name, std::string dsr_action_name);
 
 private:
   using GoalHandleActionT = rclcpp_action::ClientGoalHandle<ActionT>;
@@ -59,38 +64,71 @@ private:
   void get_params();
 
   /**
-   * @brief Callback that is called when the action server is available.
-   *
-   * @param goal_handle The goal handle of the action server.
+   * @brief Create instance of an action client
+   * @param ros_action_name Action name to create client for
    */
-  void goal_response_callback(const GoalHandleActionT::SharedPtr & goal_handle);
+  void createActionClient(const std::string & ros_action_name);
 
   /**
-   * @brief Callback that is called when the action server is unavailable.
-   *
-   * @param feedback The feedback of the action server.
-   */
-  void feedback_callback(
-    GoalHandleActionT::SharedPtr, const std::shared_ptr<const ActionT::Feedback> feedback);
+ * @brief Function to send new goal to action server
+ */
+  void send_new_goal();
 
   /**
-   * @brief Callback that is called when the action server is unavailable.
-   *
-   * @param result The result of the action server.
+   * @brief Cancel the action server goal.
    */
-  void result_callback(const GoalHandleActionT::WrappedResult & result);
+  void cancel_action();
+
+  /**
+   * @brief Update the DSR graph when the action server sends a response.
+   */
+  void update_dsr_when_response();
+
+  /**
+   * @brief Update the DSR graph when the action server sends a feedback.
+   */
+  void update_dsr_when_feedback();
+
+  /**
+   * @brief Update the DSR graph when the action server sends a result.
+   */
+  void update_dsr_when_result();
 
   // Inherited from AgentNode
   void edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type) override;
 
-  // DSR node name
-  std::string dsr_node_name_;
+  // DSR action name
+  std::string dsr_action_name_;
+
+  // ROS action name
+  std::string ros_action_name_;
 
   // ROS 2 action client
   rclcpp_action::Client<ActionT>::SharedPtr action_client_;
 
-  // ROS 2 goal handle
+  // All ROS2 actions have a goal and a result
+  ActionT::Goal goal_;
+  bool goal_result_available_{false};
   std::shared_ptr<GoalHandleActionT> goal_handle_;
+  GoalHandleActionT::WrappedResult result_;
+
+  /// To handle feedback from action server
+  std::shared_ptr<const typename ActionT::Feedback> feedback_;
+
+  // The node that will be used for any ROS operations
+  rclcpp::CallbackGroup::SharedPtr callback_group_;
+  rclcpp::executors::SingleThreadedExecutor callback_group_executor_;
+
+  // The timeout value while waiting for response from a server when a
+  // new action goal is sent or canceled
+  std::chrono::milliseconds server_timeout_;
+
+  // The timeout value for waiting for a service to response
+  std::chrono::milliseconds wait_for_service_timeout_;
+
+  // To track the action server acknowledgement when a new goal is sent
+  std::shared_ptr<std::shared_future<std::shared_ptr<GoalHandleActionT>>> future_goal_handle_;
+  rclcpp::Time time_goal_sent_;
 };
 
 }  // namespace dsr_util
