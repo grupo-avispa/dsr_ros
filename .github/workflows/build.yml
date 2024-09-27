@@ -9,11 +9,12 @@ on:
       - main
   pull_request:
 
+env:
+  CORTEX_PATH: ${{ github.workspace }}/cortex
+
 jobs:
   build:
     runs-on: ubuntu-22.04
-    container:
-      image: grupoavispa/cortex:development-ros-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4.1.6
@@ -21,6 +22,12 @@ jobs:
         uses: ros-tooling/setup-ros@0.7.5
         with:
           required-ros-distributions: humble
+      - name: Install Cortex
+        run: |
+          mkdir $CORTEX_PATH && cd $CORTEX_PATH
+          curl -o installation.sh https://raw.githubusercontent.com/grupo-avispa/cortex/development/installation.sh
+          chmod +x installation.sh
+          ./installation.sh
       - name: Install dependencies
         uses: ros-tooling/action-ros-ci@0.3.13
         with:
