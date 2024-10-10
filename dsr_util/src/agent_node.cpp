@@ -21,14 +21,31 @@
 namespace dsr_util
 {
 
-AgentNode::AgentNode(std::string ros_node_name)
-: rclcpp::Node(ros_node_name)
+AgentNode::AgentNode(std::string ros_node_name, const rclcpp::NodeOptions & options)
+: rclcpp_lifecycle::LifecycleNode(ros_node_name, "", options)
+{
+  // Register types
+  qRegisterMetaType<uint64_t>("uint64_t");
+  qRegisterMetaType<std::string>("std::string");
+  qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
+  qRegisterMetaType<DSR::Node>("Node");
+  qRegisterMetaType<DSR::Edge>("Edge");
+  qRegisterMetaType<DSR::SignalInfo>("DSR::SignalInfo");
+}
+
+CallbackReturn AgentNode::on_configure(const rclcpp_lifecycle::State & state)
 {
   // Get ROS parameters
   get_common_params();
 
   // Create graph
-  G_ = std::make_shared<dsr_util::DSRGraphExt>(ros_node_name, agent_id_, dsr_input_file_);
+  try {
+    G_ = std::make_shared<dsr_util::DSRGraphExt>(agent_name_, agent_id_, dsr_input_file_);
+  } catch (const DSR::DSRException & e) {
+    RCLCPP_ERROR(this->get_logger(), e.what());
+    on_cleanup(state);
+    return CallbackReturn::FAILURE;
+  }
 
   // Get RT API
   rt_ = G_->get_rt_api();
@@ -37,14 +54,6 @@ AgentNode::AgentNode(std::string ros_node_name)
   save_dsr_service_ = this->create_service<dsr_msgs::srv::SaveDSR>(
     "save_dsr",
     std::bind(&AgentNode::save_dsr, this, std::placeholders::_1, std::placeholders::_2));
-
-  // Register types
-  qRegisterMetaType<uint64_t>("uint64_t");
-  qRegisterMetaType<std::string>("std::string");
-  qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
-  qRegisterMetaType<DSR::Node>("Node");
-  qRegisterMetaType<DSR::Edge>("Edge");
-  qRegisterMetaType<DSR::SignalInfo>("DSR::SignalInfo");
 
   // Add connection signals
   QObject::connect(
@@ -59,17 +68,61 @@ AgentNode::AgentNode(std::string ros_node_name)
     G_.get(), &DSR::DSRGraph::del_edge_signal, this, &AgentNode::edge_deleted);
   QObject::connect(
     G_.get(), &DSR::DSRGraph::del_node_signal, this, &AgentNode::node_deleted);
+
+  RCLCPP_INFO(this->get_logger(), "Configured agent node");
+  return CallbackReturn::SUCCESS;
 }
 
-AgentNode::~AgentNode()
+CallbackReturn AgentNode::on_activate(const rclcpp_lifecycle::State & state)
 {
-  G_.reset();
+  LifecycleNode::on_activate(state);
+  RCLCPP_INFO(this->get_logger(), "Activating the node...");
+  return CallbackReturn::SUCCESS;
 }
 
-/* Initialize ROS parameters */
+CallbackReturn AgentNode::on_deactivate(const rclcpp_lifecycle::State & state)
+{
+  LifecycleNode::on_deactivate(state);
+  RCLCPP_INFO(this->get_logger(), "Deactivating the node...");
+  return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn AgentNode::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
+{
+  RCLCPP_INFO(this->get_logger(), "Cleaning the node...");
+
+  // Release the shared pointers
+  G_.reset();
+  rt_.reset();
+  save_dsr_service_.reset();
+
+  return CallbackReturn::SUCCESS;
+}
+
+CallbackReturn AgentNode::on_shutdown(const rclcpp_lifecycle::State & state)
+{
+  RCLCPP_INFO(this->get_logger(), "Shutdown the node from state %s.", state.label().c_str());
+
+  // Release the shared pointers
+  G_.reset();
+  rt_.reset();
+  save_dsr_service_.reset();
+
+  return CallbackReturn::SUCCESS;
+}
+
 void AgentNode::get_common_params()
 {
   // Agent parameters
+  declare_parameter_if_not_declared(
+    this, "agent_name", rclcpp::ParameterValue(""),
+    rcl_interfaces::msg::ParameterDescriptor()
+    .set__description("The name of the agent"));
+  this->get_parameter("agent_name", agent_name_);
+  RCLCPP_INFO(
+    this->get_logger(),
+    "The parameter agent_name is set to: [%s]", agent_name_.c_str());
+
   declare_parameter_if_not_declared(
     this, "agent_id", rclcpp::ParameterValue(0),
     rcl_interfaces::msg::ParameterDescriptor()

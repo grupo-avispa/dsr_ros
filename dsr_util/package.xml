@@ -17,6 +17,7 @@
   <depend>fastrtps</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
   <depend>tf2_geometry_msgs</depend>
 
   <exec_depend>libqt5-core</exec_depend>

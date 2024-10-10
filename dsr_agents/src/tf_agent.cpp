@@ -120,7 +120,7 @@ int main(int argc, char ** argv)
   auto node = std::make_shared<dsr_agents::TFAgent>();
 
   dsr_util::QtExecutor exe;
-  exe.add_node(node);
+  exe.add_node(node->get_node_base_interface());
   exe.start();
 
   auto res = app.exec();

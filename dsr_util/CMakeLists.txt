@@ -54,6 +54,7 @@ find_package(fastcdr REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
 # ##########
@@ -96,6 +97,7 @@ target_link_libraries(${library_name}
   ${dsr_LIBRARIES}
   ${geometry_msgs_TARGETS}
   rclcpp::rclcpp
+  rclcpp_lifecycle::rclcpp_lifecycle
   ${qt_LIBRARIES}
   PRIVATE
   Eigen3::Eigen
@@ -149,6 +151,7 @@ ament_export_dependencies(
   geometry_msgs
   Qt5Core
   rclcpp
+  rclcpp_lifecycle
   tf2_geometry_msgs
 )
 

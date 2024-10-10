@@ -56,6 +56,7 @@ find_package(nav2_util REQUIRED)
 find_package(opennav_docking_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_msgs REQUIRED)
@@ -70,7 +71,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 
-# Docking agent executable node
+# Docking agent library node
 add_executable(docking_agent src/docking_agent.cpp)
 target_include_directories(docking_agent PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
@@ -143,6 +144,7 @@ target_link_libraries(topic_agent
   dsr_util::dsr_util
   PRIVATE
   ${fastrtps_LIBRARIES}
+  rclcpp_lifecycle::rclcpp_lifecycle
   ${sensor_msgs_TARGETS}
 )
 
@@ -189,6 +191,7 @@ ament_export_dependencies(
   opennav_docking_msgs
   rclcpp
   rclcpp_action
+  rclcpp_lifecycle
   sensor_msgs
   tf2
   tf2_msgs

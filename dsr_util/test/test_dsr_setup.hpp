@@ -54,17 +54,22 @@ public:
   void SetUp() override
   {
     auto pkg = ament_index_cpp::get_package_share_directory("dsr_util");
-    G_ = std::make_shared<DSRGraphExtFixture>("test", 2, pkg + "/test/test_dsr.json");
+    test_file_ = pkg + "/test/test_dsr.json";
+    G_ = std::make_shared<DSRGraphExtFixture>("test", 2, test_file_);
+    rt_ = G_->get_rt_api();
   }
 
   void TearDown() override
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     G_.reset();
+    rt_.reset();
   }
 
 protected:
   std::shared_ptr<DSRGraphExtFixture> G_;
+  std::unique_ptr<DSR::RT_API> rt_;
+  std::string test_file_;
 };
 
 #endif  // TEST_DSR_SETUP_HPP_

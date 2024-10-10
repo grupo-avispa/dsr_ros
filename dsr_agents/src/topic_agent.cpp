@@ -23,6 +23,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 // DSR
 #include "dsr_util/qt_executor.hpp"
@@ -41,7 +42,7 @@ TopicAgent::TopicAgent()
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Subscriber to the topic with a generic subscription
-  auto data = rclcpp::Node::get_topic_names_and_types();
+  auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
   for (auto type : data[ros_topic_]) {
     generic_sub_ = create_generic_subscription(
       ros_topic_, type, rclcpp::QoS(rclcpp::SystemDefaultsQoS()),
@@ -116,7 +117,7 @@ void TopicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage
 {
   // In order to deserialize the message we have to manually create a ROS2
   // message in which we want to convert the serialized data.
-  auto data = rclcpp::Node::get_topic_names_and_types();
+  auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
   const std::string topic_type = data[ros_topic_][0];
   RCLCPP_INFO_ONCE(
     this->get_logger(), "Subscribed to topic [%s] of type [%s]",
@@ -243,7 +244,7 @@ int main(int argc, char ** argv)
   auto node = std::make_shared<dsr_agents::TopicAgent>();
 
   dsr_util::QtExecutor exe;
-  exe.add_node(node);
+  exe.add_node(node->get_node_base_interface());
   exe.start();
 
   auto res = app.exec();

@@ -30,22 +30,24 @@
 // ROS
 #include "geometry_msgs/msg/transform.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 // DSR
 #include "dsr/api/dsr_api.h"
-
 #include "dsr_msgs/srv/save_dsr.hpp"
 #include "dsr_util/dsr_api_ext.hpp"
 
 namespace dsr_util
 {
 
+using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+
 /**
  * @class dsr_util::AgentNode
  * @brief Base class to connect the DSR graph with ROS 2. It contains common methods and attributes
  * to send data from ROS 2 to the DSR graph and vice versa. All agents must inherit from this class.
  */
-class AgentNode : public QObject, public rclcpp::Node
+class AgentNode : public QObject, public rclcpp_lifecycle::LifecycleNode
 {
   Q_OBJECT
 
@@ -54,14 +56,56 @@ public:
    * @brief Construct a new Agent Node object.
    *
    * @param ros_node_name Name of the ROS node and the DSR agent.
+   * @param options Node options
    */
-  explicit AgentNode(std::string ros_node_name);
+  explicit AgentNode(
+    std::string ros_node_name, const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+
+  /**
+   * @brief Configure the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Activate the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Deactivate the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Cleanup the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Shutdown the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
   /**
    * @brief Destroy the Agent Node object.
    *
    */
-  virtual ~AgentNode();
+  virtual ~AgentNode() = default;
 
 protected:
   /**
@@ -88,8 +132,7 @@ protected:
         "Inserted node [%s] successfully of type [%s]", name.c_str(), new_node.type().c_str());
     } else {
       RCLCPP_ERROR(
-        this->get_logger(),
-        "The node [%s] couldn't be inserted", name.c_str());
+        this->get_logger(), "The node [%s] couldn't be inserted", name.c_str());
     }
     return return_node;
   }
@@ -165,15 +208,13 @@ protected:
           RCLCPP_INFO(
             this->get_logger(),
             "Inserted edge [%s->%s] successfully of type [%s]",
-            parent_node.value().name().c_str(),
-            child_node.value().name().c_str(),
+            parent_node.value().name().c_str(), child_node.value().name().c_str(),
             new_edge.type().c_str());
         } else {
           RCLCPP_ERROR(
             this->get_logger(),
             "The edge [%s->%s] of type [%s] couldn't be inserted",
-            parent_node.value().name().c_str(),
-            child_node.value().name().c_str(),
+            parent_node.value().name().c_str(), child_node.value().name().c_str(),
             new_edge.type().c_str());
         }
       } else {
@@ -215,15 +256,13 @@ protected:
         RCLCPP_INFO(
           this->get_logger(),
           "Inserted edge [%s->%s] successfully of type [%s]",
-          parent_node.value().name().c_str(),
-          child_node.value().name().c_str(),
+          parent_node.value().name().c_str(), child_node.value().name().c_str(),
           new_edge.type().c_str());
       } else {
         RCLCPP_ERROR(
           this->get_logger(),
           "The edge [%s->%s] of type [%s] couldn't be inserted",
-          parent_node.value().name().c_str(),
-          child_node.value().name().c_str(),
+          parent_node.value().name().c_str(), child_node.value().name().c_str(),
           new_edge.type().c_str());
       }
     }
@@ -241,12 +280,13 @@ protected:
   bool delete_node(uint64_t id)
   {
     // Check if the node exists
+    bool success = false;
     if (auto node = G_->get_node(id); node.has_value()) {
       // Delete the node
       if (G_->delete_node(id)) {
         RCLCPP_INFO(
           this->get_logger(), "Deleted node [%s] successfully", node.value().name().c_str());
-        return true;
+        success = true;
       } else {
         RCLCPP_ERROR(
           this->get_logger(), "The node [%s] couldn't be deleted", node.value().name().c_str());
@@ -255,7 +295,7 @@ protected:
       RCLCPP_WARN(
         this->get_logger(), "The node [%lu] couldn't be deleted because it doesn't exists", id);
     }
-    return false;
+    return success;
   }
 
   /**
@@ -282,7 +322,7 @@ protected:
    */
   bool delete_edge(uint64_t from, uint64_t to, std::string edge_type)
   {
-    // Check if the parent and child nodes exist and if the edge existsd
+    // Check if the parent and child nodes exist and if the edge exists
     auto parent_node = G_->get_node(from);
     auto child_node = G_->get_node(to);
     if (parent_node.has_value() && child_node.has_value()) {
@@ -292,16 +332,14 @@ protected:
           RCLCPP_INFO(
             this->get_logger(),
             "Deleted edge [%s->%s] successfully of type [%s]",
-            parent_node.value().name().c_str(),
-            child_node.value().name().c_str(),
+            parent_node.value().name().c_str(), child_node.value().name().c_str(),
             edge_type.c_str());
           return true;
         } else {
           RCLCPP_ERROR(
             this->get_logger(),
             "The edge [%s->%s] of type [%s] couldn't be deleted",
-            parent_node.value().name().c_str(),
-            child_node.value().name().c_str(),
+            parent_node.value().name().c_str(), child_node.value().name().c_str(),
             edge_type.c_str());
         }
       } else {
@@ -373,26 +411,22 @@ protected:
               RCLCPP_INFO(
                 this->get_logger(),
                 "Replaced edge [%s->%s] of type [%s] with type [%s]",
-                parent_node.value().name().c_str(),
-                child_node.value().name().c_str(),
-                old_edge.c_str(),
-                new_edge.type().c_str());
+                parent_node.value().name().c_str(), child_node.value().name().c_str(),
+                old_edge.c_str(), new_edge.type().c_str());
               return true;
             }
           } else {
             RCLCPP_ERROR(
               this->get_logger(),
               "The edge [%s->%s] of type [%s] couldn't be deleted",
-              parent_node.value().name().c_str(),
-              child_node.value().name().c_str(),
+              parent_node.value().name().c_str(), child_node.value().name().c_str(),
               old_edge.c_str());
           }
         } else {
           RCLCPP_WARN(
             this->get_logger(),
             "The edge [%lu->%lu] of type [%s] couldn't be deleted "
-            "because it doesn't exists",
-            from, to, old_edge.c_str());
+            "because it doesn't exists", from, to, old_edge.c_str());
         }
       } else {
         RCLCPP_WARN(
@@ -478,12 +512,12 @@ protected:
     }
   }
 
-private:
   /**
    * @brief Initialize ROS parameters.
    */
   void get_common_params();
 
+private:
   /**
    * @brief Save the DSR graph into a file.
    *
@@ -554,6 +588,9 @@ private:
 
   // Id of the DSR agent.
   int agent_id_;
+
+  // Name of the agent.
+  std::string agent_name_;
 
   // Name of the input file to load the DSR graph from.
   std::string dsr_input_file_;
