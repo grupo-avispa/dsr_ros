@@ -167,12 +167,13 @@ TEST_F(DsrUtilTest, apiExtGetPositionByLevelInGraph) {
   auto parent_node =
     G_->create_node_with_priority<robot_node_type>("parent_node", 0, "test_source");
 
-  if (auto id = G_->insert_node(parent_node); id.has_value()) {
+  if (auto p_id = G_->insert_node(parent_node); p_id.has_value()) {
     auto first_child_node =
       G_->create_node_with_priority<robot_node_type>("first_child_node", 8, "test_source");
-    if (auto id2 = G_->insert_node(first_child_node); id2.has_value()) {
-      // Create a RT edge between the parent and the child and insert it in the graph
-      auto edge = G_->create_edge_with_source<RT_edge_type>(id.value(), id2.value(), "test_source");
+    if (auto c_id = G_->insert_node(first_child_node); c_id.has_value()) {
+      // Create an edge between the parent and the child and insert it in the graph
+      auto edge = G_->create_edge_with_source<is_edge_type>(
+        p_id.value(), c_id.value(), "test_source");
       if (G_->insert_or_assign_edge(edge)) {
         // Get the position of the child node in the graph
         const auto &[pos_x, pos_y] = G_->get_position_by_level_in_graph(parent_node);
@@ -180,6 +181,39 @@ TEST_F(DsrUtilTest, apiExtGetPositionByLevelInGraph) {
         float maxy = G_->get_attrib_by_name<pos_y_att>(parent_node).value();
         EXPECT_NE(pos_x, maxx - 200);
         EXPECT_NE(pos_y, maxy - 80);
+      }
+    }
+  }
+}
+
+TEST_F(DsrUtilTest, apiExtGetPositionByLevelInGraphRT) {
+  // Insert a parent and a child node in the graph
+  auto parent_node =
+    G_->create_node_with_priority<robot_node_type>("parent_node", 0, "test_source");
+
+  if (auto p_id = G_->insert_node(parent_node); p_id.has_value()) {
+    auto first_child_node =
+      G_->create_node_with_priority<robot_node_type>("first_child_node", 8, "test_source");
+    auto second_child_node =
+      G_->create_node_with_priority<robot_node_type>("second_child_node", 5, "test_source");
+
+    if (auto c1_id = G_->insert_node(first_child_node); c1_id.has_value()) {
+      if (auto c2_id = G_->insert_node(second_child_node); c2_id.has_value()) {
+        // Create a RT edge between the parent and the child and insert it in the graph
+        auto edge = G_->create_edge_with_source<RT_edge_type>(
+          p_id.value(), c1_id.value(), "test_source");
+
+        auto edge2 = G_->create_edge_with_source<RT_edge_type>(
+          c1_id.value(), c2_id.value(), "test_source");
+
+        if (G_->insert_or_assign_edge(edge) && G_->insert_or_assign_edge(edge2)) {
+          // Get the position of the child node in the graph
+          const auto &[pos_x, pos_y] = G_->get_position_by_level_in_graph(parent_node);
+          float maxx = G_->get_attrib_by_name<pos_x_att>(parent_node).value() - 300;
+          float maxy = G_->get_attrib_by_name<pos_y_att>(parent_node).value();
+          EXPECT_NE(pos_x, maxx - 200);
+          EXPECT_NE(pos_y, maxy - 80);
+        }
       }
     }
   }

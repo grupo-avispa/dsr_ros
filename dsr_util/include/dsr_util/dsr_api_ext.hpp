@@ -179,7 +179,13 @@ protected:
    */
   std::tuple<float, float> get_position_by_level_in_graph(const DSR::Node & parent)
   {
-    auto children = get_node_edges_by_type(parent, "RT");
+    std::vector<DSR::Edge> children;
+    for (const auto & child : get_edges_by_type("RT")) {
+      auto from = get_node(child.from());
+      if (from.value().id() == parent.id()) {
+        children.push_back(child);
+      }
+    }
     std::vector<float> x_values;
     for (const auto & child : children) {
       x_values.push_back(get_attrib_by_name<pos_x_att>(get_node(child.to()).value()).value());
