@@ -17,6 +17,8 @@
 #include <pluginlib/class_list_macros.hpp>
 #include "dsr_rqt_plugin/dsr_rqt_plugin.hpp"
 
+// LCOV_EXCL_START
+
 namespace dsr_rqt_plugin
 {
 
@@ -71,3 +73,5 @@ void DSRView::restoreSettings(
 }  // namespace dsr_rqt_plugin
 
 PLUGINLIB_EXPORT_CLASS(dsr_rqt_plugin::DSRView, rqt_gui_cpp::Plugin)
+
+// LCOV_EXCL_STOP

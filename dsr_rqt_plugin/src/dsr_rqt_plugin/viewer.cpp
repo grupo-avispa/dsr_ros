@@ -26,6 +26,8 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr/gui/dsr_gui.h"
 
+// LCOV_EXCL_START
+
 int main(int argc, char ** argv)
 {
   QApplication app(argc, argv);
@@ -43,3 +45,5 @@ int main(int argc, char ** argv)
   app.setQuitOnLastWindowClosed(true);
   return app.exec();
 }
+
+// LCOV_EXCL_STOP

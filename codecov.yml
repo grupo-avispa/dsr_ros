@@ -3,6 +3,7 @@ fixes:
   - "install/::"
 
 ignore:
+  - "*/dsr_rqt_plugin/**/*" # ignore rqt plugin
   - "*/**/test/*"  # ignore package test directories
   - "*/test/**/*" # ignore package  test directories
   - "**/test_*.*" # ignore files starting with test_

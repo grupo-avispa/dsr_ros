@@ -30,6 +30,8 @@
 #include "dsr/api/dsr_api.h"
 #include "dsr/gui/dsr_gui.h"
 
+// LCOV_EXCL_START
+
 namespace dsr_rqt_plugin
 {
 
@@ -58,5 +60,7 @@ private:
 };
 
 }  // namespace dsr_rqt_plugin
+
+// LCOV_EXCL_STOP
 
 #endif  // DSR_RQT_PLUGIN__DSR_RQT_PLUGIN_HPP_
