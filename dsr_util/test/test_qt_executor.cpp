@@ -14,6 +14,8 @@
 // limitations under the License.
 
 #include <QCoreApplication>
+#include <QtTest/QSignalSpy>
+#include <thread>
 
 #include "gtest/gtest.h"
 #include "dsr_util/qt_executor.hpp"
@@ -35,7 +37,7 @@ public:
   }
 };
 
-TEST(QtExecutorTest, addNode)
+TEST(DSRQtExecutorTest, addNode)
 {
   rclcpp::init(0, nullptr);
   auto node = std::make_shared<rclcpp::Node>("test_node");
@@ -44,21 +46,24 @@ TEST(QtExecutorTest, addNode)
 
   // Sleep for a short time to verify executor.start() is going, and didn't throw.
   std::thread spinner([&]() {EXPECT_NO_THROW(executor.start());});
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  // Process Qt events to ensure signal delivery
+  QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+
   executor.cancel();
   spinner.join();
   rclcpp::shutdown();
 }
 
-TEST(QtExecutorTest, emptyExecutor)
+TEST(DSRQtExecutorTest, emptyExecutor)
 {
   rclcpp::init(0, nullptr);
   QtExecutorFixture executor;
 
   std::thread spinner([&]() {EXPECT_NO_THROW(executor.spin());});
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   executor.cancel();
   spinner.join();
   rclcpp::shutdown();
@@ -68,8 +73,6 @@ int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  // rclcpp::init(argc, argv);
   bool success = RUN_ALL_TESTS();
-  // rclcpp::shutdown();
   return success;
 }

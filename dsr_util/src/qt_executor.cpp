@@ -25,7 +25,7 @@ QtExecutor::QtExecutor(const rclcpp::ExecutorOptions & args)
 {
   QObject::connect(
     this, &QtExecutor::on_new_work, this, &QtExecutor::spin_work,
-    Qt::ConnectionType::QueuedConnection);
+    Qt::ConnectionType::BlockingQueuedConnection);
 }
 
 QtExecutor::~QtExecutor()
