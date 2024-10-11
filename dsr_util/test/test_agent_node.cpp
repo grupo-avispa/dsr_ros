@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 #include "dsr_util/agent_node.hpp"
 #include "dsr_util/qt_executor.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "test_dsr_setup.hpp"
 
@@ -104,7 +105,10 @@ TEST_F(DsrUtilTest, agentNodeConfigure) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->configure();
+
+  const auto state_after_configure = agent_node->configure();
+  ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE);
+
   agent_node->activate();
   agent_node->deactivate();
   agent_node->cleanup();
@@ -114,10 +118,8 @@ TEST_F(DsrUtilTest, agentNodeConfigure) {
 TEST_F(DsrUtilTest, agentNodeConfigureEmpty) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
-  agent_node->configure();
-  agent_node->activate();
-  agent_node->deactivate();
-  agent_node->cleanup();
+  const auto state_after_configure = agent_node->configure();
+  ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED);
   agent_node->shutdown();
 }
 

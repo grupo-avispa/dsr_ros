@@ -63,7 +63,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 set(library_name ${PROJECT_NAME})
 
 # Set DSR, FastRTPS, and Qt libraries
-set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
+set(dsr_LIBRARIES dsr_api dsr_core)
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 set(qt_LIBRARIES Qt5::Core)
 
