@@ -45,7 +45,7 @@ public:
    */
   explicit TFAgent(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
-private:
+protected:
   /**
    * @brief Callback to receive TF messages from ROS 2.
    *

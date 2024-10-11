@@ -17,7 +17,7 @@
 #include "dsr_util/agent_node.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "test_dsr_setup.hpp"
+#include "utils/test_dsr_setup.hpp"
 
 class AgentNodeFixture : public dsr_util::AgentNode
 {

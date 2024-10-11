@@ -22,8 +22,8 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include "dsr_util/dsr_api_ext.hpp"
 
-#ifndef TEST_DSR_SETUP_HPP_
-#define TEST_DSR_SETUP_HPP_
+#ifndef UTILS__TEST_DSR_SETUP_HPP_
+#define UTILS__TEST_DSR_SETUP_HPP_
 
 class DSRGraphExtFixture : public dsr_util::DSRGraphExt
 {
@@ -72,4 +72,4 @@ protected:
   std::string test_file_;
 };
 
-#endif  // TEST_DSR_SETUP_HPP_
+#endif  // UTILS__TEST_DSR_SETUP_HPP_

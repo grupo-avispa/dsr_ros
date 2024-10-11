@@ -124,8 +124,12 @@ install(DIRECTORY worlds
   DESTINATION share/${PROJECT_NAME}/
 )
 
-install(FILES test/test_dsr.json
+install(FILES test/utils/test_dsr.json
   DESTINATION share/${PROJECT_NAME}/test
+)
+
+install(DIRECTORY test/utils/
+  DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}/utils
 )
 
 # ###########

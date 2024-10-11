@@ -14,7 +14,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "test_dsr_setup.hpp"
+#include "utils/test_dsr_setup.hpp"
 
 TEST_F(DsrUtilTest, apiExtCreateNodeWithPriority) {
   auto node = G_->create_node_with_priority<robot_node_type>("test_node", 5, "test_source");

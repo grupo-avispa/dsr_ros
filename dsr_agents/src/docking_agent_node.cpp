@@ -19,6 +19,7 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/docking_agent.hpp"
 
+// LCOV_EXCL_START
 int main(int argc, char ** argv)
 {
   QCoreApplication app(argc, argv);
@@ -34,3 +35,4 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
   return res;
 }
+// LCOV_EXCL_STOP
