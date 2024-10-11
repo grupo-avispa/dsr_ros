@@ -154,7 +154,7 @@ TEST_F(DsrUtilTest, apiExtGetPriority) {
   EXPECT_EQ(G_->get_priority(node2), std::numeric_limits<int>::quiet_NaN());
 }
 
-TEST_F(DsrUtilTest, apiExtGet_source) {
+TEST_F(DsrUtilTest, apiExtGetSource) {
   auto node = G_->create_node_with_priority<robot_node_type>("test_node", 5, "test_source");
   EXPECT_EQ(G_->get_source(node), "test_source");
 

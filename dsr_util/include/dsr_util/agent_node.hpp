@@ -181,56 +181,6 @@ protected:
   }
 
   /**
-   * @brief Add an edge into the DSR graph with the given parent and child nodes names.
-   * By default, all edges have the source attribute set to the name of the physical machine.
-   *
-   * @tparam edge_type The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
-   * @param from Name of the parent DSR node.
-   * @param to  Name of the child DSR node.
-   * @return std::optional<DSR::Edge> The DSR edge if it was added successfully.
-   */
-  template<typename edge_type>
-  std::optional<DSR::Edge> add_edge(const std::string & from, const std::string & to)
-  {
-    std::optional<DSR::Edge> return_edge;
-    // Get the relatives nodes
-    auto parent_node = G_->get_node(from);
-    auto child_node = G_->get_node(to);
-    // Insert the edge into the DSR graph
-    if (parent_node.has_value()) {
-      if (child_node.has_value()) {
-        // Create the edge
-        auto new_edge = G_->create_edge_with_source<edge_type>(
-          parent_node.value().id(), child_node.value().id(), source_);
-        // Insert the edge into the DSR graph
-        if (G_->insert_or_assign_edge(new_edge)) {
-          return_edge = new_edge;
-          RCLCPP_INFO(
-            this->get_logger(),
-            "Inserted edge [%s->%s] successfully of type [%s]",
-            parent_node.value().name().c_str(), child_node.value().name().c_str(),
-            new_edge.type().c_str());
-        } else {
-          RCLCPP_ERROR(
-            this->get_logger(),
-            "The edge [%s->%s] of type [%s] couldn't be inserted",
-            parent_node.value().name().c_str(), child_node.value().name().c_str(),
-            new_edge.type().c_str());
-        }
-      } else {
-        RCLCPP_ERROR(
-          this->get_logger(),
-          "The edge couldn't be inserted because the child node [%s] doesn't exists", to.c_str());
-      }
-    } else {
-      RCLCPP_ERROR(
-        this->get_logger(),
-        "The edge couldn't be inserted because the parent node [%s] doesn't exists", from.c_str());
-    }
-    return return_edge;
-  }
-
-  /**
    * @brief Add an edge into the DSR graph with the given parent and child nodes id.
    * By default, all edges have the source attribute set to the name of the physical machine.
    *
@@ -270,6 +220,28 @@ protected:
   }
 
   /**
+   * @brief Add an edge into the DSR graph with the given parent and child nodes names.
+   * By default, all edges have the source attribute set to the name of the physical machine.
+   *
+   * @tparam edge_type The type of the DSR edge. Defined in ros_to_dsr_types.hpp.
+   * @param from Name of the parent DSR node.
+   * @param to  Name of the child DSR node.
+   * @return std::optional<DSR::Edge> The DSR edge if it was added successfully.
+   */
+  template<typename edge_type>
+  std::optional<DSR::Edge> add_edge(const std::string & from, const std::string & to)
+  {
+    std::optional<DSR::Edge> return_edge;
+    // Insert the edge into the DSR graph
+    if (auto parent_node = G_->get_node(from); parent_node.has_value()) {
+      if (auto child_node = G_->get_node(to); child_node.has_value()) {
+        return_edge = add_edge<edge_type>(parent_node.value().id(), child_node.value().id());
+      }
+    }
+    return return_edge;
+  }
+
+  /**
    * @brief Delete a node into the DSR graph with the given id.
    * This method previously checks if the node exists.
    *
@@ -284,9 +256,9 @@ protected:
     if (auto node = G_->get_node(id); node.has_value()) {
       // Delete the node
       if (G_->delete_node(id)) {
+        success = true;
         RCLCPP_INFO(
           this->get_logger(), "Deleted node [%s] successfully", node.value().name().c_str());
-        success = true;
       } else {
         RCLCPP_ERROR(
           this->get_logger(), "The node [%s] couldn't be deleted", node.value().name().c_str());
@@ -308,7 +280,11 @@ protected:
    */
   bool delete_node(const std::string & name)
   {
-    return delete_node(G_->get_node(name).value().id());
+    bool success = false;
+    if (auto node = G_->get_node(name); node.has_value()) {
+      success = delete_node(G_->get_node(name).value().id());
+    }
+    return success;
   }
 
   /**
@@ -323,33 +299,33 @@ protected:
   bool delete_edge(uint64_t from, uint64_t to, std::string edge_type)
   {
     // Check if the parent and child nodes exist and if the edge exists
+    bool success = false;
     auto parent_node = G_->get_node(from);
     auto child_node = G_->get_node(to);
-    if (parent_node.has_value() && child_node.has_value()) {
-      if (auto edge = G_->get_edge(from, to, edge_type); edge.has_value()) {
-        // Delete the edge
-        if (G_->delete_edge(from, to, edge_type)) {
-          RCLCPP_INFO(
-            this->get_logger(),
-            "Deleted edge [%s->%s] successfully of type [%s]",
-            parent_node.value().name().c_str(), child_node.value().name().c_str(),
-            edge_type.c_str());
-          return true;
-        } else {
-          RCLCPP_ERROR(
-            this->get_logger(),
-            "The edge [%s->%s] of type [%s] couldn't be deleted",
-            parent_node.value().name().c_str(), child_node.value().name().c_str(),
-            edge_type.c_str());
-        }
-      } else {
-        RCLCPP_WARN(
+    if (auto edge = G_->get_edge(from, to, edge_type); edge.has_value()) {
+      // Delete the edge
+      if (G_->delete_edge(from, to, edge_type)) {
+        success = true;
+        RCLCPP_INFO(
           this->get_logger(),
-          "The edge [%lu->%lu] of type [%s] couldn't be deleted because it doesn't exists",
-          from, to, edge_type.c_str());
+          "Deleted edge [%s->%s] successfully of type [%s]",
+          parent_node.value().name().c_str(), child_node.value().name().c_str(),
+          edge_type.c_str());
+      } else {
+        RCLCPP_ERROR(
+          this->get_logger(),
+          "The edge [%s->%s] of type [%s] couldn't be deleted",
+          parent_node.value().name().c_str(), child_node.value().name().c_str(),
+          edge_type.c_str());
       }
+    } else {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "The edge [%lu->%lu] of type [%s] couldn't be deleted because it doesn't exists",
+        from, to, edge_type.c_str());
     }
-    return false;
+
+    return success;
   }
 
   /**
@@ -364,22 +340,13 @@ protected:
   bool delete_edge(const std::string & from, const std::string & to, std::string edge_type)
   {
     // Check if the parent and child nodes exist
+    bool success = false;
     auto parent_node = G_->get_node(from);
     auto child_node = G_->get_node(to);
-    if (parent_node.has_value()) {
-      if (child_node.has_value()) {
-        return delete_edge(parent_node.value().id(), child_node.value().id(), edge_type);
-      } else {
-        RCLCPP_WARN(
-          this->get_logger(),
-          "The edge couldn't be deleted because the child node [%s] doesn't exists", to.c_str());
-      }
-    } else {
-      RCLCPP_WARN(
-        this->get_logger(),
-        "The edge couldn't be deleted because the parent node [%s] doesn't exists", from.c_str());
+    if (parent_node.has_value() && child_node.has_value()) {
+      success = delete_edge(parent_node.value().id(), child_node.value().id(), edge_type);
     }
-    return false;
+    return success;
   }
 
   /**
@@ -397,50 +364,37 @@ protected:
   bool replace_edge(uint64_t from, uint64_t to, std::string old_edge)
   {
     // Check if the parent and child nodes exist and if the old edge exists
+    bool success = false;
     auto parent_node = G_->get_node(from);
     auto child_node = G_->get_node(to);
-    if (parent_node.has_value()) {
-      if (child_node.has_value()) {
-        if (auto edge = G_->get_edge(from, to, old_edge); edge.has_value()) {
-          // Delete the old edge
-          if (G_->delete_edge(from, to, old_edge)) {
-            // Create the new edge
-            auto new_edge = G_->create_edge_with_source<edge_type>(from, to, source_);
-            // Insert the new edge into the DSR graph
-            if (G_->insert_or_assign_edge(new_edge)) {
-              RCLCPP_INFO(
-                this->get_logger(),
-                "Replaced edge [%s->%s] of type [%s] with type [%s]",
-                parent_node.value().name().c_str(), child_node.value().name().c_str(),
-                old_edge.c_str(), new_edge.type().c_str());
-              return true;
-            }
-          } else {
-            RCLCPP_ERROR(
-              this->get_logger(),
-              "The edge [%s->%s] of type [%s] couldn't be deleted",
-              parent_node.value().name().c_str(), child_node.value().name().c_str(),
-              old_edge.c_str());
-          }
-        } else {
-          RCLCPP_WARN(
+    if (auto edge = G_->get_edge(from, to, old_edge); edge.has_value()) {
+      // Delete the old edge
+      if (G_->delete_edge(from, to, old_edge)) {
+        // Create the new edge
+        auto new_edge = G_->create_edge_with_source<edge_type>(from, to, source_);
+        // Insert the new edge into the DSR graph
+        if (G_->insert_or_assign_edge(new_edge)) {
+          success = true;
+          RCLCPP_INFO(
             this->get_logger(),
-            "The edge [%lu->%lu] of type [%s] couldn't be deleted "
-            "because it doesn't exists", from, to, old_edge.c_str());
+            "Replaced edge [%s->%s] of type [%s] with type [%s]",
+            parent_node.value().name().c_str(), child_node.value().name().c_str(),
+            old_edge.c_str(), new_edge.type().c_str());
         }
       } else {
-        RCLCPP_WARN(
+        RCLCPP_ERROR(
           this->get_logger(),
-          "The edge [%lu->%lu] of type [%s] couldn't be deleted because "
-          "the child node [%lu] doesn't exists", from, to, old_edge.c_str(), to);
+          "The edge [%s->%s] of type [%s] couldn't be deleted",
+          parent_node.value().name().c_str(), child_node.value().name().c_str(),
+          old_edge.c_str());
       }
     } else {
       RCLCPP_WARN(
         this->get_logger(),
-        "The edge [%lu->%lu] of type [%s] couldn't be deleted because "
-        "the parent node [%lu] doesn't exists", from, to, old_edge.c_str(), from);
+        "The edge [%lu->%lu] of type [%s] couldn't be deleted "
+        "because it doesn't exists", from, to, old_edge.c_str());
     }
-    return false;
+    return success;
   }
 
   /**
@@ -457,12 +411,14 @@ protected:
   bool replace_edge(const std::string & from, const std::string & to, std::string old_edge)
   {
     // Check if the parent and child nodes exist
+    bool success = false;
     auto parent_node = G_->get_node(from);
     auto child_node = G_->get_node(to);
     if (parent_node.has_value() && child_node.has_value()) {
-      return replace_edge<edge_type>(parent_node.value().id(), child_node.value().id(), old_edge);
+      success =
+        replace_edge<edge_type>(parent_node.value().id(), child_node.value().id(), old_edge);
     }
-    return false;
+    return success;
   }
 
   /**

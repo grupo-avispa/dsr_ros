@@ -100,8 +100,7 @@ public:
   }
 };
 
-TEST_F(DsrUtilTest, agentNodeConfigure)
-{
+TEST_F(DsrUtilTest, agentNodeConfigure) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -112,8 +111,7 @@ TEST_F(DsrUtilTest, agentNodeConfigure)
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeConfigureEmpty)
-{
+TEST_F(DsrUtilTest, agentNodeConfigureEmpty) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->configure();
@@ -123,8 +121,7 @@ TEST_F(DsrUtilTest, agentNodeConfigureEmpty)
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeAddNode)
-{
+TEST_F(DsrUtilTest, agentNodeAddNode) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -138,13 +135,15 @@ TEST_F(DsrUtilTest, agentNodeAddNode)
   EXPECT_EQ(node.value().type(), "robot");
   EXPECT_TRUE(agent_node->get_graph()->get_node("test_node").has_value());
 
+  // Try to add the same node again
+  auto node2 = agent_node->add_node<robot_node_type>("test_node");
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeAddNodeWithEdge)
-{
+TEST_F(DsrUtilTest, agentNodeAddNodeWithEdge) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -163,13 +162,16 @@ TEST_F(DsrUtilTest, agentNodeAddNodeWithEdge)
   EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().to()).value().name(), "test_node");
   EXPECT_EQ(edge.value().type(), "is");
 
+  // Try to add the same node again
+  auto [node2, edge2] = agent_node->add_node_with_edge<robot_node_type, is_edge_type>(
+    "test_node", "world", false);
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeAddNodeWithEdgeReversed)
-{
+TEST_F(DsrUtilTest, agentNodeAddNodeWithEdgeReversed) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -188,13 +190,47 @@ TEST_F(DsrUtilTest, agentNodeAddNodeWithEdgeReversed)
   EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().to()).value().name(), "world");
   EXPECT_EQ(edge.value().type(), "is");
 
+  // Try to add the same node again
+  auto [node2, edge2] = agent_node->add_node_with_edge<robot_node_type, is_edge_type>(
+    "test_node", "world", true);
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeAddEdgeStr)
-{
+TEST_F(DsrUtilTest, agentNodeAddEdgeId) {
+  // Create the node
+  auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
+  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  agent_node->configure();
+  agent_node->activate();
+
+  // Add two nodes and an edge
+  auto parent_node = agent_node->add_node<robot_node_type>("parent_node");
+  auto child_node = agent_node->add_node<robot_node_type>("child_node");
+  auto edge = agent_node->add_edge<is_edge_type>(parent_node.value().id(), child_node.value().id());
+  EXPECT_TRUE(edge.has_value());
+  EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().from()).value().name(), "parent_node");
+  EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().to()).value().name(), "child_node");
+  EXPECT_EQ(edge.value().type(), "is");
+
+  // Add an edge with a parent node that doesn't exist
+  auto edge2 = agent_node->add_edge<is_edge_type>(2045, child_node.value().id());
+
+  // Add an edge with a child node that doesn't exist
+  auto edge3 = agent_node->add_edge<is_edge_type>(parent_node.value().id(), 505250);
+
+  // Try to add the same edge again
+  auto edge4 =
+    agent_node->add_edge<is_edge_type>(parent_node.value().id(), child_node.value().id());
+
+  agent_node->deactivate();
+  agent_node->cleanup();
+  agent_node->shutdown();
+}
+
+TEST_F(DsrUtilTest, agentNodeAddEdgeStr) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -210,35 +246,21 @@ TEST_F(DsrUtilTest, agentNodeAddEdgeStr)
   EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().to()).value().name(), "child_node");
   EXPECT_EQ(edge.value().type(), "is");
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
-}
+  // Add an edge with a parent node that doesn't exist
+  auto edge2 = agent_node->add_edge<is_edge_type>("parent_fake_node", "child_node");
 
-TEST_F(DsrUtilTest, agentNodeAddEdgeId)
-{
-  // Create the node
-  auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->configure();
-  agent_node->activate();
+  // Add an edge with a child node that doesn't exist
+  auto edge3 = agent_node->add_edge<is_edge_type>("parent_node", "child_fake_node");
 
-  // Add two nodes and an edge
-  auto parent_node = agent_node->add_node<robot_node_type>("parent_node");
-  auto child_node = agent_node->add_node<robot_node_type>("child_node");
-  auto edge = agent_node->add_edge<is_edge_type>(parent_node.value().id(), child_node.value().id());
-  EXPECT_TRUE(edge.has_value());
-  EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().from()).value().name(), "parent_node");
-  EXPECT_EQ(agent_node->get_graph()->get_node(edge.value().to()).value().name(), "child_node");
-  EXPECT_EQ(edge.value().type(), "is");
+  // Try to add the same edge again
+  auto edge4 = agent_node->add_edge<is_edge_type>("parent_node", "child_node");
 
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeDeleteNodeId)
-{
+TEST_F(DsrUtilTest, agentNodeDeleteNodeId) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -252,13 +274,18 @@ TEST_F(DsrUtilTest, agentNodeDeleteNodeId)
   // Delete the node
   EXPECT_TRUE(agent_node->delete_node(node.value().id()));
 
+  // Delete a node that doesn't exist
+  EXPECT_FALSE(agent_node->delete_node(2045));
+
+  // Try to delete the node again
+  EXPECT_FALSE(agent_node->delete_node(node.value().id()));
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeDeleteNodeStr)
-{
+TEST_F(DsrUtilTest, agentNodeDeleteNodeStr) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -272,13 +299,18 @@ TEST_F(DsrUtilTest, agentNodeDeleteNodeStr)
   // Delete the node
   EXPECT_TRUE(agent_node->delete_node(node.value().name()));
 
+  // Delete a node that doesn't exist
+  EXPECT_FALSE(agent_node->delete_node("fake_node"));
+
+  // Delete the node again
+  EXPECT_FALSE(agent_node->delete_node(node.value().name()));
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeDeleteEdgeId)
-{
+TEST_F(DsrUtilTest, agentNodeDeleteEdgeId) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -293,13 +325,21 @@ TEST_F(DsrUtilTest, agentNodeDeleteEdgeId)
   // Delete the edge
   EXPECT_TRUE(agent_node->delete_edge(parent_node.value().id(), child_node.value().id(), "is"));
 
+  // Delete an edge with a parent node that doesn't exist
+  EXPECT_FALSE(agent_node->delete_edge(2045, child_node.value().id(), "is"));
+
+  // Delete an edge with a child node that doesn't exist
+  EXPECT_FALSE(agent_node->delete_edge(parent_node.value().id(), 505250, "is"));
+
+  // Delete an edge with an edge that doesn't exist
+  EXPECT_FALSE(agent_node->delete_edge(parent_node.value().id(), child_node.value().id(), "is"));
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeDeleteEdgeStr)
-{
+TEST_F(DsrUtilTest, agentNodeDeleteEdgeStr) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -314,13 +354,21 @@ TEST_F(DsrUtilTest, agentNodeDeleteEdgeStr)
   // Delete the edge
   EXPECT_TRUE(agent_node->delete_edge("parent_node", "child_node", "is"));
 
+  // Delete an edge with a parent node that doesn't exist
+  EXPECT_FALSE(agent_node->delete_edge("parent_fake_node", "child_node", "is"));
+
+  // Delete an edge with a child node that doesn't exist
+  EXPECT_FALSE(agent_node->delete_edge("parent_node", "child_fake_node", "is"));
+
+  // Delete an edge with an edge that doesn't exist
+  EXPECT_FALSE(agent_node->delete_edge("parent_node", "child_node", "is"));
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeReplaceEdgeId)
-{
+TEST_F(DsrUtilTest, agentNodeReplaceEdgeId) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -337,13 +385,25 @@ TEST_F(DsrUtilTest, agentNodeReplaceEdgeId)
     agent_node->replace_edge<has_edge_type>(
       parent_node.value().id(), child_node.value().id(), "is"));
 
+  // Replace an edge with a parent node that doesn't exist
+  EXPECT_FALSE(
+    agent_node->replace_edge<has_edge_type>(2045, child_node.value().id(), "is"));
+
+  // Replace an edge with a child node that doesn't exist
+  EXPECT_FALSE(
+    agent_node->replace_edge<has_edge_type>(parent_node.value().id(), 505250, "is"));
+
+  // Replace an edge with an edge that doesn't exist
+  EXPECT_FALSE(
+    agent_node->replace_edge<has_edge_type>(
+      parent_node.value().id(), child_node.value().id(), "is"));
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeReplaceEdgeStr)
-{
+TEST_F(DsrUtilTest, agentNodeReplaceEdgeStr) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -358,13 +418,21 @@ TEST_F(DsrUtilTest, agentNodeReplaceEdgeStr)
   // Replace the edge
   EXPECT_TRUE(agent_node->replace_edge<has_edge_type>("parent_node", "child_node", "is"));
 
+  // Replace an edge with a parent node that doesn't exist
+  EXPECT_FALSE(agent_node->replace_edge<has_edge_type>("parent_fake_node", "child_node", "is"));
+
+  // Replace an edge with a child node that doesn't exist
+  EXPECT_FALSE(agent_node->replace_edge<has_edge_type>("parent_node", "child_fake_node", "is"));
+
+  // Replace an edge with an edge that doesn't exist
+  EXPECT_FALSE(agent_node->replace_edge<has_edge_type>("parent_node", "child_node", "is"));
+
   agent_node->deactivate();
   agent_node->cleanup();
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, agentNodeUpdateRTAttributes)
-{
+TEST_F(DsrUtilTest, agentNodeUpdateRTAttributes) {
   // Create the node
   auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -409,6 +477,37 @@ TEST_F(DsrUtilTest, agentNodeUpdateRTAttributes)
   agent_node->shutdown();
 }
 
+TEST_F(DsrUtilTest, agentNodeSaveDSR) {
+  // Create the node
+  auto agent_node = std::make_shared<AgentNodeFixture>("test_node");
+  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  agent_node->configure();
+  agent_node->activate();
+
+  // Create the client service
+  auto req = std::make_shared<dsr_msgs::srv::SaveDSR::Request>();
+  auto pkg = ament_index_cpp::get_package_share_directory("dsr_util");
+  req->dsr_url = pkg + "/test/test_save_dsr.json";
+  auto client = agent_node->create_client<dsr_msgs::srv::SaveDSR>("save_dsr");
+
+  // Wait for the service to be available
+  ASSERT_TRUE(client->wait_for_service());
+
+  // Call the service
+  auto result = client->async_send_request(req);
+
+  // Wait for the result
+  auto resp = std::make_shared<dsr_msgs::srv::SaveDSR::Response>();
+  if (rclcpp::spin_until_future_complete(agent_node, result) == rclcpp::FutureReturnCode::SUCCESS) {
+    std::cout << "Service call succeeded" << std::endl;
+    resp = result.get();
+  } else {
+    std::cout << "Service call failed" << std::endl;
+  }
+
+  // Check the result
+  EXPECT_TRUE(resp->result);
+}
 
 int main(int argc, char ** argv)
 {
