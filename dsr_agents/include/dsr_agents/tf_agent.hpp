@@ -31,15 +31,29 @@
 namespace dsr_agents
 {
 
+/**
+ * @class dsr_agents::TFAgent
+ * @brief Agent to receive and send TF messages from ROS 2 to the DSR graph.
+ */
 class TFAgent : public dsr_util::AgentNode
 {
 public:
-  TFAgent();
+  /**
+   * @brief Construct a new TFAgent object.
+   *
+   * @param options Node options
+   */
+  explicit TFAgent(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
-  rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;
-
+  /**
+   * @brief Callback to receive TF messages from ROS 2.
+   *
+   * @param msg TF message
+   */
   void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg);
+
+  rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;
 };
 
 }  // namespace dsr_agents

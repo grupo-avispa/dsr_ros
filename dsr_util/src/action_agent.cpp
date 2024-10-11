@@ -24,9 +24,6 @@ ActionAgent<ActionT, EdgeT>::ActionAgent(
 : dsr_util::AgentNode(ros_node_name), ros_action_name_(ros_action_name),
   dsr_action_name_(dsr_action_name)
 {
-  // Get ROS parameters
-  get_params();
-
   // Wait until the DSR graph is ready
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -36,6 +33,15 @@ ActionAgent<ActionT, EdgeT>::ActionAgent(
 
   // Add the navigation node to the DSR graph
   add_node_with_edge<navigation_node_type, stopped_edge_type>(dsr_action_name_, source_);
+}
+
+template<class ActionT, typename EdgeT>
+dsr_util::CallbackReturn ActionAgent<ActionT, EdgeT>::on_configure(
+  const rclcpp_lifecycle::State & state)
+{
+  // Get ROS parameters
+  get_params();
+  return AgentNode::on_configure(state);
 }
 
 template<class ActionT, typename EdgeT>

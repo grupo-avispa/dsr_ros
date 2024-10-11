@@ -15,7 +15,6 @@
 
 #include "gtest/gtest.h"
 #include "dsr_util/agent_node.hpp"
-#include "dsr_util/qt_executor.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "test_dsr_setup.hpp"

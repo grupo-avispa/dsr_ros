@@ -25,8 +25,8 @@
 namespace dsr_agents
 {
 
-DockingAgent::DockingAgent()
-: dsr_util::AgentNode("docking_agent")
+DockingAgent::DockingAgent(const rclcpp::NodeOptions & options)
+: dsr_util::AgentNode("docking_agent", options)
 {
   // Wait until the DSR graph is ready
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -219,18 +219,5 @@ void DockingAgent::start_undocking()
 
 }  // namespace dsr_agents
 
-int main(int argc, char ** argv)
-{
-  QCoreApplication app(argc, argv);
-  rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<dsr_agents::DockingAgent>();
-
-  dsr_util::QtExecutor exe;
-  exe.add_node(node->get_node_base_interface());
-  exe.start();
-
-  auto res = app.exec();
-  rclcpp::shutdown();
-  return res;
-}
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(dsr_agents::DockingAgent)

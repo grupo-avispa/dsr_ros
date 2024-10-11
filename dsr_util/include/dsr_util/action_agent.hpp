@@ -55,6 +55,14 @@ public:
    */
   ActionAgent(std::string ros_node_name, std::string ros_action_name, std::string dsr_action_name);
 
+  /**
+   * @brief Configure the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+
 private:
   using GoalHandleActionT = rclcpp_action::ClientGoalHandle<ActionT>;
 

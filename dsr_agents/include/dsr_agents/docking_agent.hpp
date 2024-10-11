@@ -37,7 +37,7 @@ namespace dsr_agents
 class DockingAgent : public dsr_util::AgentNode
 {
 public:
-  DockingAgent();
+  explicit DockingAgent(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   using Dock = opennav_docking_msgs::action::DockRobot;

@@ -32,8 +32,8 @@
 namespace dsr_agents
 {
 
-NavigationAgent::NavigationAgent()
-: dsr_util::AgentNode("navigation_agent")
+NavigationAgent::NavigationAgent(const rclcpp::NodeOptions & options)
+: dsr_util::AgentNode("navigation_agent", options)
 {
   // Initialize transform buffer and listener
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -247,18 +247,5 @@ void NavigationAgent::update_robot_pose_in_dsr(geometry_msgs::msg::Pose pose)
 
 }  // namespace dsr_agents
 
-int main(int argc, char ** argv)
-{
-  QCoreApplication app(argc, argv);
-  rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<dsr_agents::NavigationAgent>();
-
-  dsr_util::QtExecutor exe;
-  exe.add_node(node->get_node_base_interface());
-  exe.start();
-
-  auto res = app.exec();
-  rclcpp::shutdown();
-  return res;
-}
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(dsr_agents::NavigationAgent)

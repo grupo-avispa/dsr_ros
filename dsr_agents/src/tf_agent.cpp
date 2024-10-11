@@ -23,8 +23,8 @@
 namespace dsr_agents
 {
 
-TFAgent::TFAgent()
-: dsr_util::AgentNode("tf_agent")
+TFAgent::TFAgent(const rclcpp::NodeOptions & options)
+: dsr_util::AgentNode("tf_agent", options)
 {
   // Subscriber to the tf topics
   auto latched_profile = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
@@ -112,18 +112,5 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 
 }  // namespace dsr_agents
 
-int main(int argc, char ** argv)
-{
-  QCoreApplication app(argc, argv);
-  rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<dsr_agents::TFAgent>();
-
-  dsr_util::QtExecutor exe;
-  exe.add_node(node->get_node_base_interface());
-  exe.start();
-
-  auto res = app.exec();
-  rclcpp::shutdown();
-  return res;
-}
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(dsr_agents::TFAgent)

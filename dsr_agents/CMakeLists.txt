@@ -56,6 +56,7 @@ find_package(nav2_util REQUIRED)
 find_package(opennav_docking_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
@@ -72,7 +73,7 @@ set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 
 # Docking agent library node
-add_executable(docking_agent src/docking_agent.cpp)
+add_library(docking_agent SHARED src/docking_agent.cpp)
 target_include_directories(docking_agent PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
@@ -81,18 +82,27 @@ target_link_libraries(docking_agent
   PUBLIC
   ${dsr_LIBRARIES}
   dsr_util::dsr_util
+  ${opennav_docking_msgs_TARGETS}
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action
   PRIVATE
   ${fastrtps_LIBRARIES}
   ${geometry_msgs_TARGETS}
-  ${opennav_docking_msgs_TARGETS}
-  rclcpp_action::rclcpp_action
+  rclcpp_components::component
   tf2::tf2
 )
 
-# Navigation agent executable node
-add_executable(nav_agent src/nav_agent.cpp)
+# Add docking agent executable
+add_executable(docking_agent_node src/docking_agent_node.cpp)
+target_link_libraries(docking_agent_node
+  PRIVATE
+  docking_agent
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
+)
+
+# Navigation agent library node
+add_library(nav_agent SHARED src/nav_agent.cpp)
 target_include_directories(nav_agent PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
@@ -107,12 +117,22 @@ target_link_libraries(nav_agent
   ${fastrtps_LIBRARIES}
   ${geometry_msgs_TARGETS}
   ${nav2_msgs_TARGETS}
+  rclcpp_components::component
   tf2::tf2
 )
 ament_target_dependencies(nav_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 
-# TF agent executable node
-add_executable(tf_agent src/tf_agent.cpp)
+# Add navigation agent executable
+add_executable(nav_agent_node src/nav_agent_node.cpp)
+target_link_libraries(nav_agent_node
+  PRIVATE
+  nav_agent
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
+)
+
+# TF agent library node
+add_library(tf_agent SHARED src/tf_agent.cpp)
 target_include_directories(tf_agent PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
@@ -125,14 +145,24 @@ target_link_libraries(tf_agent
   PRIVATE
   ${fastrtps_LIBRARIES}
   ${geometry_msgs_TARGETS}
+  rclcpp_components::component
   ${tf2_msgs_TARGETS}
   ${tf2_sensor_msgs_TARGETS}
   ${tf2_geometry_msgs_TARGETS}
 )
 ament_target_dependencies(tf_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 
-# Topic agent executable node
-add_executable(topic_agent src/topic_agent.cpp)
+# Add TF agent executable
+add_executable(tf_agent_node src/tf_agent_node.cpp)
+target_link_libraries(tf_agent_node
+  PRIVATE
+  tf_agent
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
+)
+
+# Topic agent library node
+add_library(topic_agent SHARED src/topic_agent.cpp)
 target_include_directories(topic_agent PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
@@ -144,9 +174,25 @@ target_link_libraries(topic_agent
   dsr_util::dsr_util
   PRIVATE
   ${fastrtps_LIBRARIES}
+  rclcpp_components::component
   rclcpp_lifecycle::rclcpp_lifecycle
   ${sensor_msgs_TARGETS}
 )
+
+# Add topic agent executable
+add_executable(topic_agent_node src/topic_agent_node.cpp)
+target_link_libraries(topic_agent_node
+  PRIVATE
+  topic_agent
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
+)
+
+# Register components
+rclcpp_components_register_nodes(docking_agent "dsr_agents::DockingAgent")
+rclcpp_components_register_nodes(nav_agent "dsr_agents::NavAgent")
+rclcpp_components_register_nodes(tf_agent "dsr_agents::TfAgent")
+rclcpp_components_register_nodes(topic_agent "dsr_agents::TopicAgent")
 
 # ############
 # # Install ##
@@ -156,6 +202,10 @@ install(TARGETS docking_agent nav_agent tf_agent topic_agent
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(TARGETS docking_agent_node nav_agent_node tf_agent_node topic_agent_node
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
@@ -180,6 +230,7 @@ endif()
 
 # Export old-style CMake variables
 ament_export_include_directories(include/${PROJECT_NAME})
+ament_export_libraries(docking_agent nav_agent tf_agent topic_agent)
 ament_export_dependencies(
   dsr_msgs
   dsr_util
@@ -191,6 +242,7 @@ ament_export_dependencies(
   opennav_docking_msgs
   rclcpp
   rclcpp_action
+  rclcpp_components
   rclcpp_lifecycle
   sensor_msgs
   tf2

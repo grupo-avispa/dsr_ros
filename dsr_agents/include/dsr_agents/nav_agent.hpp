@@ -39,7 +39,7 @@ namespace dsr_agents
 class NavigationAgent : public dsr_util::AgentNode
 {
 public:
-  NavigationAgent();
+  explicit NavigationAgent(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   using NavigateToPose = nav2_msgs::action::NavigateToPose;
