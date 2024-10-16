@@ -57,12 +57,13 @@ public:
 
 private:
   /**
-   * @brief Get the parameters from the ROS 2 parameter server.
-   */
-  void get_params();
-
-  /**
-   * @brief Function
+   * @brief Modify the attributes of the node depending on the type of the ROS message
+   * and the DSR type.
+   *
+   * @tparam ROS_TYPE Type of the ROS message
+   * @tparam NODE_TYPE Type of the DSR node
+   * @param node DSR node
+   * @param msg ROS message
    */
   template<typename ROS_TYPE> void modify_attributes(
     std::optional<DSR::Node> & node, const ROS_TYPE & msg);

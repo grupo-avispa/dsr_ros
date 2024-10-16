@@ -49,17 +49,10 @@ TopicAgent::TopicAgent(const rclcpp::NodeOptions & options)
 
 dsr_util::CallbackReturn TopicAgent::on_configure(const rclcpp_lifecycle::State & state)
 {
-  // Get ROS parameters
-  get_params();
-  return AgentNode::on_configure(state);
-}
-
-void TopicAgent::get_params()
-{
   // ROS parameters
   declare_parameter_if_not_declared(
-    this, "ros_topic",
-    rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
+    this, "ros_topic", rclcpp::ParameterValue(""),
+    rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The ROS topic to subscribe to"));
   this->get_parameter("ros_topic", ros_topic_);
   RCLCPP_INFO(
@@ -68,25 +61,24 @@ void TopicAgent::get_params()
 
   // DSR parameters
   declare_parameter_if_not_declared(
-    this, "dsr_node_name",
-    rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
+    this, "dsr_node_name", rclcpp::ParameterValue(ros_topic_),
+    rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The name of the node in the DSR graph"));
   this->get_parameter("dsr_node_name", dsr_node_name_);
   RCLCPP_INFO(
     this->get_logger(),
-    "The parameter dsr_node is set to: [%s]", dsr_node_name_.c_str());
+    "The parameter dsr_node_name is set to: [%s]", dsr_node_name_.c_str());
 
   declare_parameter_if_not_declared(
-    this, "dsr_parent_node_name",
-    rclcpp::ParameterValue(""), rcl_interfaces::msg::ParameterDescriptor()
+    this, "dsr_parent_node_name", rclcpp::ParameterValue(""),
+    rcl_interfaces::msg::ParameterDescriptor()
     .set__description("The name of the parent node in the DSR graph"));
   this->get_parameter("dsr_parent_node_name", dsr_parent_node_name_);
   RCLCPP_INFO(
     this->get_logger(),
     "The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
 
-  // Default DSR node name to ROS topic
-  dsr_node_name_ = dsr_node_name_.empty() ? ros_topic_ : dsr_node_name_;
+  return AgentNode::on_configure(state);
 }
 
 template<typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE>
