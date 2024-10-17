@@ -71,6 +71,7 @@ target_link_libraries(dsr_bridge
   ${dsr_LIBRARIES}
   ${dsr_msgs_TARGETS}
   dsr_util::agent_node
+  dsr_util::qt_executor
   rclcpp::rclcpp
   PRIVATE
   ${fastrtps_LIBRARIES}
