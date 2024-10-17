@@ -49,11 +49,12 @@ find_package(ament_cmake REQUIRED)
 find_package(dsr_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
+find_package(fastrtps REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 
@@ -67,31 +68,22 @@ set(dsr_LIBRARIES dsr_api dsr_core)
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 set(qt_LIBRARIES Qt5::Core)
 
-# Set headers
-set(headers
-  include/${PROJECT_NAME}/agent_node.hpp
-  include/${PROJECT_NAME}/qt_executor.hpp
+# Qt Moc
+qt5_wrap_cpp(qt_agent_moc include/${PROJECT_NAME}/agent_node.hpp
+  OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
-
-# Set sources
-set(sources
-  src/action_agent.cpp
-  src/agent_node.cpp
-  src/qt_executor.cpp
-)
-
-# # Qt Moc
-qt5_wrap_cpp(qt_moc ${headers}
+qt5_wrap_cpp(qt_executor_moc include/${PROJECT_NAME}/qt_executor.hpp
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 
-add_library(${library_name} SHARED ${sources})
-target_include_directories(${library_name} PUBLIC
+# Add agent library
+add_library(agent_node SHARED src/agent_node.cpp)
+target_include_directories(agent_node PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   ${Eigen3_INCLUDE_DIRS}
 )
-target_link_libraries(${library_name}
+target_link_libraries(agent_node
   PUBLIC
   ${dsr_msgs_TARGETS}
   ${dsr_LIBRARIES}
@@ -104,13 +96,42 @@ target_link_libraries(${library_name}
   ${fastrtps_LIBRARIES}
   ${tf2_geometry_msgs_TARGETS}
 )
-target_sources(${library_name} PRIVATE ${qt_moc})
+target_sources(agent_node PRIVATE ${qt_agent_moc})
+
+# Add action agent library
+add_library(action_agent INTERFACE)
+target_include_directories(action_agent INTERFACE
+  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+target_link_libraries(action_agent
+  INTERFACE
+  agent_node
+  ${dsr_LIBRARIES}
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+)
+
+# Add qt executor library
+add_library(qt_executor SHARED src/qt_executor.cpp)
+target_include_directories(qt_executor PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+target_link_libraries(qt_executor
+  PUBLIC
+  rclcpp::rclcpp
+  ${qt_LIBRARIES}
+)
+target_sources(qt_executor PRIVATE ${qt_executor_moc})
+
 
 # ############
 # # Install ##
 # ############
-install(TARGETS ${library_name}
-  EXPORT ${library_name}
+install(TARGETS action_agent agent_node qt_executor
+  EXPORT ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -148,18 +169,19 @@ endif()
 
 # Export old-style CMake variables
 ament_export_include_directories(include/${PROJECT_NAME})
-ament_export_libraries(dsr_util)
+ament_export_libraries(agent_node qt_executor)
 ament_export_dependencies(
   dsr_msgs
   eigen3_cmake_module
   geometry_msgs
   Qt5Core
   rclcpp
+  rclcpp_action
   rclcpp_lifecycle
   tf2_geometry_msgs
 )
 
 # Export modern CMake targets
-ament_export_targets(${library_name})
+ament_export_targets(${PROJECT_NAME})
 
 ament_package()
