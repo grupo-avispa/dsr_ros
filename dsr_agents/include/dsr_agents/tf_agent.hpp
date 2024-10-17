@@ -45,6 +45,14 @@ public:
    */
   explicit TFAgent(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
+  /**
+   * @brief Configure the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+
 protected:
   /**
    * @brief Callback to receive TF messages from ROS 2.

@@ -26,6 +26,9 @@ namespace dsr_agents
 TFAgent::TFAgent(const rclcpp::NodeOptions & options)
 : dsr_util::AgentNode("tf_agent", options)
 {
+}
+
+dsr_util::CallbackReturn TFAgent::on_configure(const rclcpp_lifecycle::State & state){
   // Subscriber to the tf topics
   auto latched_profile = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   tf_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
@@ -36,6 +39,8 @@ TFAgent::TFAgent(const rclcpp::NodeOptions & options)
     "/tf_static",
     latched_profile,
     std::bind(&TFAgent::tf_callback, this, std::placeholders::_1));
+  
+  return AgentNode::on_configure(state);
 }
 
 void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
