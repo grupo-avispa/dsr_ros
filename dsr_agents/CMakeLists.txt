@@ -81,7 +81,7 @@ target_include_directories(docking_agent PUBLIC
 target_link_libraries(docking_agent
   PUBLIC
   ${dsr_LIBRARIES}
-  dsr_util::dsr_util
+  dsr_util::action_agent
   ${opennav_docking_msgs_TARGETS}
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action
@@ -97,6 +97,7 @@ add_executable(docking_agent_node src/docking_agent_node.cpp)
 target_link_libraries(docking_agent_node
   PRIVATE
   docking_agent
+  dsr_util::qt_executor
   ${fastrtps_LIBRARIES}
   rclcpp::rclcpp
 )
@@ -112,7 +113,7 @@ target_link_libraries(nav_agent
   ${dsr_LIBRARIES}
   rclcpp::rclcpp
   rclcpp_action::rclcpp_action
-  dsr_util::dsr_util
+  dsr_util::agent_node
   PRIVATE
   ${fastrtps_LIBRARIES}
   ${geometry_msgs_TARGETS}
@@ -126,8 +127,9 @@ ament_target_dependencies(nav_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this
 add_executable(nav_agent_node src/nav_agent_node.cpp)
 target_link_libraries(nav_agent_node
   PRIVATE
-  nav_agent
+  dsr_util::qt_executor
   ${fastrtps_LIBRARIES}
+  nav_agent
   rclcpp::rclcpp
 )
 
@@ -141,7 +143,7 @@ target_link_libraries(tf_agent
   PUBLIC
   ${dsr_LIBRARIES}
   rclcpp::rclcpp
-  dsr_util::dsr_util
+  dsr_util::agent_node
   PRIVATE
   ${fastrtps_LIBRARIES}
   ${geometry_msgs_TARGETS}
@@ -156,9 +158,10 @@ ament_target_dependencies(tf_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this 
 add_executable(tf_agent_node src/tf_agent_node.cpp)
 target_link_libraries(tf_agent_node
   PRIVATE
-  tf_agent
+  dsr_util::qt_executor
   ${fastrtps_LIBRARIES}
   rclcpp::rclcpp
+  tf_agent
 )
 
 # Topic agent library node
@@ -171,7 +174,7 @@ target_link_libraries(topic_agent
   PUBLIC
   ${dsr_LIBRARIES}
   rclcpp::rclcpp
-  dsr_util::dsr_util
+  dsr_util::agent_node
   PRIVATE
   ${fastrtps_LIBRARIES}
   rclcpp_components::component
@@ -183,9 +186,10 @@ target_link_libraries(topic_agent
 add_executable(topic_agent_node src/topic_agent_node.cpp)
 target_link_libraries(topic_agent_node
   PRIVATE
-  topic_agent
+  dsr_util::qt_executor
   ${fastrtps_LIBRARIES}
   rclcpp::rclcpp
+  topic_agent
 )
 
 # Register components

@@ -86,7 +86,7 @@ public:
     return AgentNode::on_configure(state);
   }
 
-private:
+protected:
   using GoalHandleActionT = rclcpp_action::ClientGoalHandle<ActionT>;
 
   /**
@@ -112,16 +112,20 @@ private:
   }
 
   /**
- * @brief Function to send new goal to action server
- */
+   * @brief Get the goal from the DSR graph
+   */
+  virtual void get_goal_from_dsr(DSR::Node action_node) = 0;
+
+  /**
+   * @brief Function to send new goal to action server
+   */
   void send_new_goal()
   {
     goal_result_available_ = false;
     auto send_goal_options = typename rclcpp_action::Client<ActionT>::SendGoalOptions();
     send_goal_options.goal_response_callback =
       [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr future) {
-        goal_handle_ = future.get();
-        if (!goal_handle_) {
+        if (!future) {
           RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
         } else {
           update_dsr_when_response();
@@ -199,12 +203,6 @@ private:
    */
   void update_dsr_when_feedback()
   {
-    // TODO(ajtudela): Is this necessary?
-    // Replace the 'stopped' edge with a 'actioning' edge between robot and navigation
-    /*auto stopped_edge = G_->get_edge(source_, "navigation", "stopped");
-    if (stopped_edge.has_value()) {
-      replace_edge<EdgeT>(source_, "navigation", "stopped");
-    }*/
   }
 
   /**
@@ -212,9 +210,6 @@ private:
    */
   void update_dsr_when_result()
   {
-    // TODO(ajtudela): Is this necessary?
-    // Replace the 'docking' edge with a 'stopped' edge between robot and navigation
-    replace_edge<stopped_edge_type>(source_, "navigation", "navigating");
     switch (result_.code) {
       case rclcpp_action::ResultCode::SUCCEEDED:
         // Replace the 'is_performing' edge with a 'finished' edge between robot and action
@@ -243,20 +238,34 @@ private:
   // Inherited from AgentNode
   void edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type) override
   {
-    // Check if the robot wants to start the action: robot ---(wants_to)--> action
-    if (type == "wants_to") {
-      auto robot_node = G_->get_node(source_);
-      auto action_node = G_->get_node(dsr_action_name_);
-      if (robot_node.has_value() && from == robot_node.value().id() &&
-        action_node.has_value() && to == action_node.value().id())
+    // Check if the robot wants to abort or cancel the action process: robot ---(abort)--> action
+    if (type == "abort" || type == "cancel") {
+      auto robot_node = G_->get_node(from);
+      auto action_node = G_->get_node(to);
+      if (robot_node.has_value() && robot_node.value().name() == source_ &&
+        action_node.has_value() && action_node.value().type() == dsr_action_name_)
       {
-        // Replace the 'wants_to' edge with a 'is_performing' edge between robot and action
-        // if (replace_edge<is_performing_edge_type>(from, to, type)) { }
+        RCLCPP_INFO(
+          this->get_logger(), "Aborting / canceling the action '%s'", dsr_action_name_.c_str());
+        // Delete the action node from the DSR graph
+        if (G_->delete_node(action_node.value())) {
+          cancel_action();
+          RCLCPP_INFO(
+            this->get_logger(), "Action '%s' has been canceled", dsr_action_name_.c_str());
+        }
+      }
+      // Check if the robot wants to start the action: robot ---(wants_to)--> action
+    } else if (type == "wants_to") {
+      auto robot_node = G_->get_node(from);
+      auto action_node = G_->get_node(to);
+      if (robot_node.has_value() && robot_node.value().name() == source_ &&
+        action_node.has_value() && action_node.value().type() == dsr_action_name_)
+      {
+        get_goal_from_dsr(action_node.value());
+        send_new_goal();
+        RCLCPP_INFO(this->get_logger(), "Starting the action '%s'", dsr_action_name_.c_str());
       }
     }
-
-    // Check if the robot wants to abort the action
-    // if (type == "abort") {}
   }
 
   // DSR action name
