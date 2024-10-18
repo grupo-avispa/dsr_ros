@@ -20,8 +20,6 @@ jobs:
         uses: actions/checkout@v4.1.6
       - name: Setup ROS 2
         uses: ros-tooling/setup-ros@0.7.5
-        with:
-          required-ros-distributions: humble
       - name: Install Cortex
         run: |
           mkdir $CORTEX_PATH && cd $CORTEX_PATH
