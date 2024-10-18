@@ -25,6 +25,7 @@ X.X.X (XX-XX-2024)
 * CMakeLists.txt use modern idioms.
 * Remove agents with private code.
 * Converted agents to lifecycle node.
+* Converted agents to composables.
 * Added unit tests.
 
 0.7.0 (19-06-2024)

@@ -39,49 +39,65 @@
 namespace dsr_bridge
 {
 
+// Struct to store edges when nodes are not created yet
+struct LostEdge
+{
+  LostEdge(
+    std::string parent, std::string child, std::string edge_type,
+    std::vector<std::string> & attributes)
+  {
+    from = parent;
+    to = child;
+    type = edge_type;
+    attrs = attributes;
+  }
+
+  bool operator==(const LostEdge & other_edge) const
+  {
+    return (from == other_edge.from) && (to == other_edge.to) && (type == other_edge.type);
+  }
+
+  std::string from;
+  std::string to;
+  std::string type;
+  std::vector<std::string> attrs;
+};
+
+/**
+ * @class dsr_bridge::DSRBridge
+ * @brief Bridge to connect the DSR graphs between machines throughROS 2 topics.
+ */
 class DSRBridge : public dsr_util::AgentNode
 {
 public:
-  DSRBridge();
+  /**
+   * @brief Construct a new DSRBridge object.
+   *
+   * @param options Node options
+   */
+  explicit DSRBridge(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+
+  /**
+   * @brief Configure the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
 private:
-  rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
-  rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;
-  rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
-  rclcpp::Publisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
-  std::string edge_topic_, node_topic_;
-  // Struct and vector to store edges when nodes are not created yet
-  struct lost_edge
-  {
-    std::string from;
-    std::string to;
-    std::string type;
-    std::vector<std::string> atts;
-    bool operator==(const lost_edge & other_edge) const
-    {
-      return (from == other_edge.from) && (to == other_edge.to) && (type == other_edge.type);
-    }
-    lost_edge(
-      std::string parent, std::string child, std::string edge_type,
-      std::vector<std::string> & attributes)
-    : from(parent), to(child), type(edge_type),
-      atts(attributes) {}
-  };
-  std::vector<lost_edge> lost_edges;
-  void get_params();
-
   // ROS callbacks
   void edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg);
   void node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg);
 
   // DSR callbacks
-  void node_created(std::uint64_t id, const std::string & type);
+  void node_created(std::uint64_t id, const std::string & type)override;
   void node_attr_updated(uint64_t id, const std::vector<std::string> & att_names) override;
   void edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type) override;
   void edge_attr_updated(
     std::uint64_t from, std::uint64_t to,
     const std::string & type, const std::vector<std::string> & att_names) override;
-  void node_deleted(const DSR::Node & node);
+  void node_deleted_by_node(const DSR::Node & node)override;
   void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag) override;
 
   // Converter functions
@@ -104,6 +120,13 @@ private:
     TYPE & elem, const std::vector<std::string> & atts);
   DSR::Attribute string_to_attribute(const std::string & att_value, int att_type);
   std::string get_type_from_attribute(const DSR::Attribute & att);
+
+  rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
+  rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;
+  rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
+  rclcpp::Publisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
+  std::string edge_topic_, node_topic_;
+  std::vector<LostEdge> lost_edges_;
 };
 
 }  // namespace dsr_bridge

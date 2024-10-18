@@ -77,6 +77,10 @@ CallbackReturn AgentNode::on_configure(const rclcpp_lifecycle::State & state)
     G_.get(), &DSR::DSRGraph::del_edge_signal, this, &AgentNode::edge_deleted);
   QObject::connect(
     G_.get(), &DSR::DSRGraph::del_node_signal, this, &AgentNode::node_deleted);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::create_node_signal, this, &AgentNode::node_created);
+  QObject::connect(
+    G_.get(), &DSR::DSRGraph::del_node_signal_by_node, this, &AgentNode::node_deleted_by_node);
 
   RCLCPP_INFO(this->get_logger(), "Configured agent node");
   return CallbackReturn::SUCCESS;

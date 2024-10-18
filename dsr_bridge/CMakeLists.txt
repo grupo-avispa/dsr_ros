@@ -52,6 +52,7 @@ find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 
 # ##########
 # # Build ##
@@ -60,8 +61,8 @@ find_package(rclcpp REQUIRED)
 set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 
-# Executable node
-add_executable(dsr_bridge src/dsr_bridge.cpp)
+# Add library
+add_library(dsr_bridge SHARED src/dsr_bridge.cpp)
 target_include_directories(dsr_bridge PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
@@ -71,21 +72,38 @@ target_link_libraries(dsr_bridge
   ${dsr_LIBRARIES}
   ${dsr_msgs_TARGETS}
   dsr_util::agent_node
-  dsr_util::qt_executor
   rclcpp::rclcpp
   PRIVATE
   ${fastrtps_LIBRARIES}
+  rclcpp_components::component
 )
 ament_target_dependencies(dsr_bridge PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
+
+# Add executable
+add_executable(dsr_bridge_node src/dsr_bridge_node.cpp)
+target_link_libraries(dsr_bridge_node
+  PRIVATE
+  dsr_bridge
+  dsr_util::qt_executor
+  ${fastrtps_LIBRARIES}
+  rclcpp::rclcpp
+)
+
+# Register components
+rclcpp_components_register_nodes(dsr_bridge "dsr_bridge::DSRBridge")
 
 # ############
 # # Install ##
 # ############
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS dsr_bridge
   EXPORT ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(TARGETS dsr_bridge_node
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
@@ -110,11 +128,13 @@ endif()
 
 # Export old-style CMake variables
 ament_export_include_directories(include/${PROJECT_NAME})
+ament_export_libraries(dsr_bridge)
 ament_export_dependencies(
   dsr_msgs
   dsr_util
   nav2_util
   rclcpp
+  rclcpp_components
 )
 
 # Export modern CMake targets

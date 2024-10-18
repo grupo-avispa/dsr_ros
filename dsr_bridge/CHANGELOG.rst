@@ -7,6 +7,8 @@ X.Y.Z (DD-MM-YYYY)
 * Update license to Apache 2.0.
 * Improve formating.
 * CMakeLists.txt use modern idioms.
+* Converted to lifecycle nodes.
+* Converted to composables.
 
 1.0.0 (04-03-2024)
 ------------------

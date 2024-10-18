@@ -497,6 +497,14 @@ private:
     std::shared_ptr<dsr_msgs::srv::SaveDSR::Response> response);
 
   /**
+   * @brief Callback executed when a node is created in the DSR graph.
+   *
+   * @param id The id of the node.
+   * @param type The type of the node.
+   */
+  virtual void node_created(std::uint64_t /*id*/, const std::string & /*type*/) {}
+
+  /**
    * @brief Callback executed when a node is updated in the DSR graph.
    *
    * @param id The id of the node.
@@ -540,6 +548,13 @@ private:
    * @param id The id of the node.
    */
   virtual void node_deleted(std::uint64_t /*id*/) {}
+
+  /**
+   * @brief Callback executed when a node is deleted in the DSR graph.
+   *
+   * @param node The node.
+   */
+  virtual void node_deleted_by_node(const DSR::Node & /*node*/) {}
 
   /**
    * @brief Callback executed when an edge is deleted in the DSR graph.

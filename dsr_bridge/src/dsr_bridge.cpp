@@ -29,33 +29,24 @@
 namespace dsr_bridge
 {
 
-DSRBridge::DSRBridge()
-: dsr_util::AgentNode("dsr_bridge")
+DSRBridge::DSRBridge(const rclcpp::NodeOptions & options)
+: dsr_util::AgentNode("dsr_bridge", options)
 {
-  // Get ROS parameters
-  get_params();
-
-  // Add connection signals
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::create_node_signal, this, &DSRBridge::node_created);
-  QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal_by_node, this, &DSRBridge::node_deleted);
-
-  // Publisher to the other DSR bridge
-  edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
-  node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 10);
-
-  // Subscriber to the external DSR graph
-  edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
-    edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
-  node_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Node>(
-    node_topic_, 10, std::bind(&DSRBridge::node_from_ros_callback, this, std::placeholders::_1));
 }
 
-/* Initialize ROS parameters */
-void DSRBridge::get_params()
+dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State & state)
 {
   // ROS parameters
+  declare_parameter_if_not_declared(
+    this, "node_topic",
+    rclcpp::ParameterValue("nodes"),
+    rcl_interfaces::msg::ParameterDescriptor()
+    .set__description("The ROS topic to publish / subscribe the nodes to the DSR graph"));
+  this->get_parameter("node_topic", node_topic_);
+  RCLCPP_INFO(
+    this->get_logger(),
+    "The parameter node_topic is set to: [%s]", node_topic_.c_str());
+
   declare_parameter_if_not_declared(
     this, "edge_topic",
     rclcpp::ParameterValue("edges"),
@@ -66,15 +57,17 @@ void DSRBridge::get_params()
     this->get_logger(),
     "The parameter edge_topic is set to: [%s]", edge_topic_.c_str());
 
-  declare_parameter_if_not_declared(
-    this, "node_topic",
-    rclcpp::ParameterValue("nodes"),
-    rcl_interfaces::msg::ParameterDescriptor()
-    .set__description("The ROS topic to publish / subscribe the nodes to the DSR graph"));
-  this->get_parameter("node_topic", node_topic_);
-  RCLCPP_INFO(
-    this->get_logger(),
-    "The parameter node_topic is set to: [%s]", node_topic_.c_str());
+  // Publisher to the other DSR bridge
+  edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
+  node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 10);
+
+  // Subscriber to the external DSR graph
+  edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
+    edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
+  node_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Node>(
+    node_topic_, 10, std::bind(&DSRBridge::node_from_ros_callback, this, std::placeholders::_1));
+
+  return AgentNode::on_configure(state);
 }
 
 // ROS callbacks
@@ -134,9 +127,10 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
           msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
       }
     } else {
-      lost_edge lost(msg->parent, msg->child, msg->type, msg->attributes);
-      if (auto it = std::find(lost_edges.begin(), lost_edges.end(), lost); it != lost_edges.end()) {
-        lost_edges.erase(it);
+      LostEdge lost(msg->parent, msg->child, msg->type, msg->attributes);
+      auto it = std::find(lost_edges_.begin(), lost_edges_.end(), lost);
+      if (it != lost_edges_.end()) {
+        lost_edges_.erase(it);
         RCLCPP_INFO(this->get_logger(), "Deleted edge from lost_edges vector");
       }
     }
@@ -230,9 +224,9 @@ void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
     }
   }
   // Retry to insert lost edges
-  std::vector<std::vector<lost_edge>::iterator> delete_lost_edges;
+  std::vector<std::vector<LostEdge>::iterator> delete_lost_edges;
   unsigned int i = 0;
-  for (auto & edge : lost_edges) {
+  for (auto & edge : lost_edges_) {
     auto parent_node = G_->get_node(edge.from);
     auto child_node = G_->get_node(edge.to);
     if (parent_node.has_value() && child_node.has_value()) {
@@ -240,13 +234,13 @@ void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
       new_edge.from(parent_node.value().id());
       new_edge.to(child_node.value().id());
       new_edge.type(edge.type);
-      modify_attributes(new_edge, edge.atts);
+      modify_attributes(new_edge, edge.attrs);
       if (G_->insert_or_assign_edge(new_edge)) {
         RCLCPP_DEBUG(
           this->get_logger(),
           "Inserted edge losted [%s->%s] of type [%s] in the DSR",
           edge.from.c_str(), edge.to.c_str(), edge.type.c_str());
-        auto it = (lost_edges.begin() + i);
+        auto it = (lost_edges_.begin() + i);
         delete_lost_edges.push_back(it);
       } else {
         RCLCPP_WARN(
@@ -258,7 +252,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
     i++;
   }
   for (auto it : delete_lost_edges) {
-    lost_edges.erase(it);
+    lost_edges_.erase(it);
   }
 }
 
@@ -331,7 +325,7 @@ void DSRBridge::edge_attr_updated(
   }
 }
 
-void DSRBridge::node_deleted(const DSR::Node & node)
+void DSRBridge::node_deleted_by_node(const DSR::Node & node)
 {
   // Create the message
   auto node_msg = create_msg_node(node.name(), node.type());
@@ -386,8 +380,8 @@ std::optional<DSR::Edge> DSRBridge::create_dsr_edge(
     new_edge.type(type);
     return new_edge;
   }
-  lost_edge lost(from, to, type, atts);
-  lost_edges.push_back(lost);
+
+  lost_edges_.push_back(LostEdge(from, to, type, atts));
   return {};
 }
 
@@ -581,18 +575,5 @@ std::string DSRBridge::get_type_from_attribute(const DSR::Attribute & att)
 
 }  // namespace dsr_bridge
 
-int main(int argc, char ** argv)
-{
-  QCoreApplication app(argc, argv);
-  rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<dsr_bridge::DSRBridge>();
-
-  dsr_util::QtExecutor exe;
-  exe.add_node(node->get_node_base_interface());
-  exe.start();
-
-  auto res = app.exec();
-  rclcpp::shutdown();
-  return res;
-}
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(dsr_bridge::DSRBridge)

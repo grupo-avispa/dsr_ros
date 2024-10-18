@@ -66,7 +66,7 @@ def generate_launch_description():
     dsr_bridge_robot_node = Node(
         package='dsr_bridge',
         namespace='',
-        executable='dsr_bridge',
+        executable='dsr_bridge_node',
         name='dsr_bridge_robot',
         parameters=[configured_params],
         emulate_tty=True,
