@@ -28,7 +28,8 @@ TFAgent::TFAgent(const rclcpp::NodeOptions & options)
 {
 }
 
-dsr_util::CallbackReturn TFAgent::on_configure(const rclcpp_lifecycle::State & state){
+dsr_util::CallbackReturn TFAgent::on_configure(const rclcpp_lifecycle::State & state)
+{
   // Subscriber to the tf topics
   auto latched_profile = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   tf_sub_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
@@ -39,18 +40,28 @@ dsr_util::CallbackReturn TFAgent::on_configure(const rclcpp_lifecycle::State & s
     "/tf_static",
     latched_profile,
     std::bind(&TFAgent::tf_callback, this, std::placeholders::_1));
-  
+
   return AgentNode::on_configure(state);
 }
 
 void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 {
-  tf2_msgs::msg::TFMessage unsorted_trf, sorted_trf;
-  unsorted_trf = *msg;
-
   // Sort the transforms
+  tf2_msgs::msg::TFMessage sorted_trf = sort_tf_by_parent_frame(*msg);
+
+  // Replace 'base_link' with source_ and 'map' with world
+  replace_frames_with_dsr_names(sorted_trf);
+
+  // Insert the transforms into the DSR graph
+  insert_and_update_tf_into_dsr(sorted_trf);
+}
+
+tf2_msgs::msg::TFMessage TFAgent::sort_tf_by_parent_frame(tf2_msgs::msg::TFMessage & unsorted_trf)
+{
+  tf2_msgs::msg::TFMessage sorted_trf;
   int i = 0;
   std::string parent_frame = unsorted_trf.transforms[0].header.frame_id;
+
   do {
     // Copy the transforms from the unsorted vector
     // to the sorted vector if the parent frame is the same
@@ -74,16 +85,21 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
     i++;
   } while (unsorted_trf.transforms.size() > 0);
 
-  // Replace 'base_link' with robot and 'map' with world
-  std::for_each(
-    sorted_trf.transforms.begin(), sorted_trf.transforms.end(),
-    [source = source_](auto & trf) {
-      trf.header.frame_id = (trf.header.frame_id == "base_link") ? source : trf.header.frame_id;
-      trf.header.frame_id = (trf.header.frame_id == "map") ? "world" : trf.header.frame_id;
-      trf.child_frame_id = (trf.child_frame_id == "base_link") ? source : trf.child_frame_id;
-      trf.child_frame_id = (trf.child_frame_id == "map") ? "world" : trf.child_frame_id;
-    });
+  return sorted_trf;
+}
 
+void TFAgent::replace_frames_with_dsr_names(tf2_msgs::msg::TFMessage & sorted_trf)
+{
+  for (auto & trf : sorted_trf.transforms) {
+    trf.header.frame_id = (trf.header.frame_id == "base_link") ? source_ : trf.header.frame_id;
+    trf.header.frame_id = (trf.header.frame_id == "map") ? "world" : trf.header.frame_id;
+    trf.child_frame_id = (trf.child_frame_id == "base_link") ? source_ : trf.child_frame_id;
+    trf.child_frame_id = (trf.child_frame_id == "map") ? "world" : trf.child_frame_id;
+  }
+}
+
+void TFAgent::insert_and_update_tf_into_dsr(const tf2_msgs::msg::TFMessage & sorted_trf)
+{
   for (auto trf : sorted_trf.transforms) {
     // Get the parent and child frames
     std::string new_parent_frame = trf.header.frame_id;

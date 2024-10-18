@@ -512,7 +512,6 @@ TEST_F(DsrUtilTest, agentNodeSaveDSR) {
 
 int main(int argc, char ** argv)
 {
-  QCoreApplication app(argc, argv);
   testing::InitGoogleTest(&argc, argv);
   rclcpp::init(argc, argv);
   bool success = RUN_ALL_TESTS();

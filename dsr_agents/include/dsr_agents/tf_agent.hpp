@@ -61,6 +61,29 @@ protected:
    */
   void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg);
 
+  /**
+   * @brief Sort the TF messages by parent frame.
+   *
+   * @param unsorted_trf Unsorted TF message
+   * @return tf2_msgs::msg::TFMessage Sorted TF message
+   */
+  tf2_msgs::msg::TFMessage sort_tf_by_parent_frame(tf2_msgs::msg::TFMessage & unsorted_trf);
+
+  /**
+   * @brief Replace the frames with the DSR names.
+   * The DSR names are the name of the robot (set by source_) for 'base_link' and 'world' for 'map'.
+   *
+   * @param sorted_trf Sorted TF message
+   */
+  void replace_frames_with_dsr_names(tf2_msgs::msg::TFMessage & sorted_trf);
+
+  /**
+   * @brief Insert the TF message into the DSR graph.
+   *
+   * @param sorted_trf Sorted TF message
+   */
+  void insert_and_update_tf_into_dsr(const tf2_msgs::msg::TFMessage & sorted_trf);
+
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;
 };
 
