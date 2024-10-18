@@ -35,13 +35,6 @@ namespace dsr_agents
 TopicAgent::TopicAgent(const rclcpp::NodeOptions & options)
 : dsr_util::AgentNode("generic_agent", options)
 {
-  // Subscriber to the topic with a generic subscription
-  auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
-  for (auto type : data[ros_topic_]) {
-    generic_sub_ = create_generic_subscription(
-      ros_topic_, type, rclcpp::QoS(rclcpp::SystemDefaultsQoS()),
-      std::bind(&TopicAgent::serial_callback, this, std::placeholders::_1));
-  }
 }
 
 dsr_util::CallbackReturn TopicAgent::on_configure(const rclcpp_lifecycle::State & state)
@@ -75,7 +68,56 @@ dsr_util::CallbackReturn TopicAgent::on_configure(const rclcpp_lifecycle::State 
     this->get_logger(),
     "The parameter dsr_parent_node_name is set to: [%s]", dsr_parent_node_name_.c_str());
 
+  if (ros_topic_.empty()) {
+    RCLCPP_ERROR(this->get_logger(), "The parameter 'ros_topic' is empty, cannot configure");
+    return dsr_util::CallbackReturn::FAILURE;
+  }
+
+  // Subscriber to the topic with a generic subscription
+  auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
+  for (auto type : data[ros_topic_]) {
+    generic_sub_ = create_generic_subscription(
+      ros_topic_, type, rclcpp::QoS(rclcpp::SystemDefaultsQoS()),
+      std::bind(&TopicAgent::serial_callback, this, std::placeholders::_1));
+  }
+
   return AgentNode::on_configure(state);
+}
+
+void TopicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg)
+{
+  // In order to deserialize the message we have to manually create a ROS2
+  // message in which we want to convert the serialized data.
+  auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
+  const std::string topic_type = data[ros_topic_][0];
+  RCLCPP_INFO_ONCE(
+    this->get_logger(), "Subscribed to topic [%s] of type [%s]",
+    ros_topic_.c_str(), topic_type.c_str());
+
+  handle_topic_type(msg, topic_type);
+}
+
+void TopicAgent::handle_topic_type(
+  const std::shared_ptr<rclcpp::SerializedMessage> & msg, const std::string & topic_type)
+{
+  // TODO(ajtudela): Replace 'has_edge_type' to a type according to (sensor, actuator, etc)
+  if (topic_type == "sensor_msgs/msg/BatteryState") {
+    deserialize_and_update_attributes
+    <sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>(
+      msg, dsr_node_name_, dsr_parent_node_name_);
+  } else if (topic_type == "sensor_msgs/msg/Image") {
+    deserialize_and_update_attributes
+    <sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>(
+      msg, dsr_node_name_, dsr_parent_node_name_);
+  } else if (topic_type == "sensor_msgs/msg/LaserScan") {
+    deserialize_and_update_attributes
+    <sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>(
+      msg, dsr_node_name_, dsr_parent_node_name_);
+  } else {
+    RCLCPP_WARN_ONCE(
+      this->get_logger(),
+      "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
+  }
 }
 
 template<typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE>
@@ -102,36 +144,6 @@ void TopicAgent::deserialize_and_update_attributes(
       modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
       G_->update_node(dsr_node.value());
     }
-  }
-}
-
-void TopicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg)
-{
-  // In order to deserialize the message we have to manually create a ROS2
-  // message in which we want to convert the serialized data.
-  auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
-  const std::string topic_type = data[ros_topic_][0];
-  RCLCPP_INFO_ONCE(
-    this->get_logger(), "Subscribed to topic [%s] of type [%s]",
-    ros_topic_.c_str(), topic_type.c_str());
-
-  // TODO(ajtudela): Replace 'has_edge_type' to a type according to (sensor, actuator, etc)
-  if (topic_type == "sensor_msgs/msg/BatteryState") {
-    deserialize_and_update_attributes
-    <sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
-  } else if (topic_type == "sensor_msgs/msg/Image") {
-    deserialize_and_update_attributes
-    <sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
-  } else if (topic_type == "sensor_msgs/msg/LaserScan") {
-    deserialize_and_update_attributes
-    <sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
-  } else {
-    RCLCPP_WARN_ONCE(
-      this->get_logger(),
-      "Received message of type [%s]. Unknown for the DSR.", topic_type.c_str());
   }
 }
 

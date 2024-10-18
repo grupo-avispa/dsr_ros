@@ -55,18 +55,15 @@ public:
    */
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
-private:
+protected:
   /**
-   * @brief Modify the attributes of the node depending on the type of the ROS message
-   * and the DSR type.
+   * @brief Handle the topic type and call the corresponding function to deserialize the message.
    *
-   * @tparam ROS_TYPE Type of the ROS message
-   * @tparam NODE_TYPE Type of the DSR node
-   * @param node DSR node
-   * @param msg ROS message
+   * @param msg Serialized message
+   * @param topic_type Type of the topic
    */
-  template<typename ROS_TYPE> void modify_attributes(
-    std::optional<DSR::Node> & node, const ROS_TYPE & msg);
+  void handle_topic_type(
+    const std::shared_ptr<rclcpp::SerializedMessage> & msg, const std::string & topic_type);
 
   /**
    * @brief Deserialize the message and update the attributes in the DSR graph.
@@ -82,6 +79,18 @@ private:
   void deserialize_and_update_attributes(
     const std::shared_ptr<rclcpp::SerializedMessage> msg,
     const std::string & node_name, const std::string & parent_name);
+
+  /**
+   * @brief Modify the attributes of the node depending on the type of the ROS message
+   * and the DSR type.
+   *
+   * @tparam ROS_TYPE Type of the ROS message
+   * @tparam NODE_TYPE Type of the DSR node
+   * @param node DSR node
+   * @param msg ROS message
+   */
+  template<typename ROS_TYPE> void modify_attributes(
+    std::optional<DSR::Node> & node, const ROS_TYPE & msg);
 
   /**
    * @brief Callback to receive messages from ROS 2 topics.

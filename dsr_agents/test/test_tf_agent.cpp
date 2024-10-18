@@ -241,6 +241,10 @@ TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {
   EXPECT_FLOAT_EQ(rot3[0], 0.0);
   EXPECT_FLOAT_EQ(rot3[1], 0.0);
   EXPECT_FLOAT_EQ(rot3[2], 0.0);
+
+  agent_node->deactivate();
+  agent_node->cleanup();
+  agent_node->shutdown();
 }
 
 int main(int argc, char ** argv)
