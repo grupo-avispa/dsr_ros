@@ -195,7 +195,7 @@ target_link_libraries(topic_agent_node
 # Register components
 rclcpp_components_register_nodes(docking_agent "dsr_agents::DockingAgent")
 rclcpp_components_register_nodes(nav_agent "dsr_agents::NavAgent")
-rclcpp_components_register_nodes(tf_agent "dsr_agents::TfAgent")
+rclcpp_components_register_nodes(tf_agent "dsr_agents::TFAgent")
 rclcpp_components_register_nodes(topic_agent "dsr_agents::TopicAgent")
 
 # ############
@@ -214,10 +214,6 @@ install(TARGETS docking_agent_node nav_agent_node tf_agent_node topic_agent_node
 
 install(DIRECTORY include/
   DESTINATION include/${PROJECT_NAME}
-)
-
-install(DIRECTORY launch params
-  DESTINATION share/${PROJECT_NAME}/
 )
 
 # ###########

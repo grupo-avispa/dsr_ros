@@ -10,6 +10,7 @@
 A ROS 2 stack that contains agents, interfaces and RQT plugins for connecting to CORTEX architecture using a Deep State Representation (DSR) graph.
 
  * [dsr_agents]: agents to connect to CORTEX architecture.
+ * [dsr_bringup]: launch files to start the agents.
  * [dsr_bridge]: bridge to connect two different DSR graphs through ROS 2.
  * [dsr_msgs]: messages and services to interact with the DSR agents and ROS.
  * [dsr_rqt_plugin]: RQT plugin to visualize a Deep State Representation (DSR) graph.
@@ -48,6 +49,7 @@ colcon build --symlink-install
 
 [dsr_agents]: ./dsr_agents
 [dsr_bridge]: ./dsr_bridge
+[dsr_bringup]: ./dsr_bringup
 [dsr_msgs]: ./dsr_msgs
 [dsr_rqt_plugin]: ./dsr_rqt_plugin
 [dsr_util]: ./dsr_util
