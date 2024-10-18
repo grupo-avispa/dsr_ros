@@ -28,6 +28,8 @@
 #include <vector>
 
 // ROS
+#include "bondcpp/bond.hpp"
+#include "bond/msg/constants.hpp"
 #include "geometry_msgs/msg/transform.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -106,6 +108,16 @@ public:
    *
    */
   virtual ~AgentNode() = default;
+
+  /**
+   * @brief Create bond connection to lifecycle manager
+   */
+  void createBond();
+
+  /**
+   * @brief Destroy bond connection to lifecycle manager
+   */
+  void destroyBond();
 
 protected:
   /**
@@ -550,6 +562,10 @@ private:
 
   // Name of the input file to load the DSR graph from.
   std::string dsr_input_file_;
+
+  // Connection to tell that server is still up
+  std::unique_ptr<bond::Bond> bond_{nullptr};
+  double bond_heartbeat_period_;
 };
 
 }  // namespace dsr_util

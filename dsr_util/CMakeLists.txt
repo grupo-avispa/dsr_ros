@@ -46,6 +46,8 @@ endif()
 # ###############################################
 # # Find ament macros and libraries
 find_package(ament_cmake REQUIRED)
+find_package(bond REQUIRED)
+find_package(bondcpp REQUIRED)
 find_package(dsr_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -97,6 +99,7 @@ target_link_libraries(agent_node
   ${tf2_geometry_msgs_TARGETS}
 )
 target_sources(agent_node PRIVATE ${qt_agent_moc})
+ament_target_dependencies(agent_node PUBLIC bond bondcpp) # TODO(ajtudela): Fix this in jazzy
 
 # Add action agent library
 add_library(action_agent INTERFACE)
@@ -171,6 +174,7 @@ endif()
 ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_libraries(agent_node qt_executor)
 ament_export_dependencies(
+  bondcpp
   dsr_msgs
   eigen3_cmake_module
   geometry_msgs

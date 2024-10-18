@@ -48,13 +48,14 @@ def generate_launch_description():
 
     lifecycle_nodes = [
         'tf_agent',
-        'nav_agent',
-        'docking_agent',
-        'battery_agent',
+        # 'nav_agent',
+        # 'docking_agent',
+        'battery_agent'
     ]
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
+        'autostart': autostart,
         'dsr_input_file': os.path.join(dsr_util_dir, 'worlds', 'empty.json')
     }
 
@@ -90,13 +91,13 @@ def generate_launch_description():
 
     declare_use_composition_cmd = DeclareLaunchArgument(
         'use_composition',
-        default_value='False',
+        default_value='True',
         description='Use composed bringup if True',
     )
 
     declare_container_name_cmd = DeclareLaunchArgument(
         'container_name',
-        default_value='nav2_container',
+        default_value='dsr_container',
         description='the name of container that nodes will load in if use composition',
     )
 
@@ -125,16 +126,16 @@ def generate_launch_description():
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level]
             ),
-            Node(
-                package='dsr_agents',
-                executable='nav_agent_node',
-                name='nav_agent',
-                output='screen',
-                respawn=use_respawn,
-                respawn_delay=2.0,
-                parameters=[configured_params],
-                arguments=['--ros-args', '--log-level', log_level]
-            ),
+            # Node(
+            #     package='dsr_agents',
+            #     executable='nav_agent_node',
+            #     name='nav_agent',
+            #     output='screen',
+            #     respawn=use_respawn,
+            #     respawn_delay=2.0,
+            #     parameters=[configured_params],
+            #     arguments=['--ros-args', '--log-level', log_level]
+            # ),
             Node(
                 package='dsr_agents',
                 executable='docking_agent_node',
@@ -169,6 +170,14 @@ def generate_launch_description():
     load_composable_nodes = GroupAction(
         condition=IfCondition(use_composition),
         actions=[
+            Node(
+                condition=IfCondition(use_composition),
+                name='dsr_container',
+                package='rclcpp_components',
+                executable='component_container_isolated',
+                parameters=[configured_params, {'autostart': autostart}],
+                arguments=['--ros-args', '--log-level', log_level],
+                output='screen'),
             LoadComposableNodes(
                 target_container=container_name_full,
                 composable_node_descriptions=[
@@ -178,18 +187,18 @@ def generate_launch_description():
                         name='tf_agent',
                         parameters=[configured_params],
                     ),
-                    ComposableNode(
-                        package='dsr_agents',
-                        plugin='dsr_agents::NavAgent',
-                        name='nav_agent',
-                        parameters=[configured_params],
-                    ),
-                    ComposableNode(
-                        package='dsr_agents',
-                        plugin='dsr_agents::DockingAgent',
-                        name='docking_agent',
-                        parameters=[configured_params],
-                    ),
+                    # ComposableNode(
+                    #     package='dsr_agents',
+                    #     plugin='dsr_agents::NavAgent',
+                    #     name='nav_agent',
+                    #     parameters=[configured_params],
+                    # ),
+                    # ComposableNode(
+                    #     package='dsr_agents',
+                    #     plugin='dsr_agents::DockingAgent',
+                    #     name='docking_agent',
+                    #     parameters=[configured_params],
+                    # ),
                     ComposableNode(
                         package='dsr_agents',
                         plugin='dsr_agents::TopicAgent',

@@ -31,6 +31,15 @@ AgentNode::AgentNode(std::string ros_node_name, const rclcpp::NodeOptions & opti
   qRegisterMetaType<DSR::Node>("Node");
   qRegisterMetaType<DSR::Edge>("Edge");
   qRegisterMetaType<DSR::SignalInfo>("DSR::SignalInfo");
+
+  // server side never times out from lifecycle manager
+  this->declare_parameter(bond::msg::Constants::DISABLE_HEARTBEAT_TIMEOUT_PARAM, true);
+  this->set_parameter(
+    rclcpp::Parameter(bond::msg::Constants::DISABLE_HEARTBEAT_TIMEOUT_PARAM, true));
+
+  declare_parameter_if_not_declared(
+    this, "bond_heartbeat_period", rclcpp::ParameterValue(0.1));
+  this->get_parameter("bond_heartbeat_period", bond_heartbeat_period_);
 }
 
 CallbackReturn AgentNode::on_configure(const rclcpp_lifecycle::State & state)
@@ -77,6 +86,7 @@ CallbackReturn AgentNode::on_activate(const rclcpp_lifecycle::State & state)
 {
   LifecycleNode::on_activate(state);
   RCLCPP_INFO(this->get_logger(), "Activating the node...");
+  createBond();
   return CallbackReturn::SUCCESS;
 }
 
@@ -84,6 +94,7 @@ CallbackReturn AgentNode::on_deactivate(const rclcpp_lifecycle::State & state)
 {
   LifecycleNode::on_deactivate(state);
   RCLCPP_INFO(this->get_logger(), "Deactivating the node...");
+  destroyBond();
   return CallbackReturn::SUCCESS;
 }
 
@@ -153,6 +164,31 @@ void AgentNode::get_common_params()
     .set__description("Physical source of the agent"));
   this->get_parameter("source", source_);
   RCLCPP_INFO(this->get_logger(), "The parameter source is set to: [%s]", source_.c_str());
+}
+
+void AgentNode::createBond()
+{
+  if (bond_heartbeat_period_ > 0.0) {
+    RCLCPP_INFO(get_logger(), "Creating bond (%s) to lifecycle manager.", this->get_name());
+
+    bond_ = std::make_unique<bond::Bond>(
+      std::string("bond"), this->get_name(), shared_from_this());
+
+    bond_->setHeartbeatPeriod(bond_heartbeat_period_);
+    bond_->setHeartbeatTimeout(4.0);
+    bond_->start();
+  }
+}
+
+void AgentNode::destroyBond()
+{
+  if (bond_heartbeat_period_ > 0.0) {
+    RCLCPP_INFO(get_logger(), "Destroying bond (%s) to lifecycle manager.", this->get_name());
+
+    if (bond_) {
+      bond_.reset();
+    }
+  }
 }
 
 void AgentNode::update_rt_attributes(

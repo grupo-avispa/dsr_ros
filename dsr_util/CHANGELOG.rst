@@ -11,6 +11,7 @@ X.Y.Z (DD-MM-YYYY)
 * Move action_agent to dsr_util.
 * Converted agent class to lifecycle node.
 * Added unit tests.
+* Added bond.
 
 0.1.0 (04-03-2024)
 ------------------
