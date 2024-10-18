@@ -24,6 +24,8 @@ X.X.X (XX-XX-2024)
 * Move action_agent to dsr_util.
 * CMakeLists.txt use modern idioms.
 * Remove agents with private code.
+* Converted agents to lifecycle node.
+* Added unit tests.
 
 0.7.0 (19-06-2024)
 ------------------
