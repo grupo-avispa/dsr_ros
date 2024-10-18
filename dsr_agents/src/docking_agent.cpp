@@ -28,8 +28,6 @@ namespace dsr_agents
 DockingAgent::DockingAgent(const rclcpp::NodeOptions & options)
 : dsr_util::AgentNode("docking_agent", options)
 {
-  // Wait until the DSR graph is ready
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
 void DockingAgent::edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type)

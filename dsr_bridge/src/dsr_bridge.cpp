@@ -41,9 +41,6 @@ DSRBridge::DSRBridge()
   QObject::connect(
     G_.get(), &DSR::DSRGraph::del_node_signal_by_node, this, &DSRBridge::node_deleted);
 
-  // Wait until the DSR graph is ready
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
   // Publisher to the other DSR bridge
   edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
   node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 10);

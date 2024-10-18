@@ -35,9 +35,6 @@ namespace dsr_agents
 TopicAgent::TopicAgent(const rclcpp::NodeOptions & options)
 : dsr_util::AgentNode("generic_agent", options)
 {
-  // Wait until the DSR graph is ready
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
   // Subscriber to the topic with a generic subscription
   auto data = rclcpp_lifecycle::LifecycleNode::get_topic_names_and_types();
   for (auto type : data[ros_topic_]) {

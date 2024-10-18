@@ -39,9 +39,6 @@ NavigationAgent::NavigationAgent(const rclcpp::NodeOptions & options)
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-  // Wait until the DSR graph is ready
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
   // Add the 'navigation' node with and edge 'stopped'
   // hanging from the 'robot' node into the DSR graph
   if (auto nav_node = G_->get_node("navigation"); !nav_node.has_value()) {

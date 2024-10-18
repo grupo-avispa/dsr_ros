@@ -57,9 +57,6 @@ public:
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
   : dsr_util::AgentNode(ros_node_name, options), ros_action_name_(ros_action_name)
   {
-    // Wait until the DSR graph is ready
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
     callback_group_ =
       this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
     callback_group_executor_.add_callback_group(callback_group_, this->get_node_base_interface());
