@@ -27,6 +27,7 @@ X.X.X (XX-XX-2024)
 * Converted agents to lifecycle node.
 * Converted agents to composables.
 * Added unit tests.
+* Added on_cleanup function to delete nodes.
 
 0.7.0 (19-06-2024)
 ------------------

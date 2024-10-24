@@ -44,6 +44,22 @@ dsr_util::CallbackReturn TFAgent::on_configure(const rclcpp_lifecycle::State & s
   return AgentNode::on_configure(state);
 }
 
+dsr_util::CallbackReturn TFAgent::on_cleanup(const rclcpp_lifecycle::State & state)
+{
+  // Cleaning the subscribers
+  tf_sub_.reset();
+  tf_static_sub_.reset();
+
+  // Delete all the nodes from the DSR graph
+  for (auto dsr_name : dsr_nodes_) {
+    if (auto dsr_node = G_->get_node(dsr_name); dsr_node.has_value()) {
+      delete_node(dsr_name);
+    }
+  }
+
+  return AgentNode::on_cleanup(state);
+}
+
 void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 {
   // Sort the transforms
@@ -51,6 +67,9 @@ void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)
 
   // Replace 'base_link' with source_ and 'map' with world
   replace_frames_with_dsr_names(sorted_trf);
+
+  // Store the names of the nodes in a vector
+  store_dsr_names(sorted_trf, dsr_nodes_);
 
   // Insert the transforms into the DSR graph
   insert_and_update_tf_into_dsr(sorted_trf);
@@ -129,6 +148,19 @@ void TFAgent::insert_and_update_tf_into_dsr(const tf2_msgs::msg::TFMessage & sor
       }
     }
   }
+}
+
+void TFAgent::store_dsr_names(
+  const tf2_msgs::msg::TFMessage & sorted_trf, std::vector<std::string> & dsr_names)
+{
+  for (auto trf : sorted_trf.transforms) {
+    dsr_names.push_back(trf.header.frame_id);
+    dsr_names.push_back(trf.child_frame_id);
+  }
+
+  // Remove duplicates
+  std::sort(dsr_names.begin(), dsr_names.end());
+  dsr_names.erase(std::unique(dsr_names.begin(), dsr_names.end()), dsr_names.end());
 }
 
 }  // namespace dsr_agents

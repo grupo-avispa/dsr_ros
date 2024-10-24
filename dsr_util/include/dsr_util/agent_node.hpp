@@ -107,7 +107,7 @@ public:
    * @brief Destroy the Agent Node object.
    *
    */
-  virtual ~AgentNode() = default;
+  virtual ~AgentNode();
 
   /**
    * @brief Create bond connection to lifecycle manager

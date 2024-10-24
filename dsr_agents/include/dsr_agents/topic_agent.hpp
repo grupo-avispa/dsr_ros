@@ -55,6 +55,14 @@ public:
    */
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
+  /**
+   * @brief Cleanup the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+
 protected:
   /**
    * @brief Handle the topic type and call the corresponding function to deserialize the message.

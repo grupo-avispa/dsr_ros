@@ -42,6 +42,12 @@ AgentNode::AgentNode(std::string ros_node_name, const rclcpp::NodeOptions & opti
   this->get_parameter("bond_heartbeat_period", bond_heartbeat_period_);
 }
 
+AgentNode::~AgentNode()
+{
+  G_.reset();
+  rt_.reset();
+}
+
 CallbackReturn AgentNode::on_configure(const rclcpp_lifecycle::State & state)
 {
   // Get ROS parameters

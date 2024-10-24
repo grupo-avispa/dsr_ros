@@ -84,6 +84,18 @@ dsr_util::CallbackReturn TopicAgent::on_configure(const rclcpp_lifecycle::State 
   return AgentNode::on_configure(state);
 }
 
+dsr_util::CallbackReturn TopicAgent::on_cleanup(const rclcpp_lifecycle::State & state){
+  // Cleaning the generic subscription
+  generic_sub_.reset();
+
+  // Delete the node from the DSR graph
+  if (auto dsr_node = G_->get_node(dsr_node_name_); dsr_node.has_value()) {
+    delete_node(dsr_node_name_);
+  }
+
+  return AgentNode::on_cleanup(state);
+}
+
 void TopicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg)
 {
   // In order to deserialize the message we have to manually create a ROS2

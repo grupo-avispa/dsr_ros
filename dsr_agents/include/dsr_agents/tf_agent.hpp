@@ -53,6 +53,14 @@ public:
    */
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
+  /**
+   * @brief Cleanup the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+
 protected:
   /**
    * @brief Callback to receive TF messages from ROS 2.
@@ -84,7 +92,19 @@ protected:
    */
   void insert_and_update_tf_into_dsr(const tf2_msgs::msg::TFMessage & sorted_trf);
 
+  /**
+   * @brief Store the DSR names in a vector.
+   *
+   * @param sorted_trf Sorted TF message
+   * @param std::vector<std::string> Vector with the DSR names
+   */
+  void store_dsr_names(
+    const tf2_msgs::msg::TFMessage & sorted_trf, std::vector<std::string> & dsr_names);
+
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_, tf_static_sub_;
+
+  // List of nodes created by the agent
+  std::vector<std::string> dsr_nodes_;
 };
 
 }  // namespace dsr_agents
