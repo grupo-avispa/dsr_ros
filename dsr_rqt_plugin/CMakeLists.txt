@@ -63,9 +63,15 @@ set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 set(qt_LIBRARIES Qt5::Core Qt5::OpenGL Qt5::Widgets)
 
+# QT mocs
+qt5_wrap_cpp(qt_view_moc
+  include/${PROJECT_NAME}/dsr_rqt_plugin.hpp
+)
+
 # Library
 add_library(${library_name} SHARED
   src/${PROJECT_NAME}/dsr_rqt_plugin.cpp
+  ${qt_view_moc}
 )
 target_include_directories(${library_name} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
@@ -142,6 +148,6 @@ ament_export_dependencies(
 )
 
 # Export modern CMake targets
-ament_export_targets(${library_name})
+ament_export_targets(${PROJECT_NAME})
 
 ament_package()

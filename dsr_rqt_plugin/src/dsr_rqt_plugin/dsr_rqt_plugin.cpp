@@ -29,6 +29,7 @@ DSRView::DSRView()
 
 DSRView::~DSRView()
 {
+  G_.reset();
 }
 
 /* Initialize the publishers and subscribers */
@@ -56,18 +57,6 @@ void DSRView::initPlugin(qt_gui_cpp::PluginContext & context)
 void DSRView::shutdownPlugin()
 {
   G_.reset();
-}
-
-void DSRView::saveSettings(
-  qt_gui_cpp::Settings & /*plugin_settings*/,
-  qt_gui_cpp::Settings & /*instance_settings*/) const
-{
-}
-
-void DSRView::restoreSettings(
-  const qt_gui_cpp::Settings & /*plugin_settings*/,
-  const qt_gui_cpp::Settings & /*instance_settings*/)
-{
 }
 
 }  // namespace dsr_rqt_plugin

@@ -16,9 +16,6 @@
 #ifndef DSR_RQT_PLUGIN__DSR_RQT_PLUGIN_HPP_
 #define DSR_RQT_PLUGIN__DSR_RQT_PLUGIN_HPP_
 
-// Qt
-#include <QObject>
-
 // C++
 #include <memory>
 #include <string>
@@ -42,12 +39,8 @@ class DSRView : public rqt_gui_cpp::Plugin
 public:
   DSRView();
   virtual ~DSRView();
-  virtual void initPlugin(qt_gui_cpp::PluginContext & context);
-  virtual void shutdownPlugin();
-  virtual void saveSettings(
-    qt_gui_cpp::Settings & plugin_settings, qt_gui_cpp::Settings & instance_settings) const;
-  virtual void restoreSettings(
-    const qt_gui_cpp::Settings & plugin_settings, const qt_gui_cpp::Settings & instance_settings);
+  void initPlugin(qt_gui_cpp::PluginContext & context) override;
+  void shutdownPlugin() override;
 
 protected:
   QWidget * widget_graph_;
