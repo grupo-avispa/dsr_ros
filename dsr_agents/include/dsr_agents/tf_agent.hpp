@@ -19,6 +19,7 @@
 
 // C++
 #include <string>
+#include <vector>
 
 // ROS
 #include "rclcpp/rclcpp.hpp"

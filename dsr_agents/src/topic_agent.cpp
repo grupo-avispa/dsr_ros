@@ -84,7 +84,8 @@ dsr_util::CallbackReturn TopicAgent::on_configure(const rclcpp_lifecycle::State 
   return AgentNode::on_configure(state);
 }
 
-dsr_util::CallbackReturn TopicAgent::on_cleanup(const rclcpp_lifecycle::State & state){
+dsr_util::CallbackReturn TopicAgent::on_cleanup(const rclcpp_lifecycle::State & state)
+{
   // Cleaning the generic subscription
   generic_sub_.reset();
 
