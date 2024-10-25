@@ -31,9 +31,9 @@ NavigationAgent::NavigationAgent(const rclcpp::NodeOptions & options)
 void NavigationAgent::get_goal_from_dsr(DSR::Node action_node)
 {
   // Get the attributes from the move node
-  auto goal_x = G_->get_attrib_by_name<goal_x_att>(action_node.value());
-  auto goal_y = G_->get_attrib_by_name<goal_y_att>(action_node.value());
-  auto goal_angle = G_->get_attrib_by_name<goal_angle_att>(action_node.value());
+  auto goal_x = G_->get_attrib_by_name<goal_x_att>(action_node);
+  auto goal_y = G_->get_attrib_by_name<goal_y_att>(action_node);
+  auto goal_angle = G_->get_attrib_by_name<goal_angle_att>(action_node);
 
   // Check if the goal is a point or a room and send the robot
   if (goal_x.has_value() && goal_y.has_value() && goal_angle.has_value()) {
@@ -42,7 +42,6 @@ void NavigationAgent::get_goal_from_dsr(DSR::Node action_node)
     goal_.pose.pose.position.x = goal_x.value();
     goal_.pose.pose.position.y = goal_y.value();
     goal_.pose.pose.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, goal_angle.value()));
-      tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, goal_angle.value())));
   } else {
     RCLCPP_ERROR(this->get_logger(), "Goal not found in the move node");
   }
