@@ -80,16 +80,10 @@ target_include_directories(docking_agent PUBLIC
 )
 target_link_libraries(docking_agent
   PUBLIC
-  ${dsr_LIBRARIES}
   dsr_util::action_agent
   ${opennav_docking_msgs_TARGETS}
-  rclcpp::rclcpp
-  rclcpp_action::rclcpp_action
   PRIVATE
-  ${fastrtps_LIBRARIES}
-  ${geometry_msgs_TARGETS}
   rclcpp_components::component
-  tf2::tf2
 )
 
 # Add docking agent executable
@@ -110,16 +104,10 @@ target_include_directories(nav_agent PUBLIC
 )
 target_link_libraries(nav_agent
   PUBLIC
-  ${dsr_LIBRARIES}
-  rclcpp::rclcpp
-  rclcpp_action::rclcpp_action
-  dsr_util::agent_node
-  PRIVATE
-  ${fastrtps_LIBRARIES}
-  ${geometry_msgs_TARGETS}
+  dsr_util::action_agent
   ${nav2_msgs_TARGETS}
+  PRIVATE
   rclcpp_components::component
-  tf2::tf2
 )
 ament_target_dependencies(nav_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 

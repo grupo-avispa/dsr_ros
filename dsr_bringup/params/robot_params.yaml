@@ -7,10 +7,12 @@ nav_agent:
   ros__parameters:
     agent_id: 101
     source: robot
+    dsr_action_name: move
 docking_agent:
   ros__parameters:
     agent_id: 102
     source: robot
+    dsr_action_name: dock
 battery_agent:
   ros__parameters:
     agent_id: 103

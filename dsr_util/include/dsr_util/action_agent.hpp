@@ -57,10 +57,15 @@ public:
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
   : dsr_util::AgentNode(ros_node_name, options), ros_action_name_(ros_action_name)
   {
-    callback_group_ =
-      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
-    callback_group_executor_.add_callback_group(callback_group_, this->get_node_base_interface());
+    // Initialize the input and output messages
+    goal_ = typename ActionT::Goal();
+    result_ = typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult();
   }
+
+  /**
+   * @brief Destroy the Action Agent object.
+   */
+  ~ActionAgent() = default;
 
   /**
    * @brief Configure the node
@@ -71,6 +76,7 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override
   {
     // DSR parameters
+    // If the action name is not set, use the ROS node name
     declare_parameter_if_not_declared(
       this, "dsr_action_name", rclcpp::ParameterValue(ros_action_name_),
       rcl_interfaces::msg::ParameterDescriptor()
@@ -80,6 +86,20 @@ public:
       this->get_logger(),
       "The parameter dsr_action_name is set to: [%s]", dsr_action_name_.c_str());
 
+    int wait_for_service_timeout_s;
+    declare_parameter_if_not_declared(
+      this, "wait_for_service_timeout", rclcpp::ParameterValue(1000),
+      rcl_interfaces::msg::ParameterDescriptor()
+      .set__description("The timeout value for waiting for a service to response"));
+    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout_s);
+    RCLCPP_INFO(
+      this->get_logger(),
+      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout_s);
+    wait_for_service_timeout_ = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::duration<int>(wait_for_service_timeout_s));
+
+    create_action_client(ros_action_name_);
+
     return AgentNode::on_configure(state);
   }
 
@@ -87,14 +107,20 @@ protected:
   using GoalHandleActionT = rclcpp_action::ClientGoalHandle<ActionT>;
 
   /**
+   * @brief Function to perform some user-defined operation when the goal is received from the DSR.
+   * Usually, this function should fill the goal message with the data from the DSR node.
+   */
+  virtual void get_goal_from_dsr(DSR::Node action_node) = 0;
+
+  /**
    * @brief Create instance of an action client
    * @param ros_action_name Action name to create client for
    */
-  void createActionClient(const std::string & ros_action_name)
+  void create_action_client(const std::string & ros_action_name)
   {
-    // Now that we have the ROS node to use, create the action client for this BT action
+    // Now that we have the ROS node to use, create the action client for this action
     action_client_ =
-      rclcpp_action::create_client<ActionT>(this, ros_action_name, callback_group_);
+      rclcpp_action::create_client<ActionT>(shared_from_this(), ros_action_name);
 
     // Make sure the server is actually there before continuing
     RCLCPP_DEBUG(this->get_logger(), "Waiting for \"%s\" action server", ros_action_name.c_str());
@@ -109,55 +135,52 @@ protected:
   }
 
   /**
-   * @brief Get the goal from the DSR graph
+   * @brief Function to check if current goal should be cancelled
+   * @return bool True if current goal should be cancelled, false otherwise
    */
-  virtual void get_goal_from_dsr(DSR::Node action_node) = 0;
+  bool should_cancel_goal()
+  {
+    // No need to cancel the goal if goal handle is invalid
+    if (!goal_handle_) {
+      RCLCPP_WARN(this->get_logger(), "Cancel called with no active goal.");
+      return false;
+    }
+
+    auto status = goal_handle_->get_status();
+
+    // Check if the goal is still executing
+    return status == action_msgs::msg::GoalStatus::STATUS_ACCEPTED ||
+           status == action_msgs::msg::GoalStatus::STATUS_EXECUTING;
+  }
 
   /**
    * @brief Function to send new goal to action server
    */
   void send_new_goal()
   {
-    goal_result_available_ = false;
     auto send_goal_options = typename rclcpp_action::Client<ActionT>::SendGoalOptions();
     send_goal_options.goal_response_callback =
-      [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr future) {
-        if (!future) {
+      [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal) {
+        if (!goal) {
           RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
         } else {
-          update_dsr_when_response();
+          update_dsr_when_goal_accepted();
         }
       };
     send_goal_options.result_callback =
       [this](const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result) {
-        if (future_goal_handle_) {
-          RCLCPP_DEBUG(
-            this->get_logger(),
-            "Goal result for %s available, but it hasn't received the goal response yet. "
-            "It's probably a goal result for the last goal request", ros_action_name_.c_str());
-          return;
-        }
-
-        // TODO(#1652): a work around until rcl_action interface is updated
-        // if goal ids are not matched, the older goal call this callback so ignore the result
-        // if matched, it must be processed (including aborted)
-        if (this->goal_handle_->get_goal_id() == result.goal_id) {
-          goal_result_available_ = true;
-          result_ = result;
-          update_dsr_when_result();
-        }
+        result_ = result;
+        update_dsr_when_result_received();
       };
     send_goal_options.feedback_callback =
       [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr,
         const std::shared_ptr<const typename ActionT::Feedback> feedback) {
         feedback_ = feedback;
-        update_dsr_when_feedback();
+        on_feedback(feedback);
+        update_dsr_when_feedback_received();
       };
 
-    future_goal_handle_ = std::make_shared<
-      std::shared_future<typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr>>(
-      action_client_->async_send_goal(goal_, send_goal_options));
-    time_goal_sent_ = this->now();
+    auto future_goal_handle = action_client_->async_send_goal(goal_, send_goal_options);
   }
 
   /**
@@ -165,29 +188,35 @@ protected:
    */
   void cancel_action()
   {
-    if (!goal_handle_) {
-      RCLCPP_WARN(this->get_logger(), "Cancel called with no active goal.");
-      return;
-    }
-    callback_group_executor_.spin_some();
-    auto status = goal_handle_->get_status();
-    if (status == rclcpp_action::GoalStatus::STATUS_ACCEPTED ||
-      status == rclcpp_action::GoalStatus::STATUS_EXECUTING)
-    {
-      auto future_cancel = action_client_->async_cancel_goal(goal_handle_);
-      if (callback_group_executor_.spin_until_future_complete(future_cancel, server_timeout_) !=
-        rclcpp::FutureReturnCode::SUCCESS)
-      {
+    if (should_cancel_goal()) {
+      auto future_cancel =
+        action_client_->async_cancel_goal(goal_handle_).wait_for(std::chrono::seconds(5));
+      if (future_cancel != std::future_status::ready) {
         RCLCPP_ERROR(
           this->get_logger(), "Failed to cancel action server for %s", ros_action_name_.c_str());
+      }
+
+      auto future_result =
+        action_client_->async_get_result(goal_handle_).wait_for(std::chrono::seconds(5));
+      if (future_result != std::future_status::ready) {
+        RCLCPP_ERROR(
+          this->get_logger(), "Failed to get result after canceling action server for %s",
+          ros_action_name_.c_str());
       }
     }
   }
 
   /**
+   * @brief Function to perform some user-defined operation inside the feedback callback.
+   */
+  virtual void on_feedback(const std::shared_ptr<const typename ActionT::Feedback> feedback)
+  {
+  }
+
+  /**
    * @brief Update the DSR graph when the action server sends a response.
    */
-  void update_dsr_when_response()
+  void update_dsr_when_goal_accepted()
   {
     // Replace the 'wants_to' edge with a 'is_performing' edge between robot and action
     if (replace_edge<is_performing_edge_type>(source_, dsr_action_name_, "wants_to")) {
@@ -198,14 +227,14 @@ protected:
   /**
    * @brief Update the DSR graph when the action server sends a feedback.
    */
-  void update_dsr_when_feedback()
+  void update_dsr_when_feedback_received()
   {
   }
 
   /**
    * @brief Update the DSR graph when the action server sends a result.
    */
-  void update_dsr_when_result()
+  void update_dsr_when_result_received()
   {
     switch (result_.code) {
       case rclcpp_action::ResultCode::SUCCEEDED:
@@ -276,27 +305,14 @@ protected:
 
   // All ROS2 actions have a goal and a result
   ActionT::Goal goal_;
-  bool goal_result_available_{false};
   std::shared_ptr<GoalHandleActionT> goal_handle_;
   GoalHandleActionT::WrappedResult result_;
 
   /// To handle feedback from action server
   std::shared_ptr<const typename ActionT::Feedback> feedback_;
 
-  // The node that will be used for any ROS operations
-  rclcpp::CallbackGroup::SharedPtr callback_group_;
-  rclcpp::executors::SingleThreadedExecutor callback_group_executor_;
-
-  // The timeout value while waiting for response from a server when a
-  // new action goal is sent or canceled
-  std::chrono::milliseconds server_timeout_;
-
   // The timeout value for waiting for a service to response
   std::chrono::milliseconds wait_for_service_timeout_;
-
-  // To track the action server acknowledgement when a new goal is sent
-  std::shared_ptr<std::shared_future<std::shared_ptr<GoalHandleActionT>>> future_goal_handle_;
-  rclcpp::Time time_goal_sent_;
 };
 
 }   // namespace dsr_util

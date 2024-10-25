@@ -76,8 +76,6 @@ REGISTER_EDGE_TYPE(abort)
 REGISTER_EDGE_TYPE(aborting)
 REGISTER_EDGE_TYPE(cancel)
 REGISTER_EDGE_TYPE(failed)
-REGISTER_EDGE_TYPE(navigating)
-REGISTER_EDGE_TYPE(docking)
 
 // General types
 REGISTER_TYPE(priority, int, false)
@@ -95,6 +93,7 @@ REGISTER_TYPE(pose_angle, float, false)
 REGISTER_TYPE(goal_x, float, false)
 REGISTER_TYPE(goal_y, float, false)
 REGISTER_TYPE(goal_angle, float, false)
+REGISTER_TYPE(dock_id, std::string, false)
 REGISTER_TYPE(zone, std::string, false)
 REGISTER_TYPE(zones, std::string, false)
 

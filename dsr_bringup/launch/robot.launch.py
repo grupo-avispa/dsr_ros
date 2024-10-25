@@ -48,8 +48,8 @@ def generate_launch_description():
 
     lifecycle_nodes = [
         'tf_agent',
-        # 'nav_agent',
-        # 'docking_agent',
+        'nav_agent',
+        'docking_agent',
         'battery_agent'
     ]
 
@@ -126,16 +126,16 @@ def generate_launch_description():
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level]
             ),
-            # Node(
-            #     package='dsr_agents',
-            #     executable='nav_agent_node',
-            #     name='nav_agent',
-            #     output='screen',
-            #     respawn=use_respawn,
-            #     respawn_delay=2.0,
-            #     parameters=[configured_params],
-            #     arguments=['--ros-args', '--log-level', log_level]
-            # ),
+            Node(
+                package='dsr_agents',
+                executable='nav_agent_node',
+                name='nav_agent',
+                output='screen',
+                respawn=use_respawn,
+                respawn_delay=2.0,
+                parameters=[configured_params],
+                arguments=['--ros-args', '--log-level', log_level]
+            ),
             Node(
                 package='dsr_agents',
                 executable='docking_agent_node',
@@ -187,18 +187,18 @@ def generate_launch_description():
                         name='tf_agent',
                         parameters=[configured_params],
                     ),
-                    # ComposableNode(
-                    #     package='dsr_agents',
-                    #     plugin='dsr_agents::NavAgent',
-                    #     name='nav_agent',
-                    #     parameters=[configured_params],
-                    # ),
-                    # ComposableNode(
-                    #     package='dsr_agents',
-                    #     plugin='dsr_agents::DockingAgent',
-                    #     name='docking_agent',
-                    #     parameters=[configured_params],
-                    # ),
+                    ComposableNode(
+                        package='dsr_agents',
+                        plugin='dsr_agents::NavAgent',
+                        name='nav_agent',
+                        parameters=[configured_params],
+                    ),
+                    ComposableNode(
+                        package='dsr_agents',
+                        plugin='dsr_agents::DockingAgent',
+                        name='docking_agent',
+                        parameters=[configured_params],
+                    ),
                     ComposableNode(
                         package='dsr_agents',
                         plugin='dsr_agents::TopicAgent',
