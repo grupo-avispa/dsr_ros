@@ -16,6 +16,8 @@
 #ifndef DSR_AGENTS__NAV_AGENT_HPP_
 #define DSR_AGENTS__NAV_AGENT_HPP_
 
+#include <memory>
+
 // ROS
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 
@@ -42,7 +44,7 @@ public:
 protected:
   /**
    * @brief Get the goal from the DSR node.
-   * 
+   *
    * @param action_node The DSR node with the goal information.
    */
   void get_goal_from_dsr(DSR::Node action_node) override;

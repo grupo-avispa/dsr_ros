@@ -40,10 +40,9 @@ public:
   explicit DockingAgent(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 protected:
-
   /**
    * @brief Get the dock_id from the DSR node.
-   * 
+   *
    * @param action_node The DSR node with the dock_id information.
    */
   void get_goal_from_dsr(DSR::Node action_node) override;

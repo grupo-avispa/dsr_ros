@@ -30,7 +30,7 @@ void DockingAgent::get_goal_from_dsr(DSR::Node action_node)
 {
   if (auto dock_id = G_->get_attrib_by_name<dock_id_att>(action_node); dock_id.has_value()) {
     goal_.dock_id = dock_id.value();
-  }else{
+  } else {
     RCLCPP_ERROR(this->get_logger(), "Docking ID not found in the DSR graph");
   }
 }
