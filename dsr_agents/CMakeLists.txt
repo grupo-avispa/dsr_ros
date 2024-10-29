@@ -58,6 +58,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
@@ -167,6 +168,7 @@ target_link_libraries(topic_agent
   rclcpp_components::component
   rclcpp_lifecycle::rclcpp_lifecycle
   ${sensor_msgs_TARGETS}
+  ${std_msgs_TARGETS}
 )
 
 # Add topic agent executable
@@ -233,6 +235,7 @@ ament_export_dependencies(
   rclcpp_components
   rclcpp_lifecycle
   sensor_msgs
+  std_msgs
   tf2_ros
   tf2_msgs
   tf2_sensor_msgs

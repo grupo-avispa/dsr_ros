@@ -29,6 +29,7 @@ X.X.X (XX-XX-2024)
 * Added unit tests.
 * Added on_cleanup function to delete nodes.
 * Navigation and docking agents now inherit from action_node.
+* Added std_msgs::String to the topic_agent.
 
 0.7.0 (19-06-2024)
 ------------------

@@ -23,6 +23,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
 // DSR
@@ -251,6 +252,18 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::LaserScan>(
       this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
   }
 }
+
+template<>
+void TopicAgent::modify_attributes<std_msgs::msg::String>(
+  std::optional<DSR::Node> & node, const std_msgs::msg::String & msg)
+{
+  // Modify the attributes of the node
+  G_->add_or_modify_attrib_local<text_att>(node.value(), msg.data);
+  // Print the attributes of the node
+  RCLCPP_DEBUG(
+    this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
+}
+
 }  // namespace dsr_agents
 
 #include "rclcpp_components/register_node_macro.hpp"
