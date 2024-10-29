@@ -52,14 +52,13 @@ find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
-find_package(nav2_util REQUIRED)
 find_package(opennav_docking_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -108,8 +107,9 @@ target_link_libraries(nav_agent
   ${nav2_msgs_TARGETS}
   PRIVATE
   rclcpp_components::component
+  tf2_ros::tf2_ros
+  ${tf2_geometry_msgs_TARGETS}
 )
-ament_target_dependencies(nav_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 
 # Add navigation agent executable
 add_executable(nav_agent_node src/nav_agent_node.cpp)
@@ -132,15 +132,14 @@ target_link_libraries(tf_agent
   ${dsr_LIBRARIES}
   rclcpp::rclcpp
   dsr_util::agent_node
+  ${tf2_msgs_TARGETS}
   PRIVATE
   ${fastrtps_LIBRARIES}
   ${geometry_msgs_TARGETS}
   rclcpp_components::component
-  ${tf2_msgs_TARGETS}
   ${tf2_sensor_msgs_TARGETS}
   ${tf2_geometry_msgs_TARGETS}
 )
-ament_target_dependencies(tf_agent PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 
 # Add TF agent executable
 add_executable(tf_agent_node src/tf_agent_node.cpp)
@@ -228,14 +227,13 @@ ament_export_dependencies(
   fastcdr
   geometry_msgs
   nav2_msgs
-  nav2_util
   opennav_docking_msgs
   rclcpp
   rclcpp_action
   rclcpp_components
   rclcpp_lifecycle
   sensor_msgs
-  tf2
+  tf2_ros
   tf2_msgs
   tf2_sensor_msgs
   tf2_geometry_msgs

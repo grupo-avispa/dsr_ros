@@ -13,9 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ROS
-#include "nav2_util/node_utils.hpp"
-
 // DSR
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_agents/tf_agent.hpp"
