@@ -20,16 +20,6 @@ Along with the template mentioned above, this package also provides the next age
 
 The dsr_agent package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
-## Usage
-
-To use this package, first modify the `default_params.yaml` file located in the `params` directory to set the configuration options for the generic_agent node.
-
-Next, launch the package using the provided launch file `default.launch.py`. This file can be found in the launch directory of the package. To launch the package with default settings, use the following command:
-
-	ros2 launch dsr_agent default.launch.py
-
-The package comes with an example configuration file called `robot_params.yaml` located in the `params` directory and an example launch file called `robot.launch.py` located in the launch directory. These files can be used as a starting point for creating custom configurations and launch files.
-
 ## Nodes
 
 ### topic_agent
@@ -54,13 +44,19 @@ Agent that subscribe to a generic topic in ROS 2 and publishes it as a node in t
 
 ### docking_agent
 
-Agent that wait until a `dock` node is created in the DSR and then start the docking process.
+Agent that wait until a `dock` node is created in the DSR and then start the docking process. The `dock` node must be created with the attribute `dock_id` that contains the id of the docking station where the robot should dock.
 
 #### Actions
 
 * **`dock_robot`**  ([opennav_docking_msgs/action/DockRobot])
 
 	Action to send the robot to the docking station.
+
+#### Parameters
+
+* **`dsr_action_name`** (string, default: "")
+
+	The name of the node in the DSR where the action should be listened.
 
 ### nav_agent
 
@@ -71,6 +67,13 @@ Agent that wait until a `move` node is created in the DSR and then start the nav
 * **`navigate_to_pose`**  ([nav2_msgs/action/NavigateToPose])
 
 	Action to send a navigation goal from the DSR.
+
+#### Parameters
+
+* **`dsr_action_name`** (string, default: "")
+
+	The name of the node in the DSR where the action should be listened.
+
 ### tf_agent
 
 Agent that publishes the transformations tree as RT nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system. The frame `base_link` is replaced by the `robot` frame in the DSR and the frame `map` is replaced by the `world` frame in the DSR.
@@ -85,9 +88,6 @@ Agent that publishes the transformations tree as RT nodes in the DSR. This allow
 
 	The static transformation tree.
 
-## Future work
-- [ ] Convert nodes to LifeCycleNodes.
-- [x] Inherit from a generic agent class.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/
