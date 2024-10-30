@@ -261,7 +261,13 @@ protected:
     }
   }
 
-  // Inherited from AgentNode
+  /**
+   * @brief Callback executed when an edge is updated in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param type The type of the edge.
+   */
   void edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type) override
   {
     // Check if the robot wants to abort or cancel the action process: robot ---(abort)--> action

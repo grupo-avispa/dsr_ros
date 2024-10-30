@@ -26,7 +26,6 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 
 // DSR
-#include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
 namespace dsr_agents

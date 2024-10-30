@@ -68,8 +68,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 # # Build ##
 # ##########
 
-# Set DSR and FastRTPS
-set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
+# Set FastRTPS libraries
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 
 # Docking agent library node
@@ -130,7 +129,6 @@ target_include_directories(tf_agent PUBLIC
 )
 target_link_libraries(tf_agent
   PUBLIC
-  ${dsr_LIBRARIES}
   rclcpp::rclcpp
   dsr_util::agent_node
   ${tf2_msgs_TARGETS}
@@ -160,7 +158,6 @@ target_include_directories(topic_agent PUBLIC
 )
 target_link_libraries(topic_agent
   PUBLIC
-  ${dsr_LIBRARIES}
   rclcpp::rclcpp
   dsr_util::agent_node
   PRIVATE

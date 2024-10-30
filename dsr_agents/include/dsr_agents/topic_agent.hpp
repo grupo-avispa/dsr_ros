@@ -27,7 +27,6 @@
 #include "rclcpp/serialization.hpp"
 
 // DSR
-#include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
 namespace dsr_agents
