@@ -12,6 +12,7 @@ X.Y.Z (DD-MM-YYYY)
 * Converted agent class to lifecycle node.
 * Added unit tests.
 * Added bond.
+* Added service agent.
 
 0.1.0 (04-03-2024)
 ------------------
