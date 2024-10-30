@@ -17,6 +17,7 @@
 #define DSR_UTIL__SERVICE_AGENT_HPP_
 
 // C++
+#include <memory>
 #include <string>
 #include <vector>
 
