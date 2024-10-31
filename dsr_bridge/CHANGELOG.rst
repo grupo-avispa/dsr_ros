@@ -9,6 +9,7 @@ X.Y.Z (DD-MM-YYYY)
 * CMakeLists.txt use modern idioms.
 * Converted to lifecycle nodes.
 * Converted to composables.
+* Move launch to bringup.
 
 1.0.0 (04-03-2024)
 ------------------

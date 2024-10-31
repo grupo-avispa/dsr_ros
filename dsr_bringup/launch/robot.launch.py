@@ -47,6 +47,7 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
 
     lifecycle_nodes = [
+        'bridge_robot',
         'tf_agent',
         'nav_agent',
         'docking_agent',
@@ -56,7 +57,7 @@ def generate_launch_description():
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
         'autostart': autostart,
-        'dsr_input_file': os.path.join(dsr_util_dir, 'worlds', 'empty.json')
+        'dsr_input_file': os.path.join(dsr_util_dir, 'worlds', 'world_with_robot.json')
     }
 
     configured_params = RewrittenYaml(
@@ -116,6 +117,17 @@ def generate_launch_description():
     load_nodes = GroupAction(
         condition=IfCondition(PythonExpression(['not ', use_composition])),
         actions=[
+            Node(
+                package='dsr_bridge',
+                namespace='',
+                executable='dsr_bridge_node',
+                name='bridge_robot',
+                output='screen',
+                respawn=use_respawn,
+                respawn_delay=2.0,
+                parameters=[configured_params],
+                arguments=['--ros-args', '--log-level', log_level]
+            ),
             Node(
                 package='dsr_agents',
                 executable='tf_agent_node',
@@ -181,6 +193,12 @@ def generate_launch_description():
             LoadComposableNodes(
                 target_container=container_name_full,
                 composable_node_descriptions=[
+                    ComposableNode(
+                        package='dsr_bridge',
+                        plugin='dsr_bridge::DSRBridge',
+                        name='bridge_robot',
+                        parameters=[configured_params],
+                    ),
                     ComposableNode(
                         package='dsr_agents',
                         plugin='dsr_agents::TFAgent',

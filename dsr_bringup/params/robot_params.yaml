@@ -1,21 +1,25 @@
-tf_agent:
+bridge_robot:
   ros__parameters:
     agent_id: 100
+    source: robot
     dsr_input_file: ''
+tf_agent:
+  ros__parameters:
+    agent_id: 101
     source: robot
 nav_agent:
   ros__parameters:
-    agent_id: 101
+    agent_id: 102
     source: robot
     dsr_action_name: move
 docking_agent:
   ros__parameters:
-    agent_id: 102
+    agent_id: 103
     source: robot
     dsr_action_name: dock
 battery_agent:
   ros__parameters:
-    agent_id: 103
+    agent_id: 104
     source: robot
     dsr_node_name: battery
     dsr_parent_node_name: robot

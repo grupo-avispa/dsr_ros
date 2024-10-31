@@ -9,6 +9,7 @@
   <author email="ajtudela@gmail.com">Alberto Tudela</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>dsr_agents</exec_depend>
+  <exec_depend>dsr_bridge</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
 

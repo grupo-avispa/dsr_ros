@@ -69,7 +69,6 @@ target_include_directories(dsr_bridge PUBLIC
 )
 target_link_libraries(dsr_bridge
   PUBLIC
-  ${dsr_LIBRARIES}
   ${dsr_msgs_TARGETS}
   dsr_util::agent_node
   rclcpp::rclcpp
@@ -108,10 +107,6 @@ install(TARGETS dsr_bridge_node
 
 install(DIRECTORY include/
   DESTINATION include/${PROJECT_NAME}
-)
-
-install(DIRECTORY launch params
-  DESTINATION share/${PROJECT_NAME}/
 )
 
 # ###########

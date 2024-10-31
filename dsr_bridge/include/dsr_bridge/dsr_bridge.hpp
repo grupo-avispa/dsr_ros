@@ -18,9 +18,6 @@
 #ifndef DSR_BRIDGE__DSR_BRIDGE_HPP_
 #define DSR_BRIDGE__DSR_BRIDGE_HPP_
 
-// Qt
-#include <QObject>
-
 // C++
 #include <map>
 #include <memory>
@@ -33,7 +30,6 @@
 #include "dsr_msgs/msg/node.hpp"
 
 // DSR
-#include "dsr/api/dsr_api.h"
 #include "dsr_util/agent_node.hpp"
 
 namespace dsr_bridge
