@@ -6,7 +6,7 @@ This package contains utility functions and classes for the DSR ROS stack:
 
 * **`ActionAgent:`** This class is a wrapper around the `rclcpp_action` object that provides a more user-friendly interface to call ROS 2 actions from the DSR graph. This class has callbacks that listen a 'wants_to' edge between the robot and the action node. When the robot wants to start the action, the agent calls the ROS 2 action server and waits for the result. The agent also listens to 'abort' and 'cancel' edges to cancel the action.
 
-* **`AgentNode:`** This class inherits from `rclcpp_lifecycle::LifecycleNode` and is used to create a lifecycle ROS 2 node that can communicate with the DSR. It contains a pointer to the `DSRGraph` object that is used to communicate with the DSR. It also contains a `Service` to save the graph to a file.
+* **`AgentNode:`** This class inherits from `rclcpp_lifecycle::LifecycleNode` and is used to create a lifecycle ROS 2 node that can communicate with the DSR. It contains a pointer to the `DSRGraph` object that is used to communicate with the DSR. It also contains a `Service` to save the graph to a file. By default all nodes created with this templates will have the priority 0. This means that the nodes will only publish if there are no other nodes with the same name and priority 1 or higher. The user can also specify the priority of the nodes by update the `priority` attribute to the message.
 
 * **`DSRGraphExt:`** This class is a wrapper around the `DSRGraph` object that provides a more user-friendly interface to the DSR. It contains functions to add nodes, edges, and properties to the graph.
 

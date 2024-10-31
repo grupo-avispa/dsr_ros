@@ -2,23 +2,21 @@
 
 ## Overview
 
-This package provides ROS 2 agents for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS 2 middleware.
+This package provides ROS 2 agents designed to facilitate connectivity with the CORTEX architecture through the DSR graph, enabling seamless integration between CORTEX-based systems and the ROS 2 middleware. This functionality simplifies the user's ability to interact with CORTEX-based systems and supports sensor data integration and robot control.
 
-This package feature a template for creating agents that can be used to publish data in the DSR:
-* **`Topic agent:`** which allows the user to subscribe to a generic topic and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system.
+A core feature of the package is a template for creating agents that publish data to the DSR:
+* **`Topic agent:`** this agent enables the user to subscribe to a generic topic and publish its data in the DSR, supporting the integration of various sensor types into a CORTEX system.
 
-By default all nodes created with this templates will have the priority 0. This means that the nodes will only publish if there are no other nodes with the same name and priority 1 or higher. The user can also specify the priority of the nodes by update the `priority` attribute to the message.
-
-Along with the template mentioned above, this package also provides the next agents that can be used to publish data in the DSR:
-* **`Docking agent:`** which allows the user to call the docking action from the DSR.
-* **`Navigation agent:`**  which allows the user to call the navigation action from the DSR.
-* **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
+In addition to the generic template, depending on the specific task for which they are implemented, there are specialized agents for data publications in the DSR:
+* **`Docking agent:`** initiate docking actions directly within the DSR.
+* **`Navigation agent:`**  facilitates the execution of navigation commands from the DSR.
+* **`TF agent:`** publishes the transformation tree as nodes in the DSR, providing a visual representation of transformations across different reference frames in the CORTEX environment.
 
 **Keywords:** ROS2, cortex, dsr, deep space representation
 
 **Author: Alberto Tudela, Oscar Pons Fernández, José Galeas Merchan<br />**
 
-The dsr_agent package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
+The dsr_agents package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 ## Nodes
 
