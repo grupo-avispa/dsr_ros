@@ -81,41 +81,110 @@ public:
    */
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
-private:
-  // ROS callbacks
+protected:
+  /**
+   * @brief Callback executed when an edge is received from a ROS 2 topic.
+   *
+   * @param msg The edge received.
+   */
   void edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg);
+
+  /**
+   * @brief Callback executed when a node is received from a ROS 2 topic.
+   *
+   * @param msg The node received.
+   */
   void node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg);
 
-  // DSR callbacks
-  void node_created(std::uint64_t id, const std::string & type)override;
+  /**
+   * @brief Callback executed when a node is created in the DSR graph.
+   *
+   * @param id The id of the node.
+   * @param type The type of the node.
+   */
+  void node_created(std::uint64_t id, const std::string & type) override;
+
+  /**
+   * @brief Callback executed when a node attribute is updated in the DSR graph.
+   *
+   * @param id The id of the node.
+   * @param att_names The names of the attributes updated.
+   */
   void node_attr_updated(uint64_t id, const std::vector<std::string> & att_names) override;
+
+  /**
+   * @brief Callback executed when an edge is updated in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param type The type of the edge.
+   */
   void edge_updated(std::uint64_t from, std::uint64_t to, const std::string & type) override;
+
+  /**
+   * @brief Callback executed when an edge attribute is updated in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param type The type of the edge.
+   * @param att_names The names of the attributes updated.
+   */
   void edge_attr_updated(
     std::uint64_t from, std::uint64_t to,
     const std::string & type, const std::vector<std::string> & att_names) override;
+
+  /**
+   * @brief Callback executed when a node is deleted in the DSR graph.
+   *
+   * @param id The id of the node.
+   */
   void node_deleted_by_node(const DSR::Node & node)override;
+
+  /**
+   * @brief Callback executed when an edge is deleted in the DSR graph.
+   *
+   * @param from The id of the parent node.
+   * @param to The id of the child node.
+   * @param edge_tag The type of the edge.
+   */
   void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag) override;
 
-  // Converter functions
-  std::optional<DSR::Node> create_dsr_node(std::string name, std::string type);
+  /**
+   * @brief Create a DSR::Node from a ROS 2 message.
+   *
+   * @param msg The ROS 2 message.
+   * @return DSR::Node The DSR node created.
+   */
+  DSR::Node from_msg(const dsr_msgs::msg::Node & msg);
+
+  /**
+   * @brief Create a dsr_msgs::msg::Node from a DSR::Node.
+   *
+   * @param node The DSR node.
+   * @param deleted If the node has to be marked as deleted.
+   * @return dsr_msgs::msg::Node The ROS 2 message.
+   */
+  dsr_msgs::msg::Node to_msg(const DSR::Node & node, bool deleted = false);
+
   std::optional<DSR::Edge> create_dsr_edge(
     std::string from, std::string to, const std::string & type, std::vector<std::string> & atts);
-  dsr_msgs::msg::Node create_msg_node(std::string name, std::string type);
+
   dsr_msgs::msg::Edge create_msg_edge(
     std::uint64_t from, std::uint64_t to, const std::string & type);
 
-  // Helper functions
+  /**
+   * @brief Modify the attributes of a DSR element with the given attributes in a vector of strings.
+   *
+   * @tparam TYPE Type of the DSR element.
+   * @param elem The DSR element (node or edge) to modify.
+   * @param att_str The attributes to modify in format (name, value, type).
+   */
   template<typename TYPE>
-  void modify_attributes(TYPE & elem, std::vector<std::string> & att_str);
+  void modify_attributes(TYPE & elem, const std::vector<std::string> & att_str);
 
-  std::string attribute_to_string(const DSR::Attribute & att);
-  std::vector<std::string> attributes_to_string(
-    const std::map<std::string, DSR::Attribute> & atts);
   template<typename TYPE>
   std::vector<std::string> attributes_updated_to_string(
     TYPE & elem, const std::vector<std::string> & atts);
-  DSR::Attribute string_to_attribute(const std::string & att_value, int att_type);
-  std::string get_type_from_attribute(const DSR::Attribute & att);
 
   rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
   rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;

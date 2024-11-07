@@ -57,8 +57,7 @@ find_package(rclcpp_components REQUIRED)
 # ##########
 # # Build ##
 # ##########
-# Set DSR and FastRTPS
-set(dsr_LIBRARIES dsr_api dsr_core dsr_gui)
+# Set FastRTPS libraries
 set(fastrtps_LIBRARIES fastrtps fastcdr)
 
 # Add library

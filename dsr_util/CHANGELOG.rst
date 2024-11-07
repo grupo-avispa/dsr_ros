@@ -13,6 +13,7 @@ X.Y.Z (DD-MM-YYYY)
 * Added unit tests.
 * Added bond.
 * Added service agent.
+* Added helpers functions from dsr_bridge.
 
 0.1.0 (04-03-2024)
 ------------------

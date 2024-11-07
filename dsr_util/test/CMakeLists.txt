@@ -18,6 +18,19 @@ target_include_directories(test_dsr_api_ext PUBLIC
 target_link_libraries(test_dsr_api_ext
   agent_node
   ${fastrtps_LIBRARIES}
+  ${dsr_LIBRARIES}
+  ament_index_cpp::ament_index_cpp
+)
+
+# Test for test_helpers
+ament_add_gtest(test_helpers test_helpers.cpp)
+target_include_directories(test_helpers PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+target_link_libraries(test_helpers
+  ${fastrtps_LIBRARIES}
+  ${dsr_LIBRARIES}
   ament_index_cpp::ament_index_cpp
 )
 
