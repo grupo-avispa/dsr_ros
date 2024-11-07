@@ -57,6 +57,7 @@ TEST_F(DsrUtilTest, tfAgentIntegration) {
 
   // Deactivate the nodes
   agent_node->deactivate();
+  agent_node->cleanup();
   pub_node->deactivate();
   rclcpp::shutdown();
   // Have to join thread after rclcpp is shut down otherwise test hangs.

@@ -48,6 +48,12 @@ public:
     return dsr_agents::TFAgent::replace_frames_with_dsr_names(sorted_trf);
   }
 
+  void store_dsr_names(
+    const tf2_msgs::msg::TFMessage & sorted_trf, std::vector<std::string> & dsr_names)
+  {
+    return dsr_agents::TFAgent::store_dsr_names(sorted_trf, dsr_names);
+  }
+
   void insert_and_update_tf_into_dsr(const tf2_msgs::msg::TFMessage & sorted_trf)
   {
     return dsr_agents::TFAgent::insert_and_update_tf_into_dsr(sorted_trf);
@@ -133,6 +139,40 @@ TEST_F(DsrUtilTest, tfAgentReplaceFramesWithDSRNames) {
   EXPECT_EQ(sorted_trf.transforms[1].child_frame_id, "world");
   EXPECT_EQ(sorted_trf.transforms[2].header.frame_id, "camera_link");
   EXPECT_EQ(sorted_trf.transforms[2].child_frame_id, "odom");
+}
+
+TEST_F(DsrUtilTest, tfAgentStoreDSRNames) {
+  // Create the node
+  auto agent_node = std::make_shared<TFAgentFixture>();
+
+  // Set the source
+  agent_node->set_source("robot");
+
+  // Create a sample sorted TFMessage
+  tf2_msgs::msg::TFMessage sorted_trf;
+  geometry_msgs::msg::TransformStamped trf1, trf2, trf3;
+
+  trf1.header.frame_id = "map";
+  trf1.child_frame_id = "base_link";
+  trf2.header.frame_id = "base_link";
+  trf2.child_frame_id = "map";
+  trf3.header.frame_id = "camera_link";
+  trf3.child_frame_id = "odom";
+
+  sorted_trf.transforms.push_back(trf1);
+  sorted_trf.transforms.push_back(trf2);
+  sorted_trf.transforms.push_back(trf3);
+
+  // Replace the frames with the DSR names
+  std::vector<std::string> dsr_names;
+  agent_node->store_dsr_names(sorted_trf, dsr_names);
+
+  // Check the DSR names
+  ASSERT_EQ(dsr_names.size(), 4);
+  EXPECT_EQ(dsr_names[0], "base_link");
+  EXPECT_EQ(dsr_names[1], "camera_link");
+  EXPECT_EQ(dsr_names[2], "map");
+  EXPECT_EQ(dsr_names[3], "odom");
 }
 
 TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {

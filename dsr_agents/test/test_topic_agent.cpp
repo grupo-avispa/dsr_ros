@@ -21,6 +21,7 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "std_msgs/msg/string.hpp"
 
 class TopicAgentFixture : public dsr_agents::TopicAgent
 {
@@ -320,6 +321,36 @@ TEST_F(DsrUtilTest, TopicAgentModifyAttributeLaserScan) {
   EXPECT_FLOAT_EQ(ranges[0], scan.ranges[0]);
   EXPECT_FLOAT_EQ(ranges[1], scan.ranges[1]);
   EXPECT_FLOAT_EQ(ranges[2], scan.ranges[2]);
+
+  agent_node->deactivate();
+  agent_node->cleanup();
+  agent_node->shutdown();
+}
+
+TEST_F(DsrUtilTest, TopicAgentModifyAttributeString) {
+  // Create the node
+  auto agent_node = std::make_shared<TopicAgentFixture>();
+  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+
+  // Configure and activate the node
+  agent_node->configure();
+  agent_node->activate();
+
+  // Create a string message
+  std_msgs::msg::String str_msg;
+  str_msg.data = "test_string";
+
+  // Modify the attributes
+  auto node = agent_node->add_node<robot_node_type>("test_node");
+  agent_node->modify_attributes<std_msgs::msg::String>(node, str_msg);
+  agent_node->get_graph()->update_node(node.value());
+
+  // Check the attributes
+  EXPECT_TRUE(agent_node->get_graph()->get_node("test_node").has_value());
+  auto attrs = agent_node->get_graph()->get_node("test_node").value().attrs();
+  auto text = std::get<std::string>(attrs["text"].value());
+  EXPECT_EQ(text, str_msg.data);
 
   agent_node->deactivate();
   agent_node->cleanup();
