@@ -13,6 +13,7 @@
 
   <depend>bond</depend>
   <depend>bondcpp</depend>
+  <depend>boost</depend>
   <depend>dsr_msgs</depend>
   <depend>eigen</depend>
   <depend>fastcdr</depend>

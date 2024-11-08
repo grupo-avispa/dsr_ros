@@ -48,6 +48,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(bond REQUIRED)
 find_package(bondcpp REQUIRED)
+find_package(Boost REQUIRED)
 find_package(dsr_msgs REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -175,6 +176,7 @@ ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_libraries(agent_node qt_executor)
 ament_export_dependencies(
   bondcpp
+  Boost
   dsr_msgs
   eigen3_cmake_module
   geometry_msgs
