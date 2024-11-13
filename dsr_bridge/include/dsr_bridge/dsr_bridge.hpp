@@ -35,30 +35,6 @@
 namespace dsr_bridge
 {
 
-// Struct to store edges when nodes are not created yet
-struct LostEdge
-{
-  LostEdge(
-    std::string parent, std::string child, std::string edge_type,
-    std::vector<std::string> & attributes)
-  {
-    from = parent;
-    to = child;
-    type = edge_type;
-    attrs = attributes;
-  }
-
-  bool operator==(const LostEdge & other_edge) const
-  {
-    return (from == other_edge.from) && (to == other_edge.to) && (type == other_edge.type);
-  }
-
-  std::string from;
-  std::string to;
-  std::string type;
-  std::vector<std::string> attrs;
-};
-
 /**
  * @class dsr_bridge::DSRBridge
  * @brief Bridge to connect the DSR graphs between machines throughROS 2 topics.
@@ -166,11 +142,22 @@ protected:
    */
   dsr_msgs::msg::Node to_msg(const DSR::Node & node, bool deleted = false);
 
-  std::optional<DSR::Edge> create_dsr_edge(
-    std::string from, std::string to, const std::string & type, std::vector<std::string> & atts);
+  /**
+   * @brief Create a DSR::Edge from a ROS 2 message.
+   *
+   * @param msg The ROS 2 message.
+   * @return DSR::Edge The DSR Edge created.
+   */
+  DSR::Edge from_msg(const dsr_msgs::msg::Edge & msg);
 
-  dsr_msgs::msg::Edge create_msg_edge(
-    std::uint64_t from, std::uint64_t to, const std::string & type);
+  /**
+   * @brief Create a dsr_msgs::msg::Edge from a DSR::Edge.
+   *
+   * @param edge The DSR edge.
+   * @param deleted If the edge has to be marked as deleted.
+   * @return dsr_msgs::msg::Edge The ROS 2 message.
+   */
+  dsr_msgs::msg::Edge to_msg(const DSR::Edge & edge, bool deleted = false);
 
   /**
    * @brief Modify the attributes of a DSR element with the given attributes in a vector of strings.
@@ -191,7 +178,6 @@ protected:
   rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
   rclcpp::Publisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
   std::string edge_topic_, node_topic_;
-  std::vector<LostEdge> lost_edges_;
 };
 
 }  // namespace dsr_bridge
