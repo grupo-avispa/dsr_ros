@@ -10,6 +10,7 @@ X.Y.Z (DD-MM-YYYY)
 * Converted to lifecycle nodes.
 * Converted to composables.
 * Move launch to bringup.
+* Move some functions to dsr_util::helpers.
 
 1.0.0 (04-03-2024)
 ------------------

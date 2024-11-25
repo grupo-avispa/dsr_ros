@@ -189,6 +189,51 @@ std::vector<std::string> attributes_to_string(const std::map<std::string, DSR::A
   return att_vector_str;
 }
 
+/**
+ * @brief Get the attributes from a DSR element in a vector of strings.
+ *
+ * @param elem The DSR element (node or edge) to modify.
+ * @param atts_names The names of the attributes to convert.
+ * @return std::vector<std::string> The vector of strings.
+ */
+template<typename TYPE>
+std::vector<std::string> attributes_to_string_by_names(
+  TYPE & elem, const std::vector<std::string> & atts_names)
+{
+  std::vector<std::string> att_vector_str;
+  for (const auto & att_name : atts_names) {
+    auto search = elem.attrs().find(att_name);
+    if (search != elem.attrs().end()) {
+      att_vector_str.push_back(att_name);
+      att_vector_str.push_back(dsr_util::helpers::attribute_to_string(search->second));
+      att_vector_str.push_back(dsr_util::helpers::get_type_from_attribute(search->second));
+    }
+  }
+  return att_vector_str;
+}
+
+/**
+   * @brief Modify the attributes of a DSR element with the given attributes in a vector of strings.
+   *
+   * @tparam TYPE Type of the DSR element.
+   * @param elem The DSR element (node or edge) to modify.
+   * @param att_str The attributes to modify in format (name, value, type).
+   */
+template<typename TYPE>
+void modify_attributes_from_string(TYPE & elem, const std::vector<std::string> & att_str)
+{
+  for (unsigned int i = 0; i < att_str.size(); i += 3) {
+    std::string att_name = att_str[i];
+    std::string att_value = att_str[i + 1];
+    std::string att_type = att_str[i + 2];
+
+    // Add the attribute to the element
+    DSR::Attribute new_att =
+      dsr_util::helpers::string_to_attribute(att_value, std::stoi(att_type));
+    elem.attrs().insert_or_assign(att_name, new_att);
+  }
+}
+
 }  // namespace dsr_util::helpers
 
 #endif  // DSR_UTIL__HELPERS_HPP_

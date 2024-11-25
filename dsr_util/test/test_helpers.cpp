@@ -15,6 +15,7 @@
 
 #include "gtest/gtest.h"
 #include "dsr_util/helpers.hpp"
+#include "dsr/core/types/user_types.h"
 
 TEST(DsrUtilTest, StringToAttribute) {
   // Test string
@@ -132,10 +133,41 @@ TEST(DsrUtilTest, AttributesToString) {
   EXPECT_EQ(att_str[5], "8");
 }
 
+TEST(DsrUtilTest, AttributesToStringByNames) {
+  auto node = DSR::Node::create<robot_node_type>("test");
+  DSR::Attribute att;
+  att.value(1.0);
+  node.attrs().insert_or_assign("pos_x", att);
+  att.value(2.0);
+  node.attrs().insert_or_assign("pos_y", att);
+
+  auto att_str = dsr_util::helpers::attributes_to_string_by_names(node, {"pos_x", "pos_y"});
+  EXPECT_EQ(att_str.size(), 6);
+  EXPECT_EQ(att_str[0], "pos_x");
+  EXPECT_EQ(att_str[1], "1.000000");
+  EXPECT_EQ(att_str[2], "8");
+  EXPECT_EQ(att_str[3], "pos_y");
+  EXPECT_EQ(att_str[4], "2.000000");
+  EXPECT_EQ(att_str[5], "8");
+}
+
 TEST(DsrUtilTest, GetAttributeType) {
   DSR::Attribute att;
   att.value("test");
   EXPECT_EQ(dsr_util::helpers::get_type_from_attribute(att), "0");
+}
+
+TEST(DsrUtilTest, ModifyAttributesFromString) {
+  auto node = DSR::Node::create<robot_node_type>("test");
+  auto attrs_str = std::vector<std::string>{"pos_x", "1.0", "2", "pos_y", "2.0", "2"};
+  dsr_util::helpers::modify_attributes_from_string(node, attrs_str);
+  auto attrs = node.attrs();
+  auto search = attrs.find("pos_x");
+  EXPECT_TRUE(search != attrs.end());
+  EXPECT_EQ(std::get<float>(search->second.value()), 1.0);
+  search = attrs.find("pos_y");
+  EXPECT_TRUE(search != attrs.end());
+  EXPECT_EQ(std::get<float>(search->second.value()), 2.0);
 }
 
 int main(int argc, char ** argv)
