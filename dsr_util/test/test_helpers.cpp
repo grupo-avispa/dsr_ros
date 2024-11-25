@@ -82,7 +82,7 @@ TEST(DsrUtilTest, AttributeToString) {
   EXPECT_EQ(dsr_util::helpers::attribute_to_string(att), "5");
 
   // Test float
-  att.value(5.0);
+  att.value(static_cast<float>(5.0));
   EXPECT_EQ(dsr_util::helpers::attribute_to_string(att), "5.000000");
 
   // Test float vector
@@ -98,11 +98,11 @@ TEST(DsrUtilTest, AttributeToString) {
   EXPECT_EQ(dsr_util::helpers::attribute_to_string(att), "5,6,7");
 
   // Test uint32_t
-  att.value(5);
+  att.value(static_cast<uint32_t>(5));
   EXPECT_EQ(dsr_util::helpers::attribute_to_string(att), "5");
 
   // Test uint64_t
-  att.value(5);
+  att.value(static_cast<uint64_t>(5));
   EXPECT_EQ(dsr_util::helpers::attribute_to_string(att), "5");
 
   // Test double
