@@ -99,6 +99,10 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSRNode) {
   auto search = attributes.find("level");
   EXPECT_TRUE(search != attributes.end());
   EXPECT_EQ(std::get<int>(search->second.value()), 5);
+
+  // Update the message with a wrong type
+  node_msg.type = "wrong";
+  EXPECT_THROW(agent_node->from_msg(node_msg), std::runtime_error);
 }
 
 TEST_F(DsrUtilTest, DSRBridgeCreateMsgNode) {
@@ -150,6 +154,10 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
   auto search = attributes.find("source");
   EXPECT_TRUE(search != attributes.end());
   EXPECT_EQ(std::get<std::string>(search->second.value()), "robot");
+
+  // Update the message with a wrong type
+  edge_msg.type = "wrong";
+  EXPECT_THROW(agent_node->from_msg(edge_msg), std::runtime_error);
 }
 
 TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
