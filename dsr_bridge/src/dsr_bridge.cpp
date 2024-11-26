@@ -73,9 +73,7 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
   RCLCPP_INFO_ONCE(
     this->get_logger(),
     "Subscribed to nodes topic from [%s]", msg->header.frame_id.c_str());
-  RCLCPP_DEBUG(
-    this->get_logger(),
-    "Node name [%s] and Frame ID [%s]", msg->name.c_str(), msg->header.frame_id.c_str());
+
   // The message comes from the same name, ignore it
   if (msg->header.frame_id == source_) {
     return;
@@ -120,10 +118,12 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
 {
   RCLCPP_INFO_ONCE(
     this->get_logger(), "Subscribed to edges topic from [%s]", msg->header.frame_id.c_str());
+
   // The message comes from the same name, ignore it
   if (msg->header.frame_id == source_) {
     return;
   }
+
   // Create or update the current edge
   if (!msg->deleted) {
     // Update the edge
@@ -142,6 +142,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
       }
       // Create the edge
     } else {
+      // TODO(ajtudela): Check if the nodes exist
       auto new_edge = from_msg(*msg);
       if (G_->insert_or_assign_edge(new_edge)) {
         RCLCPP_DEBUG(
