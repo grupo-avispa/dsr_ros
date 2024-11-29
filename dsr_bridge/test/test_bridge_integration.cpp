@@ -35,6 +35,11 @@ public:
   {
     return G_;
   }
+
+  std::vector<dsr_msgs::msg::Edge> get_lost_edges()
+  {
+    return lost_edges_;
+  }
 };
 
 TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateNode) {
@@ -244,12 +249,6 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateEdge) {
   bridge_node->configure();
   bridge_node->activate();
 
-  // Insert the nodes in the graph
-  auto new_node = DSR::Node::create<robot_node_type>("robot_name");
-  bridge_node->get_graph()->insert_node(new_node);
-  new_node = DSR::Node::create<person_node_type>("person_name");
-  bridge_node->get_graph()->insert_node(new_node);
-
   // Create a message with different source
   dsr_msgs::msg::Edge edge_msg;
   edge_msg.header.frame_id = "test";
@@ -264,11 +263,40 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateEdge) {
   // Check the results: now, the message publisher should have a subscription
   EXPECT_EQ(msg_pub->get_subscription_count(), 1);
 
+  // The edge should not be in the graph because the nodes are not in the graph
+  EXPECT_FALSE(bridge_node->get_graph()->get_node("robot_name").has_value());
+  EXPECT_FALSE(bridge_node->get_graph()->get_node("person_name").has_value());
+  EXPECT_EQ(bridge_node->get_lost_edges().size(), 1);
+  EXPECT_EQ(bridge_node->get_lost_edges()[0].parent, "robot_name");
+  EXPECT_EQ(bridge_node->get_lost_edges()[0].child, "person_name");
+
+  // Now, insert the nodes in the graph
+  auto new_node = DSR::Node::create<robot_node_type>("robot_name");
+  bridge_node->get_graph()->insert_node(new_node);
+  new_node = DSR::Node::create<person_node_type>("person_name");
+  bridge_node->get_graph()->insert_node(new_node);
+
+  // Create a message with different source
+  edge_msg.header.frame_id = "test";
+  edge_msg.parent = "robot_name";
+  edge_msg.child = "person_name";
+  edge_msg.type = "is";
+
+  // Publish and spin
+  msg_pub->publish(edge_msg);
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
   // The edge should be in the graph because the source is different
   EXPECT_TRUE(
     bridge_node->get_graph()->get_edge(
       bridge_node->get_graph()->get_node("robot_name").value().id(),
       bridge_node->get_graph()->get_node("person_name").value().id(), "is").has_value());
+
+  // Now, insert new nodes in the graph
+  new_node = DSR::Node::create<robot_node_type>("robot_name2");
+  bridge_node->get_graph()->insert_node(new_node);
+  new_node = DSR::Node::create<person_node_type>("person_name2");
+  bridge_node->get_graph()->insert_node(new_node);
 
   // Now, create a message with the same source
   edge_msg.header.frame_id = "robot";
@@ -281,10 +309,10 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateEdge) {
   rclcpp::spin_some(bridge_node->get_node_base_interface());
 
   // The edge should not be in the graph because the message comes from the same source
-  // EXPECT_FALSE(
-  //   bridge_node->get_graph()->get_edge(
-  //     bridge_node->get_graph()->get_node("robot_name2").value().id(),
-  //     bridge_node->get_graph()->get_node("person_name2").value().id(), "has").has_value());
+  EXPECT_FALSE(
+    bridge_node->get_graph()->get_edge(
+      bridge_node->get_graph()->get_node("robot_name2").value().id(),
+      bridge_node->get_graph()->get_node("person_name2").value().id(), "has").has_value());
 
   // Deactivate the nodes
   bridge_node->deactivate();

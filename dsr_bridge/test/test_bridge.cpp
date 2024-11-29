@@ -64,6 +64,21 @@ public:
   {
     return dsr_bridge::DSRBridge::to_msg(edge, deleted);
   }
+
+  std::vector<dsr_msgs::msg::Edge> get_lost_edges()
+  {
+    return lost_edges_;
+  }
+
+  void store_lost_edge(const dsr_msgs::msg::Edge & edge)
+  {
+    lost_edges_.push_back(edge);
+  }
+
+  void insert_lost_edges()
+  {
+    dsr_bridge::DSRBridge::insert_lost_edges();
+  }
 };
 
 TEST_F(DsrUtilTest, DSRBridgeConfigure) {
@@ -182,6 +197,35 @@ TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
   EXPECT_TRUE(search != attributes.end());
   EXPECT_EQ(std::get<std::string>(search->second.value()), "robot");
   EXPECT_TRUE(edge_msg.deleted);
+}
+
+TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
+  // Create the node
+  auto agent_node = std::make_shared<DSRBridgeFixture>();
+  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  agent_node->configure();
+  agent_node->activate();
+
+  EXPECT_TRUE(agent_node->get_lost_edges().empty());
+
+  // Create the message and store it
+  dsr_msgs::msg::Edge edge_msg;
+  edge_msg.parent = "robot_parent";
+  edge_msg.child = "robot_child";
+  edge_msg.type = "is";
+  edge_msg.attributes = {"source", "robot", "0"};
+  agent_node->store_lost_edge(edge_msg);
+  EXPECT_EQ(agent_node->get_lost_edges().size(), 1);
+
+  // Add the DRS nodes
+  auto dsr_parent_node = agent_node->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = agent_node->add_node<robot_node_type>("robot_child");
+
+  // Insert the lost edges
+  agent_node->insert_lost_edges();
+
+  // Check the results
+  EXPECT_EQ(agent_node->get_lost_edges().size(), 0);
 }
 
 int main(int argc, char ** argv)

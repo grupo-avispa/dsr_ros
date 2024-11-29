@@ -32,6 +32,11 @@ DSRBridge::DSRBridge(const rclcpp::NodeOptions & options)
 {
 }
 
+DSRBridge::~DSRBridge()
+{
+  lost_edges_.clear();
+}
+
 dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State & state)
 {
   // ROS parameters
@@ -56,14 +61,14 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
     "The parameter edge_topic is set to: [%s]", edge_topic_.c_str());
 
   // Publisher to the other DSR bridge
-  edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
   node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 10);
+  edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
 
   // Subscriber to the external DSR graph
-  edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
-    edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
   node_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Node>(
     node_topic_, 10, std::bind(&DSRBridge::node_from_ros_callback, this, std::placeholders::_1));
+  edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
+    edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
 
   return AgentNode::on_configure(state);
 }
@@ -112,6 +117,8 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
   } else {
     delete_node(msg->name);
   }
+
+  insert_lost_edges();
 }
 
 void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
@@ -126,28 +133,29 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
 
   // Create or update the current edge
   if (!msg->deleted) {
-    // Update the edge
-    if (auto edge = G_->get_edge(msg->parent, msg->child, msg->type); edge.has_value()) {
-      dsr_util::helpers::modify_attributes_from_string(edge.value(), msg->attributes);
-      if (G_->insert_or_assign_edge(edge.value())) {
-        RCLCPP_DEBUG(
-          this->get_logger(),
-          "Updated edge [%s->%s] of type [%s] in the DSR",
-          msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
-      } else {
-        RCLCPP_WARN(
-          this->get_logger(),
-          "The edge [%s->%s] of type [%s] could not be updated in the DSR",
-          msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
-      }
-      // Create the edge
+    // Store the edge until the nodes are created
+    auto parent_node = G_->get_node(msg->parent);
+    auto child_node = G_->get_node(msg->child);
+    if (!parent_node.has_value() || !child_node.has_value()) {
+      lost_edges_.push_back(*msg);
+      RCLCPP_WARN(
+        this->get_logger(),
+        "Th edge [%s->%s] of type [%s] has been stored until the nodes are created",
+        msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
     } else {
-      // TODO(ajtudela): Check if the nodes exist
-      auto new_edge = from_msg(*msg);
+      // Update the edge attributes or create it
+      DSR::Edge new_edge;
+      if (auto edge = G_->get_edge(msg->parent, msg->child, msg->type); edge.has_value()) {
+        dsr_util::helpers::modify_attributes_from_string(edge.value(), msg->attributes);
+        new_edge = edge.value();
+      } else {
+        new_edge = from_msg(*msg);
+      }
+      // Insert the edge in the DSR graph
       if (G_->insert_or_assign_edge(new_edge)) {
         RCLCPP_DEBUG(
           this->get_logger(),
-          "Inserted edge [%s->%s] of type [%s] in the DSR",
+          "Inserted or updated edge [%s->%s] of type [%s] in the DSR",
           msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
       }
     }
@@ -159,7 +167,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
 
 void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
 {
-  // Filter the edges that comes from the same source
+  // Filter the nodes that comes from the same source
   if (auto dsr_node = G_->get_node(id); dsr_node.has_value()) {
     if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value());
       (source.has_value() && source.value() == source_))
@@ -171,7 +179,7 @@ void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
 
 void DSRBridge::node_attr_updated(uint64_t id, const std::vector<std::string> & att_names)
 {
-  // Filter the edges that comes from the same source
+  // Filter the nodes that comes from the same source
   if (auto dsr_node = G_->get_node(id); dsr_node.has_value()) {
     if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value());
       (source.has_value() && source.value() == source_))
@@ -217,13 +225,23 @@ void DSRBridge::edge_attr_updated(
 
 void DSRBridge::node_deleted_by_node(const DSR::Node & node)
 {
-  node_to_ros_pub_->publish(to_msg(node, true));
+  // Filter the nodes that comes from the same source
+  if (auto source = G_->get_attrib_by_name<source_att>(node);
+    (source.has_value() && source.value() == source_))
+  {
+    node_to_ros_pub_->publish(to_msg(node, true));
+  }
 }
 
 void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag)
 {
+  // Filter the edges that comes from the same source
   if (auto dsr_edge = G_->get_edge(from, to, edge_tag); dsr_edge.has_value()) {
-    edge_to_ros_pub_->publish(to_msg(dsr_edge.value(), true));
+    if (auto source = G_->get_attrib_by_name<source_att>(dsr_edge.value());
+      (source.has_value() && source.value() == source_))
+    {
+      edge_to_ros_pub_->publish(to_msg(dsr_edge.value(), true));
+    }
   }
 }
 
@@ -287,6 +305,34 @@ dsr_msgs::msg::Edge DSRBridge::to_msg(const DSR::Edge & edge, bool deleted)
     edge_msg.deleted = deleted;
   }
   return edge_msg;
+}
+
+void DSRBridge::insert_lost_edges()
+{
+  std::vector<dsr_msgs::msg::Edge> to_delete;
+  for (auto & msg : lost_edges_) {
+    auto parent_node = G_->get_node(msg.parent);
+    auto child_node = G_->get_node(msg.child);
+    if (parent_node.has_value() && child_node.has_value()) {
+      auto new_edge = from_msg(msg);
+      if (G_->insert_or_assign_edge(new_edge)) {
+        to_delete.push_back(msg);
+        RCLCPP_INFO(
+          this->get_logger(),
+          "Inserted lost edge [%s->%s] of type [%s] in the DSR",
+          msg.parent.c_str(), msg.child.c_str(), msg.type.c_str());
+      }
+    }
+  }
+
+  for (auto & msg : to_delete) {
+    lost_edges_.erase(
+      std::remove_if(
+        lost_edges_.begin(), lost_edges_.end(), [&msg](const dsr_msgs::msg::Edge & edge) {
+          return edge == msg;
+        }),
+      lost_edges_.end());
+  }
 }
 
 }  // namespace dsr_bridge

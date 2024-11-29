@@ -19,7 +19,6 @@
 #define DSR_BRIDGE__DSR_BRIDGE_HPP_
 
 // C++
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,6 +47,11 @@ public:
    * @param options Node options
    */
   explicit DSRBridge(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+
+  /**
+   * @brief Destroy the DSRBridge object.
+   */
+  ~DSRBridge();
 
   /**
    * @brief Configure the node
@@ -159,11 +163,17 @@ protected:
    */
   dsr_msgs::msg::Edge to_msg(const DSR::Edge & edge, bool deleted = false);
 
-  rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
+  /**
+   * @brief Insert the lost edges in the DSR graph.
+   */
+  void insert_lost_edges();
+
   rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;
-  rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
+  rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
   rclcpp::Publisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
-  std::string edge_topic_, node_topic_;
+  rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
+  std::string node_topic_, edge_topic_;
+  std::vector<dsr_msgs::msg::Edge> lost_edges_;
 };
 
 }  // namespace dsr_bridge
