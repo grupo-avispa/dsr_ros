@@ -275,7 +275,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateEdge) {
   dsr_msgs::msg::Edge edge_msg;
   edge_msg.header.frame_id = "test";
   edge_msg.parent = "robot_parent";
-  edge_msg.child = "person_name";
+  edge_msg.child = "robot_child";
   edge_msg.type = "is";
 
   // Publish and spin
@@ -368,13 +368,13 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyEdge) {
   bridge_node->activate();
 
   // Insert the nodes and the edge in the graph
-  auto new_node = DSR::Node::create<robot_node_type>("robot_name");
+  auto new_node = DSR::Node::create<robot_node_type>("robot_parent");
   bridge_node->get_graph()->insert_node(new_node);
-  new_node = DSR::Node::create<person_node_type>("person_name");
+  new_node = DSR::Node::create<person_node_type>("robot_child");
   bridge_node->get_graph()->insert_node(new_node);
   auto new_edge = DSR::Edge::create<is_edge_type>(
-    bridge_node->get_graph()->get_node("robot_name").value().id(),
-    bridge_node->get_graph()->get_node("person_name").value().id());
+    bridge_node->get_graph()->get_node("robot_parent").value().id(),
+    bridge_node->get_graph()->get_node("robot_child").value().id());
   bridge_node->get_graph()->insert_or_assign_edge(new_edge);
   bridge_node->get_graph()->add_or_modify_attrib_local<width_att>(new_edge, 35);
   bridge_node->get_graph()->insert_or_assign_edge(new_edge);
@@ -382,14 +382,14 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyEdge) {
   // Check that the edge is in the graph
   EXPECT_TRUE(
     bridge_node->get_graph()->get_edge(
-      bridge_node->get_graph()->get_node("robot_name").value().id(),
-      bridge_node->get_graph()->get_node("person_name").value().id(), "is").has_value());
+      bridge_node->get_graph()->get_node("robot_parent").value().id(),
+      bridge_node->get_graph()->get_node("robot_child").value().id(), "is").has_value());
 
   // Create the message
   dsr_msgs::msg::Edge edge_msg;
   edge_msg.header.frame_id = "test";
-  edge_msg.parent = "robot_name";
-  edge_msg.child = "person_name";
+  edge_msg.parent = "robot_parent";
+  edge_msg.child = "robot_child";
   edge_msg.type = "is";
   edge_msg.attributes = {"level", "5", "1"};
 
@@ -402,8 +402,8 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyEdge) {
 
   // The edge should be in the graph
   auto edge = bridge_node->get_graph()->get_edge(
-    bridge_node->get_graph()->get_node("robot_name").value().id(),
-    bridge_node->get_graph()->get_node("person_name").value().id(), "is");
+    bridge_node->get_graph()->get_node("robot_parent").value().id(),
+    bridge_node->get_graph()->get_node("robot_child").value().id(), "is");
   EXPECT_TRUE(edge.has_value());
   auto attributes = edge.value().attrs();
   auto search = attributes.find("width");
@@ -445,26 +445,26 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSDeleteEdge) {
   bridge_node->activate();
 
   // Insert the nodes and the edge in the graph
-  auto new_node = DSR::Node::create<robot_node_type>("robot_name");
+  auto new_node = DSR::Node::create<robot_node_type>("robot_parent");
   bridge_node->get_graph()->insert_node(new_node);
-  new_node = DSR::Node::create<person_node_type>("person_name");
+  new_node = DSR::Node::create<person_node_type>("robot_child");
   bridge_node->get_graph()->insert_node(new_node);
   auto new_edge = DSR::Edge::create<is_edge_type>(
-    bridge_node->get_graph()->get_node("robot_name").value().id(),
-    bridge_node->get_graph()->get_node("person_name").value().id());
+    bridge_node->get_graph()->get_node("robot_parent").value().id(),
+    bridge_node->get_graph()->get_node("robot_child").value().id());
   bridge_node->get_graph()->insert_or_assign_edge(new_edge);
 
   // Check that the edge is in the graph
   EXPECT_TRUE(
     bridge_node->get_graph()->get_edge(
-      bridge_node->get_graph()->get_node("robot_name").value().id(),
-      bridge_node->get_graph()->get_node("person_name").value().id(), "is").has_value());
+      bridge_node->get_graph()->get_node("robot_parent").value().id(),
+      bridge_node->get_graph()->get_node("robot_child").value().id(), "is").has_value());
 
   // Create the message
   dsr_msgs::msg::Edge edge_msg;
   edge_msg.header.frame_id = "test";
-  edge_msg.parent = "robot_name";
-  edge_msg.child = "person_name";
+  edge_msg.parent = "robot_parent";
+  edge_msg.child = "robot_child";
   edge_msg.type = "is";
   edge_msg.deleted = true;
 
@@ -478,8 +478,8 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSDeleteEdge) {
   // The edge should not be in the graph
   EXPECT_FALSE(
     bridge_node->get_graph()->get_edge(
-      bridge_node->get_graph()->get_node("robot_name").value().id(),
-      bridge_node->get_graph()->get_node("person_name").value().id(), "is").has_value());
+      bridge_node->get_graph()->get_node("robot_parent").value().id(),
+      bridge_node->get_graph()->get_node("robot_child").value().id(), "is").has_value());
 
   // Deactivate the nodes
   bridge_node->deactivate();
