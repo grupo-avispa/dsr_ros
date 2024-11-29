@@ -206,9 +206,11 @@ void DSRBridge::edge_updated(std::uint64_t from, std::uint64_t to, const std::st
 }
 
 void DSRBridge::edge_attr_updated(
-  std::uint64_t from, std::uint64_t to,
-  const std::string & type, const std::vector<std::string> & att_names)
+  std::uint64_t /*from*/, std::uint64_t /*to*/,
+  const std::string & /*type*/, const std::vector<std::string> & /*att_names*/)
 {
+  // TODO(ajtudela): Implement this method
+  /*
   // Filter the edges that comes from the same source
   if (auto dsr_edge = G_->get_edge(from, to, type); dsr_edge.has_value()) {
     if (auto source = G_->get_attrib_by_name<source_att>(dsr_edge.value());
@@ -221,6 +223,7 @@ void DSRBridge::edge_attr_updated(
       edge_to_ros_pub_->publish(edge_msg);
     }
   }
+  */
 }
 
 void DSRBridge::node_deleted_by_node(const DSR::Node & node)

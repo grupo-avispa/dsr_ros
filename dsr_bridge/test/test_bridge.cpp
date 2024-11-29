@@ -83,22 +83,22 @@ public:
 
 TEST_F(DsrUtilTest, DSRBridgeConfigure) {
   // Create the node
-  auto agent_node = std::make_shared<DSRBridgeFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
 
-  const auto state_after_configure = agent_node->configure();
+  const auto state_after_configure = bridge_node->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE);
 
-  agent_node->activate();
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  bridge_node->activate();
+  bridge_node->deactivate();
+  bridge_node->cleanup();
+  bridge_node->shutdown();
 }
 
 TEST_F(DsrUtilTest, DSRBridgeCreateDSRNode) {
   // Create the node
-  auto agent_node = std::make_shared<DSRBridgeFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
 
   // Create the message
   dsr_msgs::msg::Node node_msg;
@@ -107,7 +107,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSRNode) {
   node_msg.attributes = {"level", "5", "1"};
 
   // Create the DSR node
-  auto dsr_node = agent_node->from_msg(node_msg);
+  auto dsr_node = bridge_node->from_msg(node_msg);
   EXPECT_EQ(dsr_node.name(), node_msg.name);
   EXPECT_EQ(dsr_node.type(), node_msg.type);
   auto attributes = dsr_node.attrs();
@@ -117,22 +117,22 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSRNode) {
 
   // Update the message with a wrong type
   node_msg.type = "wrong";
-  EXPECT_THROW(agent_node->from_msg(node_msg), std::runtime_error);
+  EXPECT_THROW(bridge_node->from_msg(node_msg), std::runtime_error);
 }
 
 TEST_F(DsrUtilTest, DSRBridgeCreateMsgNode) {
   // Create the node
-  auto agent_node = std::make_shared<DSRBridgeFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->configure();
-  agent_node->activate();
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->configure();
+  bridge_node->activate();
 
   // Create the DSR node
   auto dsr_node = DSR::Node::create<robot_node_type>("robot_name");
-  agent_node->get_graph()->add_or_modify_attrib_local<level_att>(dsr_node, 5);
+  bridge_node->get_graph()->add_or_modify_attrib_local<level_att>(dsr_node, 5);
 
   // Create the message
-  auto node_msg = agent_node->to_msg(dsr_node, true);
+  auto node_msg = bridge_node->to_msg(dsr_node, true);
   EXPECT_EQ(node_msg.name, dsr_node.name());
   EXPECT_EQ(node_msg.type, dsr_node.type());
   auto attributes = dsr_node.attrs();
@@ -144,14 +144,14 @@ TEST_F(DsrUtilTest, DSRBridgeCreateMsgNode) {
 
 TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
   // Create the node
-  auto agent_node = std::make_shared<DSRBridgeFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->configure();
-  agent_node->activate();
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->configure();
+  bridge_node->activate();
 
   // Add the DRS nodes
-  auto dsr_parent_node = agent_node->add_node<robot_node_type>("robot_parent");
-  auto dsr_child_node = agent_node->add_node<robot_node_type>("robot_child");
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
 
   // Create the message
   dsr_msgs::msg::Edge edge_msg;
@@ -161,9 +161,9 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
   edge_msg.attributes = {"source", "robot", "0"};
 
   // Create the DSR edge
-  auto dsr_edge = agent_node->from_msg(edge_msg);
-  EXPECT_EQ(dsr_edge.from(), agent_node->get_graph()->get_node("robot_parent").value().id());
-  EXPECT_EQ(dsr_edge.to(), agent_node->get_graph()->get_node("robot_child").value().id());
+  auto dsr_edge = bridge_node->from_msg(edge_msg);
+  EXPECT_EQ(dsr_edge.from(), bridge_node->get_graph()->get_node("robot_parent").value().id());
+  EXPECT_EQ(dsr_edge.to(), bridge_node->get_graph()->get_node("robot_child").value().id());
   EXPECT_EQ(dsr_edge.type(), "is");
   auto attributes = dsr_edge.attrs();
   auto search = attributes.find("source");
@@ -172,23 +172,23 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
 
   // Update the message with a wrong type
   edge_msg.type = "wrong";
-  EXPECT_THROW(agent_node->from_msg(edge_msg), std::runtime_error);
+  EXPECT_THROW(bridge_node->from_msg(edge_msg), std::runtime_error);
 }
 
 TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
   // Create the node
-  auto agent_node = std::make_shared<DSRBridgeFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->configure();
-  agent_node->activate();
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->configure();
+  bridge_node->activate();
 
   // Add the DRS nodes and edge
-  auto dsr_parent_node = agent_node->add_node<robot_node_type>("robot_parent");
-  auto dsr_child_node = agent_node->add_node<robot_node_type>("robot_child");
-  auto dsr_edge = agent_node->add_edge<is_edge_type>("robot_parent", "robot_child");
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
+  auto dsr_edge = bridge_node->add_edge<is_edge_type>("robot_parent", "robot_child");
 
   // Create the message
-  auto edge_msg = agent_node->to_msg(dsr_edge.value(), true);
+  auto edge_msg = bridge_node->to_msg(dsr_edge.value(), true);
   EXPECT_EQ(edge_msg.parent, "robot_parent");
   EXPECT_EQ(edge_msg.child, "robot_child");
   EXPECT_EQ(edge_msg.type, "is");
@@ -201,12 +201,12 @@ TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
 
 TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
   // Create the node
-  auto agent_node = std::make_shared<DSRBridgeFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->configure();
-  agent_node->activate();
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->configure();
+  bridge_node->activate();
 
-  EXPECT_TRUE(agent_node->get_lost_edges().empty());
+  EXPECT_TRUE(bridge_node->get_lost_edges().empty());
 
   // Create the message and store it
   dsr_msgs::msg::Edge edge_msg;
@@ -214,18 +214,18 @@ TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
   edge_msg.child = "robot_child";
   edge_msg.type = "is";
   edge_msg.attributes = {"source", "robot", "0"};
-  agent_node->store_lost_edge(edge_msg);
-  EXPECT_EQ(agent_node->get_lost_edges().size(), 1);
+  bridge_node->store_lost_edge(edge_msg);
+  EXPECT_EQ(bridge_node->get_lost_edges().size(), 1);
 
   // Add the DRS nodes
-  auto dsr_parent_node = agent_node->add_node<robot_node_type>("robot_parent");
-  auto dsr_child_node = agent_node->add_node<robot_node_type>("robot_child");
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
 
   // Insert the lost edges
-  agent_node->insert_lost_edges();
+  bridge_node->insert_lost_edges();
 
   // Check the results
-  EXPECT_EQ(agent_node->get_lost_edges().size(), 0);
+  EXPECT_EQ(bridge_node->get_lost_edges().size(), 0);
 }
 
 int main(int argc, char ** argv)
