@@ -78,7 +78,7 @@ target_link_libraries(dsr_bridge
 ament_target_dependencies(dsr_bridge PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
 
 # Add executable
-add_executable(dsr_bridge_node src/dsr_bridge_node.cpp)
+add_executable(dsr_bridge_node src/main.cpp)
 target_link_libraries(dsr_bridge_node
   PRIVATE
   dsr_bridge
