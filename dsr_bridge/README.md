@@ -51,8 +51,8 @@ Node that receives the messages from the DSR side and creates the corresponding 
 	The path to the DSR file that will be loaded.
 
 ## Future work
-- [ ] Convert nodes to LifeCycleNodes.
-- [ ] Store the edges if the nodes are not available. and re-send them when the nodes are available.
+- [x] Convert nodes to LifeCycleNodes.
+- [x] Store the edges if the nodes are not available. and re-send them when the nodes are available.
 - [ ] Add filtering options for the nodes / edges.
 - [ ] Add resync function.
 
