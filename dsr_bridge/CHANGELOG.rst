@@ -2,7 +2,7 @@
 Changelog for package dsr_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-X.Y.Z (DD-MM-YYYY)
+1.0.0 (XX-XX-XXXX)
 ------------------
 * Update license to Apache 2.0.
 * Improve formating.
