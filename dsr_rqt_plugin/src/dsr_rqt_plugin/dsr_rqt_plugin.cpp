@@ -1,51 +1,66 @@
-/*
- * DSR RQT PLUGIN ROS NODE
- *
- * Copyright (c) 2023 Alberto José Tudela Roldán <ajtudela@gmail.com>
- * 
- * This file is part of dsr_agent.
- * 
- * All rights reserved.
- *
- */
+// Copyright (c) 2023 Alberto J. Tudela Roldán
+// Copyright (c) 2023 Grupo Avispa, DTE, Universidad de Málaga
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 // ROS
 #include <pluginlib/class_list_macros.hpp>
 #include "dsr_rqt_plugin/dsr_rqt_plugin.hpp"
 
-namespace dsr_rqt_plugin{
+// LCOV_EXCL_START
 
-DSRView::DSRView(): rqt_gui_cpp::Plugin(), widget_(0){
-	//setObjectName("DSRView");
+namespace dsr_rqt_plugin
+{
+
+DSRView::DSRView()
+: rqt_gui_cpp::Plugin(), widget_graph_(0), widget_tree_(0)
+{
 }
 
-DSRView::~DSRView(){
-
+DSRView::~DSRView()
+{
+  G_.reset();
 }
 
 /* Initialize the publishers and subscribers */
-void DSRView::initPlugin(qt_gui_cpp::PluginContext& context){
-	// TODO: Fix this
-	G_ = std::make_shared<DSR::DSRGraph>(0, "DSRView", 255, "");
-	widget_ = new QWidget();
-	QMainWindow *window;
-	graph_viewer_ = std::make_unique<DSR::DSRViewer>(window, G_, DSR::DSRViewer::view::tree, DSR::DSRViewer::view::graph);
-	window->setWindowFlags(Qt::Widget | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
-	context.addWidget(window);
-
-	/*auto centralwidget = new QMainWindow(this);
-	centralwidget->setWindowFlags(Qt::Widget);
-	setCentralWidget(centralwidget);*/
+void DSRView::initPlugin(qt_gui_cpp::PluginContext & context)
+{
+  // Start DSR graph
+  G_ = std::make_shared<DSR::DSRGraph>(0, "DSRView", 255, "");
+  // Set the DSR viewer
+  QMainWindow * window = new QMainWindow();
+  int current_opts = DSR::DSRViewer::view::tree | DSR::DSRViewer::view::graph |
+    DSR::DSRViewer::view::scene | DSR::DSRViewer::view::osg;
+  graph_viewer_ = std::make_unique<DSR::DSRViewer>(
+    window, G_, current_opts, DSR::DSRViewer::view::graph);
+  // FIXME: This is a hack to avoid the window to be shown
+  window->setVisible(false);
+  // Add the widgets to the user interface
+  widget_graph_ = graph_viewer_->get_widget(DSR::DSRViewer::view::graph);
+  widget_graph_->setWindowTitle("DSRGraph");
+  context.addWidget(widget_graph_);
+  widget_tree_ = graph_viewer_->get_widget(DSR::DSRViewer::view::tree);
+  widget_tree_->setWindowTitle("DSRTree");
+  context.addWidget(widget_tree_);
 }
 
-void DSRView::shutdownPlugin(){
+void DSRView::shutdownPlugin()
+{
+  G_.reset();
 }
 
-void DSRView::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const{
-}
-
-void DSRView::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, const qt_gui_cpp::Settings& instance_settings){
-}
-}
+}  // namespace dsr_rqt_plugin
 
 PLUGINLIB_EXPORT_CLASS(dsr_rqt_plugin::DSRView, rqt_gui_cpp::Plugin)
+
+// LCOV_EXCL_STOP

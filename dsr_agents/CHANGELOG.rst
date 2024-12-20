@@ -1,6 +1,48 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Changelog for package dsr_agents
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1.0.0 (XX-XX-XXXX)
+------------------
+* Improve DSR documentation.
+* Better information and refactor in navAgent.
+* Delete unseen persons in personAgent.
+* Initial dsr_bridge.
+* Added qRegisterMetaType.
+* Added source to all agents.
+* Refactor CMakelists.txt.
+* Added new functions to agent node.
+* Remove viewer as it's integrated in dsr_rqt_plugin.
+* Remove QtExecutor as it's integrated in dsr_util.
+* Move ros_to_dsr_types.hpp to dsr_util.
+* Move agent_node.hpp to dsr_util and move agents.
+* Skip the removal of person if they are interacting.
+* Add the rooms to the DSR and the edges between them and the objects.
+* Improve formating.
+* Update license to Apache 2.0.
+* Move DSR callback functions to agent_node.
+* Move action_agent to dsr_util.
+* CMakeLists.txt use modern idioms.
+* Remove agents with private code.
+* Converted agents to lifecycle node.
+* Converted agents to composables.
+* Added unit tests.
+* Added on_cleanup function to delete nodes.
+* Navigation and docking agents now inherit from action_node.
+* Added std_msgs::String to the topic_agent.
+
+0.7.0 (19-06-2024)
+------------------
+* Split the navigation agent into three agents: nav, dock and semantic.
+
+0.6.2 (23-01-2024)
+------------------
+* Added try-catch in navAgent to handle UnknownGoalHandleError exceptions.
+
+0.6.1 (19-01-2024)
+------------------
+* Update robot pose into the DSR when the navigation is updated in navAgent.
+* Update personAgent 
 
 0.6.0 (14-12-2023)
 ------------------

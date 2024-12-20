@@ -1,0 +1,5 @@
+# Save the current DSR into a file
+
+string    dsr_url     # DSR URL
+---
+bool      result      # Result of the service

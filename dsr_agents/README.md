@@ -1,68 +1,28 @@
 # dsr_agents
-![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
 
 ## Overview
 
-This package provides ROS2 agents for connecting to CORTEX architecture using a Deep State Representation (DSR) graph. The package enables the user to easily interface with CORTEX-based systems through a ROS2 middleware.
+This package provides ROS 2 agents designed to facilitate connectivity with the CORTEX architecture through the DSR graph, enabling seamless integration between CORTEX-based systems and the ROS 2 middleware. This functionality simplifies the user's ability to interact with CORTEX-based systems and supports sensor data integration and robot control.
 
-This package feature two templates for creating agents that can be used to publish data in the DSR:
-* **`Topic agent:`** which allows the user to subscribe to a generic topic and publish it in the DSR. This node is useful for users who need to integrate different types of sensors into their CORTEX system. You must update the `ros_to_dsr_types.hpp` file to add the new DSR types and add the conversion from ROS to DSR in the `topic_agent.cpp` file.
-* **`Action agent:`** which allows the user to communicate with the DSR using ROS2 actions. This node is useful for users who need to integrate different types of actuators into their CORTEX system. You must update the `ros_to_dsr_types.hpp` file to add the new DSR types and add the conversion from ROS to DSR in the `action_agent.cpp` file.
+A core feature of the package is a template for creating agents that publish data to the DSR:
+* **`Topic agent:`** this agent enables the user to subscribe to a generic topic and publish its data in the DSR, supporting the integration of various sensor types into a CORTEX system.
 
-Along with the templates mentioned above, this package also provides two agents that can be used to publish data in the DSR:
-* **`Navigation agent:`**  which allows the user to publish the navigation data in the DSR.
-* **`TF agent:`** which publishes the transformation tree as nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system.
-* **`Person agent:`** which publishes the detected people in the DSR.
-
-By default all nodes are created with low priority (0) and they'll only publish with this priority.
-
-Besides the agents, this package also provides a DSR viewer. This viewer allows the user to visualize the DSR graph in a graphical interface.
+In addition to the generic template, depending on the specific task for which they are implemented, there are specialized agents for data publications in the DSR:
+* **`Docking agent:`** initiate docking actions directly within the DSR.
+* **`Navigation agent:`**  facilitates the execution of navigation commands from the DSR.
+* **`TF agent:`** publishes the transformation tree as nodes in the DSR, providing a visual representation of transformations across different reference frames in the CORTEX environment.
 
 **Keywords:** ROS2, cortex, dsr, deep space representation
 
-**Author: Alberto Tudela<br />**
+**Author: Alberto Tudela, Oscar Pons Fernández, José Galeas Merchan<br />**
 
-The dsr_agent package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
-
-## Installation
-
-### Building from Source
-
-#### Dependencies
-
-- [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics)
-- [Cortex](hhttps://github.com/robocomp/cortex) (DSR library)
-- [FAST-DDS](https://github.com/eProsima/Fast-DDS) (eprosima Fast DDS)
-
-#### Building
-
-To build from source, clone the latest version from the main repository into your colcon workspace and compile the package using
-
-	cd colcon_workspace/src
-	git clone https://gitlab.com/grupo-avispa/ros/dsr_ros.git -b humble
-	cd ../
-	rosdep install -i --from-path src --rosdistro humble -y
-	colcon build --symlink-install
-
-## Usage
-
-To use this package, first modify the `default_params.yaml` file located in the `params` directory to set the configuration options for the generic_agent node.
-
-Next, launch the package using the provided launch file `default.launch.py`. This file can be found in the launch directory of the package. To launch the package with default settings, use the following command:
-
-	ros2 launch dsr_agent default.launch.py
-
-The package comes with an example configuration file called `robot_params.yaml` located in the `params` directory and an example launch file called `robot.launch.py` located in the launch directory. These files can be used as a starting point for creating custom configurations and launch files.
-
-The viewer can be launched using the following command:
-
-	ros2 launch dsr_agent dsr_viewer.launch.py
+The dsr_agents package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 ## Nodes
 
 ### topic_agent
 
-Agent that subscribe to a generic topic and publishes it in the DSR.
+Agent that subscribe to a generic topic in ROS 2 and publishes it as a node in the DSR.
 
 #### Subscribed Topics
 
@@ -80,9 +40,25 @@ Agent that subscribe to a generic topic and publishes it in the DSR.
 
 	String that specifies the name of the parent node in the DSR where the `dsr_node_name` should be attached to. If left empty, the node will be attached to frame_id from the ROS header message.
 
+### docking_agent
+
+Agent that wait until a `dock` node is created in the DSR and then start the docking process. The `dock` node must be created with the attribute `dock_id` that contains the id of the docking station where the robot should dock.
+
+#### Actions
+
+* **`dock_robot`**  ([opennav_docking_msgs/action/DockRobot])
+
+	Action to send the robot to the docking station.
+
+#### Parameters
+
+* **`dsr_action_name`** (string, default: "")
+
+	The name of the node in the DSR where the action should be listened.
+
 ### nav_agent
 
-Agent that publishes the navigation data in the DSR.
+Agent that wait until a `move` node is created in the DSR and then start the navigation. The `move` node must be created with the attributes `goal_x`, `goal_y` and `goal_angle` that contains the goal pose for the robot.
 
 #### Actions
 
@@ -90,17 +66,15 @@ Agent that publishes the navigation data in the DSR.
 
 	Action to send a navigation goal from the DSR.
 
-* **`dock`**  ([auto_docking_interfaces/action/Dock])
+#### Parameters
 
-	Action to send a docking goal from the DSR.
+* **`dsr_action_name`** (string, default: "")
 
-* **`semantic_goals`**  ([semantic_navigation_msgs/action/SemanticGoals])
-
-	Action to generate a random pose from a region of interest.
+	The name of the node in the DSR where the action should be listened.
 
 ### tf_agent
 
-Agent that publishes the transformation tree as nodes in the DSR.
+Agent that publishes the transformations tree as RT nodes in the DSR. This allows the user to have a visual representation of the transformations between different reference frames in their CORTEX system. The frame `base_link` is replaced by the `robot` frame in the DSR and the frame `map` is replaced by the `world` frame in the DSR.
 
 #### Subscribed Topics
 
@@ -112,36 +86,9 @@ Agent that publishes the transformation tree as nodes in the DSR.
 
 	The static transformation tree.
 
-### person_agent
-
-Agent that publishes the detected people in the DSR.
-
-#### Subscribed Topics
-
-* **`detections_3d`**  ([vision_msgs/Detection3DArray])
-
-	The detected people in 3D format.
-
-### Common parameters for all nodes
-
-* **`agent_id`** (int, default: 0)
-
-	A unique identifier for the agent.
-
-* **`dsr_input_file`** (string, default: "") (Optional)
-
-	The path to the DSR file that will be loaded.
-
-## Future work
-- [ ] Convert nodes to LifeCycleNodes.
-- [x] Inherit from a generic agent class.
-- [ ] Finish the action agent.
-- [ ] Replace the Detection3DArray message with a custom people message.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/
 [tf2_msgs/TFMessage]: http://docs.ros.org/api/tf2_msgs/html/msg/TFMessage.html
 [nav2_msgs/action/NavigateToPose]: hhttps://github.com/ros-planning/navigation2/blob/main/nav2_msgs/action/NavigateToPose.action
-[auto_docking_interfaces/action/Dock]: https://gitlab.com/grupo-avispa/ros/docking/-/blob/dev/auto_docking_interfaces/action/Dock.action
-[semantic_navigation_msgs/action/SemanticGoals]: https://gitlab.com/grupo-avispa/ros/semantic_navigation/-/blob/dev/semantic_navigation_msgs/srv/SemanticGoals.srv
-[vision_msgs/Detection3DArray]: http://docs.ros.org/api/vision_msgs/html/msg/Detection3DArray.html
+[opennav_docking_msgs/action/DockRobot]: https://github.com/open-navigation/opennav_docking/blob/main/opennav_docking_msgs/action/DockRobot.action

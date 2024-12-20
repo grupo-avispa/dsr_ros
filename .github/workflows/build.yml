@@ -1,0 +1,57 @@
+# Simple set of rules for GitHub actions integration with a ROS project
+#
+
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  CORTEX_PATH: ${{ github.workspace }}/cortex
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.2.2
+      - name: Setup ROS 2
+        uses: ros-tooling/setup-ros@0.7.9
+      - name: Install Cortex
+        run: |
+          mkdir $CORTEX_PATH && cd $CORTEX_PATH
+          curl -o installation.sh https://raw.githubusercontent.com/grupo-avispa/cortex/development/installation.sh
+          chmod +x installation.sh
+          ./installation.sh
+      - name: Install dependencies
+        uses: ros-tooling/action-ros-ci@0.3.15
+        with:
+          package-name: 
+            dsr_ros
+            dsr_agents
+            dsr_bridge
+            dsr_msgs
+            dsr_rqt_plugin
+            dsr_util
+          target-ros2-distro: humble
+          colcon-defaults: |
+            {
+              "build": {
+                "mixin": ["coverage-gcc", "coverage-pytest"]
+              },
+              "test": {
+                "mixin": ["coverage-pytest"]
+              }
+            }
+          skip-tests: false
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.4.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ros_ws/lcov/total_coverage.info,ros_ws/coveragepy/.coverage
+          flags: unittests
+          name: codecov-umbrella
+          slug: grupo-avispa/dsr_ros
