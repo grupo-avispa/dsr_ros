@@ -82,17 +82,16 @@ public:
       this->get_logger(),
       "The parameter dsr_action_name is set to: [%s]", dsr_action_name_.c_str());
 
-    int wait_for_service_timeout_s;
+    int wait_for_service_timeout;
     declare_parameter_if_not_declared(
       this, "wait_for_service_timeout", rclcpp::ParameterValue(1000),
       rcl_interfaces::msg::ParameterDescriptor()
       .set__description("The timeout value for waiting for a service to response"));
-    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout_s);
+    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout);
     RCLCPP_INFO(
       this->get_logger(),
-      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout_s);
-    wait_for_service_timeout_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::duration<int>(wait_for_service_timeout_s));
+      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout);
+    wait_for_service_timeout_ = std::chrono::milliseconds(wait_for_service_timeout);
 
     create_service_client(ros_service_name_);
 
