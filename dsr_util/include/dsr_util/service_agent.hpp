@@ -168,7 +168,8 @@ protected:
         // Delete the action node from the DSR graph
         if (G_->delete_node(action_node.value())) {
           RCLCPP_INFO(
-            this->get_logger(), "Action '%s' has been canceled", dsr_action_name_.c_str());
+            this->get_logger(),
+            "Action '%s' has been %sed", dsr_action_name_.c_str(), type.c_str());
         }
       }
       // Check if the robot wants to start the action: robot ---(wants_to)--> action

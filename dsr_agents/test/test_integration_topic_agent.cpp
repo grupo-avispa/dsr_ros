@@ -48,7 +48,7 @@ TEST_F(DsrUtilTest, topicAgentIntegration) {
   // Publish the message
   topic_pub->publish(scan_msg);
 
-  // Spin the tf_agent node
+  // Spin the topic_agent node
   rclcpp::spin_some(agent_node->get_node_base_interface());
 
   // Check the results: now, the topic should have a subscription

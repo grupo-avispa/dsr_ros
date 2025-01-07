@@ -71,7 +71,7 @@ public:
   }
 };
 
-TEST_F(DsrUtilTest, TopicAgentConfigure) {
+TEST_F(DsrUtilTest, topicAgentConfigure) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -86,7 +86,7 @@ TEST_F(DsrUtilTest, TopicAgentConfigure) {
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, TopicAgentConfigureEmptyTopic) {
+TEST_F(DsrUtilTest, topicAgentConfigureEmptyTopic) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -96,7 +96,7 @@ TEST_F(DsrUtilTest, TopicAgentConfigureEmptyTopic) {
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, TopicAgentHandleTopic) {
+TEST_F(DsrUtilTest, topicAgentHandleTopic) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -131,7 +131,7 @@ TEST_F(DsrUtilTest, TopicAgentHandleTopic) {
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, TopicAgentModifyAttributeBatteryState) {
+TEST_F(DsrUtilTest, topicAgentModifyAttributeBatteryState) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -233,7 +233,7 @@ TEST_F(DsrUtilTest, TopicAgentModifyAttributeBatteryState) {
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, TopicAgentModifyAttributeImage) {
+TEST_F(DsrUtilTest, topicAgentModifyAttributeImage) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -277,7 +277,7 @@ TEST_F(DsrUtilTest, TopicAgentModifyAttributeImage) {
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, TopicAgentModifyAttributeLaserScan) {
+TEST_F(DsrUtilTest, topicAgentModifyAttributeLaserScan) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -327,7 +327,7 @@ TEST_F(DsrUtilTest, TopicAgentModifyAttributeLaserScan) {
   agent_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, TopicAgentModifyAttributeString) {
+TEST_F(DsrUtilTest, topicAgentModifyAttributeString) {
   // Create the node
   auto agent_node = std::make_shared<TopicAgentFixture>();
   agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
