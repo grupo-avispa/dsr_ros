@@ -20,7 +20,7 @@
 
 TEST_F(DsrUtilTest, topicAgentIntegration) {
   rclcpp::init(0, nullptr);
-  // Create the transform publisher node
+  // Create the topic publisher node
   auto pub_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("topic_publisher");
   pub_node->configure();
   // Create a publisher for the topic

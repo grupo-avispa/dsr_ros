@@ -86,6 +86,23 @@ Agent that publishes the transformations tree as RT nodes in the DSR. This allow
 
 	The static transformation tree.
 
+## Parameters (common for all agents)
+
+* **`agent_name`** (string, default: "")
+
+	The name of the agent that will be used.
+
+* **`agent_id`** (int, default: 0)
+
+	A unique identifier for the agent.
+
+* **`dsr_input_file`** (string, default: "") (Optional)
+
+	The path to the DSR file that will be loaded.
+
+* **`source`** (string, default: "robot")
+
+	The source of the nodes / edges.
 
 [Ubuntu]: https://ubuntu.com/
 [ROS2]: https://docs.ros.org/en/humble/
