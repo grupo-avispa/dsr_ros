@@ -46,8 +46,9 @@ protected:
    * @brief Get the goal from the DSR node.
    *
    * @param action_node The DSR node with the goal information.
+   * @return true If the goal is successfully obtained.
    */
-  void get_goal_from_dsr(DSR::Node action_node) override;
+  bool get_goal_from_dsr(DSR::Node action_node) override;
 
   /**
    * @brief Callback to update the robot pose in the DSR graph while navigating.
