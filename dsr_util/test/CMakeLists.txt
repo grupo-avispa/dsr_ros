@@ -1,4 +1,17 @@
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(nav2_util REQUIRED)
+find_package(test_msgs REQUIRED)
+
+# Test for action agent node
+ament_add_gtest(test_action_agent test_action_agent.cpp)
+target_link_libraries(test_action_agent
+  ${fastrtps_LIBRARIES}
+  action_agent
+  ament_index_cpp::ament_index_cpp
+  ${test_msgs_TARGETS}
+)
+ament_target_dependencies(test_action_agent nav2_util)
+
 
 # Test for agent node
 ament_add_gtest(test_agent_node test_agent_node.cpp)

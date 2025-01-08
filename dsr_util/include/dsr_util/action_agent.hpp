@@ -108,11 +108,15 @@ protected:
   /**
    * @brief Function to perform some user-defined operation when the goal is received from the DSR.
    * Usually, this function should fill the goal message with the data from the DSR node.
+   *
+   * @param action_node The DSR node with the goal information.
+   * @return true If the goal is successfully obtained.
    */
-  virtual void get_goal_from_dsr(DSR::Node action_node) = 0;
+  virtual bool get_goal_from_dsr(DSR::Node action_node) = 0;
 
   /**
    * @brief Create instance of an action client
+   *
    * @param ros_action_name Action name to create client for
    */
   void create_action_client(const std::string & ros_action_name)
@@ -159,17 +163,20 @@ protected:
   {
     auto send_goal_options = typename rclcpp_action::Client<ActionT>::SendGoalOptions();
     send_goal_options.goal_response_callback =
-      [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal) {
-        if (!goal) {
+      [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal_handle) {
+        if (!goal_handle) {
           RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
         } else {
           update_dsr_when_goal_accepted();
+          goal_handle_ = goal_handle;
         }
       };
     send_goal_options.result_callback =
       [this](const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result) {
         result_ = result;
+        on_result(result);
         update_dsr_when_result_received();
+        goal_handle_.reset();
       };
     send_goal_options.feedback_callback =
       [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr,
@@ -208,7 +215,15 @@ protected:
   /**
    * @brief Function to perform some user-defined operation inside the feedback callback.
    */
-  virtual void on_feedback(const std::shared_ptr<const typename ActionT::Feedback> feedback)
+  virtual void on_feedback(const std::shared_ptr<const typename ActionT::Feedback>/*feedback*/)
+  {
+  }
+
+  /**
+   * @brief Function to perform some user-defined operation inside the result callback.
+   */
+  virtual void on_result(
+    const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & /*result*/)
   {
   }
 
@@ -248,12 +263,6 @@ protected:
           RCLCPP_ERROR(this->get_logger(), "Goal aborted");
         }
         break;
-      case rclcpp_action::ResultCode::CANCELED:
-        // Replace the 'is_performing' edge with a 'canceled' edge between robot and action
-        if (replace_edge<cancel_edge_type>(source_, dsr_action_name_, "is_performing")) {
-          RCLCPP_ERROR(this->get_logger(), "Goal canceled");
-        }
-        break;
       default:
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
         break;
@@ -282,7 +291,8 @@ protected:
         if (G_->delete_node(action_node.value())) {
           cancel_action();
           RCLCPP_INFO(
-            this->get_logger(), "Action '%s' has been canceled", dsr_action_name_.c_str());
+            this->get_logger(),
+            "Action '%s' has been %sed", dsr_action_name_.c_str(), type.c_str());
         }
       }
       // Check if the robot wants to start the action: robot ---(wants_to)--> action
@@ -292,9 +302,17 @@ protected:
       if (robot_node.has_value() && robot_node.value().name() == source_ &&
         action_node.has_value() && action_node.value().type() == dsr_action_name_)
       {
-        get_goal_from_dsr(action_node.value());
-        send_new_goal();
-        RCLCPP_INFO(this->get_logger(), "Starting the action '%s'", dsr_action_name_.c_str());
+        if (get_goal_from_dsr(action_node.value())) {
+          send_new_goal();
+          RCLCPP_INFO(this->get_logger(), "Starting the action '%s'", dsr_action_name_.c_str());
+        } else {
+          // Replace the 'wants_to' edge with a 'failed' edge between robot and action
+          if (replace_edge<failed_edge_type>(source_, dsr_action_name_, "wants_to")) {
+            RCLCPP_ERROR(
+              this->get_logger(), "Missing goal information in the DSR for the action node '%s'",
+              action_node.value().name().c_str());
+          }
+        }
       }
     }
   }

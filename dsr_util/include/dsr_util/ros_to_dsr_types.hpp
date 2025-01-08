@@ -75,6 +75,7 @@ REGISTER_EDGE_TYPE(finished)
 REGISTER_EDGE_TYPE(abort)
 REGISTER_EDGE_TYPE(aborting)
 REGISTER_EDGE_TYPE(cancel)
+REGISTER_EDGE_TYPE(canceled)
 REGISTER_EDGE_TYPE(failed)
 
 // General types
