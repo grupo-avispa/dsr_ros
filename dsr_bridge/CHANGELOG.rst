@@ -12,6 +12,7 @@ Changelog for package dsr_bridge
 * Move launch to bringup.
 * Move some functions to dsr_util::helpers.
 * Added function to check if the edge are lost in bridge.
+* Add filtering options for the nodes.
 
 1.0.0 (04-03-2024)
 ------------------

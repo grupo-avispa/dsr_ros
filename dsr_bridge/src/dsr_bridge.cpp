@@ -60,6 +60,44 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
     this->get_logger(),
     "The parameter edge_topic is set to: [%s]", edge_topic_.c_str());
 
+  declare_parameter_if_not_declared(
+    this, "include_nodes",
+    rclcpp::ParameterValue(std::vector<std::string>{}),
+    rcl_interfaces::msg::ParameterDescriptor()
+    .set__description("List of node types to be sent to the other DSR bridge"));
+  this->get_parameter("include_nodes", include_nodes_);
+  RCLCPP_INFO(
+    this->get_logger(),
+    "The parameter include_nodes is set to: [%s]",
+    std::accumulate(
+      include_nodes_.begin(), include_nodes_.end(), std::string(),
+      [](const std::string & a, const std::string & b) -> std::string {
+        return a + (a.length() > 0 ? ", " : "") + b;
+      }).c_str());
+
+  std::vector<std::string> exclude;
+  declare_parameter_if_not_declared(
+    this, "exclude_nodes",
+    rclcpp::ParameterValue(std::vector<std::string>{}),
+    rcl_interfaces::msg::ParameterDescriptor()
+    .set__description("List of node types to be excluded from sending to the other DSR bridge"));
+  this->get_parameter("exclude_nodes", exclude);
+
+  if (!include_nodes_.empty()) {
+    RCLCPP_WARN(
+      this->get_logger(), "The parameter include is not empty. It has priority over exclude.");
+  } else {
+    exclude_nodes_ = exclude;
+    RCLCPP_INFO(
+      this->get_logger(),
+      "The parameter exclude is set to: [%s]",
+      std::accumulate(
+        exclude_nodes_.begin(), exclude_nodes_.end(), std::string(),
+        [](const std::string & a, const std::string & b) -> std::string {
+          return a + (a.length() > 0 ? ", " : "") + b;
+        }).c_str());
+  }
+
   // Publisher to the other DSR bridge
   node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 10);
   edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
@@ -172,7 +210,18 @@ void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
     if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value());
       (source.has_value() && source.value() == source_))
     {
-      node_to_ros_pub_->publish(to_msg(dsr_node.value()));
+      // Check if the node type is in the include or exclude list
+      if ((!include_nodes_.empty() &&
+        std::find(
+          include_nodes_.begin(), include_nodes_.end(),
+          dsr_node.value().type()) != include_nodes_.end()) ||
+        (!exclude_nodes_.empty() &&
+        std::find(
+          exclude_nodes_.begin(), exclude_nodes_.end(),
+          dsr_node.value().type()) == exclude_nodes_.end()))
+      {
+        node_to_ros_pub_->publish(to_msg(dsr_node.value()));
+      }
     }
   }
 }

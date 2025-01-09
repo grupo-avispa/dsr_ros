@@ -62,6 +62,16 @@ public:
   {
     return lost_edges_;
   }
+
+  void set_include_nodes(const std::vector<std::string> & include_nodes)
+  {
+    include_nodes_ = include_nodes;
+  }
+
+  void set_exclude_nodes(const std::vector<std::string> & exclude_nodes)
+  {
+    exclude_nodes_ = exclude_nodes;
+  }
 };
 
 TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateNode) {
@@ -526,7 +536,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNode) {
   bridge_node->configure();
   bridge_node->activate();
 
-  // Add a DRS node
+  // Add a DSR node
   auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_name");
   EXPECT_TRUE(bridge_node->get_graph()->get_node("robot_name").has_value());
 
@@ -546,6 +556,191 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNode) {
 
   // Delete the node
   bridge_node->delete_node("robot_name");
+
+  // Deactivate the nodes
+  bridge_node->deactivate();
+  sub_node->deactivate();
+  rclcpp::shutdown();
+  // Have to join thread after rclcpp is shut down otherwise test hangs.
+  sub_thread.join();
+}
+
+TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeInclude) {
+  rclcpp::init(0, nullptr);
+
+  // Create a subscriber node
+  auto sub_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("node_subscriber");
+  sub_node->configure();
+  sub_node->activate();
+
+  // Create a subscriber for the node_msgs
+  // The first count is for created, the second for modified and the third for deleted
+  bool msg_received = false;
+  int count = 0;
+  auto msg_sub = sub_node->create_subscription<dsr_msgs::msg::Node>(
+    "nodes", 1,
+    [&](const dsr_msgs::msg::Node msg) {
+      msg_received = true;
+      if (count == 1) {
+        EXPECT_EQ(msg.name, "robot_name");
+        EXPECT_EQ(msg.type, "robot");
+      }
+      RCLCPP_INFO(sub_node->get_logger(), "Message received");
+      count++;
+    });
+  auto sub_thread = std::thread([&]() {rclcpp::spin(sub_node->get_node_base_interface());});
+
+  // Create the bridge node
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->declare_parameter(
+    "include_nodes", rclcpp::ParameterValue(std::vector<std::string>{"robot"}));
+  bridge_node->configure();
+  bridge_node->activate();
+
+  // Add a DSR node
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_name");
+  EXPECT_TRUE(bridge_node->get_graph()->get_node("robot_name").has_value());
+
+  // Spin
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
+  // Check the results: now, the message subscriber should have a publisher
+  EXPECT_EQ(msg_sub->get_publisher_count(), 1);
+
+  // Add a second node to the DSR node
+  auto dsr_child_node = bridge_node->add_node<person_node_type>("person_name");
+  EXPECT_TRUE(bridge_node->get_graph()->get_node("person_name").has_value());
+
+  // Spin
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
+  // Check the results: the count should be 1 because the second node is not included
+  EXPECT_EQ(count, 1);
+
+  // Deactivate the nodes
+  bridge_node->deactivate();
+  sub_node->deactivate();
+  rclcpp::shutdown();
+  // Have to join thread after rclcpp is shut down otherwise test hangs.
+  sub_thread.join();
+}
+
+TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeExclude) {
+  rclcpp::init(0, nullptr);
+
+  // Create a subscriber node
+  auto sub_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("node_subscriber");
+  sub_node->configure();
+  sub_node->activate();
+
+  // Create a subscriber for the node_msgs
+  // The first count is for created, the second for modified and the third for deleted
+  bool msg_received = false;
+  int count = 0;
+  auto msg_sub = sub_node->create_subscription<dsr_msgs::msg::Node>(
+    "nodes", 1,
+    [&](const dsr_msgs::msg::Node msg) {
+      msg_received = true;
+      if (count == 1) {
+        EXPECT_EQ(msg.name, "person_name");
+        EXPECT_EQ(msg.type, "person");
+      }
+      RCLCPP_INFO(sub_node->get_logger(), "Message received");
+      count++;
+    });
+  auto sub_thread = std::thread([&]() {rclcpp::spin(sub_node->get_node_base_interface());});
+
+  // Create the bridge node
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->declare_parameter(
+    "exclude_nodes", rclcpp::ParameterValue(std::vector<std::string>{"robot"}));
+  bridge_node->configure();
+  bridge_node->activate();
+
+  // Add a DSR node
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_name");
+  EXPECT_TRUE(bridge_node->get_graph()->get_node("robot_name").has_value());
+
+  // Spin
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
+  // Check the results: now, the message subscriber should have a publisher
+  EXPECT_EQ(msg_sub->get_publisher_count(), 1);
+
+  // Add a second node to the DSR node
+  auto dsr_child_node = bridge_node->add_node<person_node_type>("person_name");
+  EXPECT_TRUE(bridge_node->get_graph()->get_node("person_name").has_value());
+
+  // Spin
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
+  // Check the results: the count should be 1 because the second node is not included
+  EXPECT_EQ(count, 1);
+
+  // Deactivate the nodes
+  bridge_node->deactivate();
+  sub_node->deactivate();
+  rclcpp::shutdown();
+  // Have to join thread after rclcpp is shut down otherwise test hangs.
+  sub_thread.join();
+}
+
+TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeIncludeExclude) {
+  rclcpp::init(0, nullptr);
+
+  // Create a subscriber node
+  auto sub_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("node_subscriber");
+  sub_node->configure();
+  sub_node->activate();
+
+  // Create a subscriber for the node_msgs
+  // The first count is for created, the second for modified and the third for deleted
+  bool msg_received = false;
+  int count = 0;
+  auto msg_sub = sub_node->create_subscription<dsr_msgs::msg::Node>(
+    "nodes", 1,
+    [&](const dsr_msgs::msg::Node msg) {
+      msg_received = true;
+      if (count == 1) {
+        EXPECT_EQ(msg.name, "robot_name");
+        EXPECT_EQ(msg.type, "robot");
+      }
+      RCLCPP_INFO(sub_node->get_logger(), "Message received");
+      count++;
+    });
+  auto sub_thread = std::thread([&]() {rclcpp::spin(sub_node->get_node_base_interface());});
+
+  // Create the bridge node
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->declare_parameter(
+    "include_nodes", rclcpp::ParameterValue(std::vector<std::string>{"robot"}));
+  bridge_node->declare_parameter(
+    "exclude_nodes", rclcpp::ParameterValue(std::vector<std::string>{"person"}));
+  bridge_node->configure();
+  bridge_node->activate();
+
+  // Add a DSR node
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_name");
+  EXPECT_TRUE(bridge_node->get_graph()->get_node("robot_name").has_value());
+
+  // Spin
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
+  // Check the results: now, the message subscriber should have a publisher
+  EXPECT_EQ(msg_sub->get_publisher_count(), 1);
+
+  // Add a second node to the DSR node
+  auto dsr_child_node = bridge_node->add_node<person_node_type>("person_name");
+  EXPECT_TRUE(bridge_node->get_graph()->get_node("person_name").has_value());
+
+  // Spin
+  rclcpp::spin_some(bridge_node->get_node_base_interface());
+
+  // Check the results: the count should be 1 because the second node is not included
+  EXPECT_EQ(count, 1);
 
   // Deactivate the nodes
   bridge_node->deactivate();
@@ -593,7 +788,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdge) {
   bridge_node->configure();
   bridge_node->activate();
 
-  // Add the DRS nodes and edge
+  // Add the DSR nodes and edge
   auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
   auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
   auto dsr_edge = bridge_node->add_edge<is_edge_type>("robot_parent", "robot_child");

@@ -174,6 +174,9 @@ protected:
   rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
   std::string node_topic_, edge_topic_;
   std::vector<dsr_msgs::msg::Edge> lost_edges_;
+
+  // List of node types to include or exclude
+  std::vector<std::string> include_nodes_, exclude_nodes_;
 };
 
 }  // namespace dsr_bridge
