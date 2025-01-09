@@ -52,13 +52,13 @@ public:
   template<typename node_type>
   std::optional<DSR::Node> add_node(const std::string & name)
   {
-    return dsr_util::AgentNode::add_node<node_type>(name);
+    return dsr_util::NodeAgent::add_node<node_type>(name);
   }
 
   template<typename edge_type>
   std::optional<DSR::Edge> add_edge(const std::string & parent, const std::string & child)
   {
-    return dsr_util::AgentNode::add_edge<edge_type>(parent, child);
+    return dsr_util::NodeAgent::add_edge<edge_type>(parent, child);
   }
 
 private:
@@ -134,114 +134,114 @@ protected:
 
 TEST_F(DsrUtilTest, actionAgentConfigure) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
+  auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  const auto state_after_configure = agent_node->configure();
+  const auto state_after_configure = node_agent->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE);
 
-  agent_node->activate();
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->activate();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
   dummy_server_node.reset();
   rclcpp::shutdown();
 }
 
 TEST_F(DsrUtilTest, actionAgentConfigureWithoutServer) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<ActionAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  const auto state_after_configure = agent_node->configure();
+  const auto state_after_configure = node_agent->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED);
-  agent_node->shutdown();
+  node_agent->shutdown();
   rclcpp::shutdown();
 }
 
 TEST_F(DsrUtilTest, actionAgentAbortCancelAction) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
+  auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Insert the nodes and an abort edge in the graph
-  auto robot_node = agent_node->add_node<robot_node_type>("robot");
-  auto action_node = agent_node->add_node<move_node_type>("move");
-  EXPECT_TRUE(agent_node->get_graph()->get_node("move").has_value());
+  auto robot_node = node_agent->add_node<robot_node_type>("robot");
+  auto action_node = node_agent->add_node<move_node_type>("move");
+  EXPECT_TRUE(node_agent->get_graph()->get_node("move").has_value());
 
-  auto edge = agent_node->add_edge<abort_edge_type>("robot", "move");
+  auto edge = node_agent->add_edge<abort_edge_type>("robot", "move");
 
   // Check the result: the node should be removed
-  EXPECT_FALSE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_FALSE(node_agent->get_graph()->get_node("move").has_value());
 
   // Now, we insert the action node again and a cancel edge
-  action_node = agent_node->add_node<move_node_type>("move");
-  EXPECT_TRUE(agent_node->get_graph()->get_node("move").has_value());
+  action_node = node_agent->add_node<move_node_type>("move");
+  EXPECT_TRUE(node_agent->get_graph()->get_node("move").has_value());
 
-  edge = agent_node->add_edge<cancel_edge_type>("robot", "move");
+  edge = node_agent->add_edge<cancel_edge_type>("robot", "move");
 
   // Check the result: the node should be removed
-  EXPECT_FALSE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_FALSE(node_agent->get_graph()->get_node("move").has_value());
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
   dummy_server_node.reset();
   rclcpp::shutdown();
 }
 
 TEST_F(DsrUtilTest, actionAgentWantsToActionSucceeded) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
+  auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
   dummy_server_node->setExecutionDuration(std::chrono::milliseconds(5));
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a thread to spin the node
-  auto node_thread = std::thread([&]() {rclcpp::spin(agent_node->get_node_base_interface());});
+  auto node_thread = std::thread([&]() {rclcpp::spin(node_agent->get_node_base_interface());});
 
   // Insert the nodes and a wants_to edge in the graph
-  auto robot_node = agent_node->add_node<robot_node_type>("robot");
-  auto action_node = agent_node->add_node<move_node_type>("move");
+  auto robot_node = node_agent->add_node<robot_node_type>("robot");
+  auto action_node = node_agent->add_node<move_node_type>("move");
 
-  EXPECT_TRUE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("move").has_value());
 
-  auto edge = agent_node->add_edge<wants_to_edge_type>("robot", "move");
+  auto edge = node_agent->add_edge<wants_to_edge_type>("robot", "move");
 
   // Wait until the edge becomes 'is_performing'
   std::this_thread::sleep_for(std::chrono::milliseconds(2));
-  auto is_performing_edge = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("robot").value().id(),
-    agent_node->get_graph()->get_node("move").value().id(), "is_performing");
+  auto is_performing_edge = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("robot").value().id(),
+    node_agent->get_graph()->get_node("move").value().id(), "is_performing");
   EXPECT_TRUE(is_performing_edge.has_value());
 
   // Wait for the action to finish
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
-  auto finished_edge = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("robot").value().id(),
-    agent_node->get_graph()->get_node("move").value().id(), "finished");
+  auto finished_edge = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("robot").value().id(),
+    node_agent->get_graph()->get_node("move").value().id(), "finished");
   EXPECT_TRUE(finished_edge.has_value());
 
   // Check the result
-  EXPECT_TRUE(agent_node->get_result().code == rclcpp_action::ResultCode::SUCCEEDED);
+  EXPECT_TRUE(node_agent->get_result().code == rclcpp_action::ResultCode::SUCCEEDED);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
   dummy_server_node.reset();
   rclcpp::shutdown();
   // Have to join thread after rclcpp is shut down otherwise test hangs.
@@ -250,48 +250,48 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionSucceeded) {
 
 TEST_F(DsrUtilTest, actionAgentWantsToActionAbort) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
+  auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
   dummy_server_node->setReturn(false);
   dummy_server_node->setExecutionDuration(std::chrono::milliseconds(5));
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a thread to spin the node
-  auto node_thread = std::thread([&]() {rclcpp::spin(agent_node->get_node_base_interface());});
+  auto node_thread = std::thread([&]() {rclcpp::spin(node_agent->get_node_base_interface());});
 
   // Insert the nodes and a wants_to edge in the graph
-  auto robot_node = agent_node->add_node<robot_node_type>("robot");
-  auto action_node = agent_node->add_node<move_node_type>("move");
+  auto robot_node = node_agent->add_node<robot_node_type>("robot");
+  auto action_node = node_agent->add_node<move_node_type>("move");
 
-  EXPECT_TRUE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("move").has_value());
 
-  auto edge = agent_node->add_edge<wants_to_edge_type>("robot", "move");
+  auto edge = node_agent->add_edge<wants_to_edge_type>("robot", "move");
 
   // Wait until the edge becomes 'is_performing'
   std::this_thread::sleep_for(std::chrono::milliseconds(2));
-  auto is_performing_edge = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("robot").value().id(),
-    agent_node->get_graph()->get_node("move").value().id(), "is_performing");
+  auto is_performing_edge = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("robot").value().id(),
+    node_agent->get_graph()->get_node("move").value().id(), "is_performing");
   EXPECT_TRUE(is_performing_edge.has_value());
 
   // Wait for the action to finish
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
-  auto failed_edge = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("robot").value().id(),
-    agent_node->get_graph()->get_node("move").value().id(), "failed");
+  auto failed_edge = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("robot").value().id(),
+    node_agent->get_graph()->get_node("move").value().id(), "failed");
   EXPECT_TRUE(failed_edge.has_value());
 
   // Check the result
-  EXPECT_TRUE(agent_node->get_result().code == rclcpp_action::ResultCode::ABORTED);
+  EXPECT_TRUE(node_agent->get_result().code == rclcpp_action::ResultCode::ABORTED);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
   dummy_server_node.reset();
   rclcpp::shutdown();
   // Have to join thread after rclcpp is shut down otherwise test hangs.
@@ -300,46 +300,46 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionAbort) {
 
 TEST_F(DsrUtilTest, actionAgentWantsToActionCancel) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
+  auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
   dummy_server_node->setExecutionDuration(std::chrono::milliseconds(5));
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a thread to spin the node
-  auto node_thread = std::thread([&]() {rclcpp::spin(agent_node->get_node_base_interface());});
+  auto node_thread = std::thread([&]() {rclcpp::spin(node_agent->get_node_base_interface());});
 
   // Insert the nodes and a wants_to edge in the graph
-  auto robot_node = agent_node->add_node<robot_node_type>("robot");
-  auto action_node = agent_node->add_node<move_node_type>("move");
+  auto robot_node = node_agent->add_node<robot_node_type>("robot");
+  auto action_node = node_agent->add_node<move_node_type>("move");
 
-  EXPECT_TRUE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("move").has_value());
 
-  auto edge = agent_node->add_edge<wants_to_edge_type>("robot", "move");
+  auto edge = node_agent->add_edge<wants_to_edge_type>("robot", "move");
 
   // Wait until the edge becomes 'is_performing'
   std::this_thread::sleep_for(std::chrono::milliseconds(2));
-  auto is_performing_edge = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("robot").value().id(),
-    agent_node->get_graph()->get_node("move").value().id(), "is_performing");
+  auto is_performing_edge = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("robot").value().id(),
+    node_agent->get_graph()->get_node("move").value().id(), "is_performing");
   EXPECT_TRUE(is_performing_edge.has_value());
 
   // Now insert a cancel edge
-  edge = agent_node->add_edge<cancel_edge_type>("robot", "move");
+  edge = node_agent->add_edge<cancel_edge_type>("robot", "move");
 
   // Wait for the action to finish
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the result
-  EXPECT_FALSE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_FALSE(node_agent->get_graph()->get_node("move").has_value());
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
   dummy_server_node.reset();
   rclcpp::shutdown();
   // Have to join thread after rclcpp is shut down otherwise test hangs.
@@ -348,35 +348,35 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionCancel) {
 
 TEST_F(DsrUtilTest, actionAgentWantsToActionMissing) {
   rclcpp::init(0, nullptr);
-  auto agent_node = std::make_shared<ActionAgentFixture>();
+  auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Set the return value to false
-  agent_node->set_return_goal_from_dsr(false);
+  node_agent->set_return_goal_from_dsr(false);
 
   // Insert the nodes and a wants_to edge in the graph
-  auto robot_node = agent_node->add_node<robot_node_type>("robot");
-  auto action_node = agent_node->add_node<move_node_type>("move");
+  auto robot_node = node_agent->add_node<robot_node_type>("robot");
+  auto action_node = node_agent->add_node<move_node_type>("move");
 
-  EXPECT_TRUE(agent_node->get_graph()->get_node("move").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("move").has_value());
 
-  auto edge = agent_node->add_edge<wants_to_edge_type>("robot", "move");
+  auto edge = node_agent->add_edge<wants_to_edge_type>("robot", "move");
 
   // Wait until the edge becomes 'failed'
-  auto failed_edge = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("robot").value().id(),
-    agent_node->get_graph()->get_node("move").value().id(), "failed");
+  auto failed_edge = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("robot").value().id(),
+    node_agent->get_graph()->get_node("move").value().id(), "failed");
   EXPECT_TRUE(failed_edge.has_value());
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
   dummy_server_node.reset();
   rclcpp::shutdown();
 }

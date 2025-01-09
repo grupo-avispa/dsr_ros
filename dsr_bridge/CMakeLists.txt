@@ -69,7 +69,7 @@ target_include_directories(dsr_bridge PUBLIC
 target_link_libraries(dsr_bridge
   PUBLIC
   ${dsr_msgs_TARGETS}
-  dsr_util::agent_node
+  dsr_util::node_agent
   rclcpp::rclcpp
   PRIVATE
   ${fastrtps_LIBRARIES}

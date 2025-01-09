@@ -110,85 +110,85 @@ protected:
 };
 
 TEST_F(DsrUtilTest, navAgentGetGoalFromDSR) {
-  auto agent_node = std::make_shared<NavAgentFixture>();
+  auto node_agent = std::make_shared<NavAgentFixture>();
   auto dummy_navigator_node = std::make_shared<DummyNavigationServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Insert a node with the goal in the graph
   auto new_node = DSR::Node::create<move_node_type>("move");
-  agent_node->get_graph()->insert_node(new_node);
-  agent_node->get_graph()->add_or_modify_attrib_local<goal_x_att>(
+  node_agent->get_graph()->insert_node(new_node);
+  node_agent->get_graph()->add_or_modify_attrib_local<goal_x_att>(
     new_node, static_cast<float>(1.0));
-  agent_node->get_graph()->add_or_modify_attrib_local<goal_y_att>(
+  node_agent->get_graph()->add_or_modify_attrib_local<goal_y_att>(
     new_node, static_cast<float>(2.0));
-  agent_node->get_graph()->add_or_modify_attrib_local<goal_angle_att>(
+  node_agent->get_graph()->add_or_modify_attrib_local<goal_angle_att>(
     new_node, static_cast<float>(3.0));
-  agent_node->get_graph()->update_node(new_node);
+  node_agent->get_graph()->update_node(new_node);
 
   // Check the results
-  EXPECT_TRUE(agent_node->get_goal_from_dsr(new_node));
-  EXPECT_EQ(agent_node->get_goal().pose.header.frame_id, "map");
-  EXPECT_DOUBLE_EQ(agent_node->get_goal().pose.pose.position.x, 1.0);
-  EXPECT_DOUBLE_EQ(agent_node->get_goal().pose.pose.position.y, 2.0);
+  EXPECT_TRUE(node_agent->get_goal_from_dsr(new_node));
+  EXPECT_EQ(node_agent->get_goal().pose.header.frame_id, "map");
+  EXPECT_DOUBLE_EQ(node_agent->get_goal().pose.pose.position.x, 1.0);
+  EXPECT_DOUBLE_EQ(node_agent->get_goal().pose.pose.position.y, 2.0);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, navAgentGetGoalFromDSRMisssing) {
-  auto agent_node = std::make_shared<NavAgentFixture>();
+  auto node_agent = std::make_shared<NavAgentFixture>();
   auto dummy_navigator_node = std::make_shared<DummyNavigationServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Insert a node with the goal in the graph but without values
   auto new_node = DSR::Node::create<move_node_type>("move");
-  agent_node->get_graph()->insert_node(new_node);
+  node_agent->get_graph()->insert_node(new_node);
 
   // Check the results
-  EXPECT_FALSE(agent_node->get_goal_from_dsr(new_node));
+  EXPECT_FALSE(node_agent->get_goal_from_dsr(new_node));
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, navAgentOnFeedback) {
-  auto agent_node = std::make_shared<NavAgentFixture>();
+  auto node_agent = std::make_shared<NavAgentFixture>();
   auto dummy_navigator_node = std::make_shared<DummyNavigationServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Insert a robot node
   auto robot_node = DSR::Node::create<robot_node_type>("robot");
-  agent_node->get_graph()->insert_node(robot_node);
+  node_agent->get_graph()->insert_node(robot_node);
 
   // Create a feedback message
   auto feedback = std::make_shared<nav2_msgs::action::NavigateToPose::Feedback>();
   feedback->current_pose.pose.position.x = 1.0;
   feedback->current_pose.pose.position.y = 2.0;
-  agent_node->on_feedback(feedback);
+  node_agent->on_feedback(feedback);
 
   // Check the results
-  robot_node = agent_node->get_graph()->get_node("robot").value();
+  robot_node = node_agent->get_graph()->get_node("robot").value();
   auto attrs = robot_node.attrs();
   EXPECT_FLOAT_EQ(std::get<float>(attrs["pose_x"].value()), 1.0);
   EXPECT_FLOAT_EQ(std::get<float>(attrs["pose_y"].value()), 2.0);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 int main(int argc, char ** argv)

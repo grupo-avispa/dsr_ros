@@ -27,7 +27,7 @@
 
 // DSR
 #include "dsr/api/dsr_api.h"
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_util
 {
@@ -42,7 +42,7 @@ namespace dsr_util
  * @tparam ActionT The type of the ROS 2 action.
  */
 template<class ActionT>
-class ActionAgent : public dsr_util::AgentNode
+class ActionAgent : public dsr_util::NodeAgent
 {
 public:
   /**
@@ -55,7 +55,7 @@ public:
   ActionAgent(
     std::string ros_node_name, std::string ros_action_name,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : dsr_util::AgentNode(ros_node_name, options), ros_action_name_(ros_action_name)
+  : dsr_util::NodeAgent(ros_node_name, options), ros_action_name_(ros_action_name)
   {
     // Initialize the input and output messages
     goal_ = typename ActionT::Goal();
@@ -99,7 +99,7 @@ public:
 
     create_action_client(ros_action_name_);
 
-    return AgentNode::on_configure(state);
+    return NodeAgent::on_configure(state);
   }
 
 protected:

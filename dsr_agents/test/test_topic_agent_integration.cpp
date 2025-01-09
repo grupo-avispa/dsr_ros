@@ -34,12 +34,12 @@ TEST_F(DsrUtilTest, topicAgentIntegration) {
   auto pub_thread = std::thread([&]() {rclcpp::spin(pub_node->get_node_base_interface());});
 
   // Create and configure the topic_agent node
-  auto agent_node = std::make_shared<dsr_agents::TopicAgent>();
+  auto node_agent = std::make_shared<dsr_agents::TopicAgent>();
   // Set some parameters
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("/scan"));
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("/scan"));
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a message
   sensor_msgs::msg::LaserScan scan_msg;
@@ -49,14 +49,14 @@ TEST_F(DsrUtilTest, topicAgentIntegration) {
   topic_pub->publish(scan_msg);
 
   // Spin the topic_agent node
-  rclcpp::spin_some(agent_node->get_node_base_interface());
+  rclcpp::spin_some(node_agent->get_node_base_interface());
 
   // Check the results: now, the topic should have a subscription
   EXPECT_EQ(topic_pub->get_subscription_count(), 1);
 
   // Deactivate the nodes
-  agent_node->deactivate();
-  agent_node->cleanup();
+  node_agent->deactivate();
+  node_agent->cleanup();
   pub_node->deactivate();
   rclcpp::shutdown();
   // Have to join thread after rclcpp is shut down otherwise test hangs.

@@ -28,7 +28,7 @@ namespace dsr_bridge
 {
 
 DSRBridge::DSRBridge(const rclcpp::NodeOptions & options)
-: dsr_util::AgentNode("dsr_bridge", options)
+: dsr_util::NodeAgent("dsr_bridge", options)
 {
 }
 
@@ -108,7 +108,7 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
   edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
     edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
 
-  return AgentNode::on_configure(state);
+  return NodeAgent::on_configure(state);
 }
 
 void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)

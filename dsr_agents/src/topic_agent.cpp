@@ -34,7 +34,7 @@ namespace dsr_agents
 {
 
 TopicAgent::TopicAgent(const rclcpp::NodeOptions & options)
-: dsr_util::AgentNode("generic_agent", options)
+: dsr_util::NodeAgent("generic_agent", options)
 {
 }
 
@@ -82,7 +82,7 @@ dsr_util::CallbackReturn TopicAgent::on_configure(const rclcpp_lifecycle::State 
       std::bind(&TopicAgent::serial_callback, this, std::placeholders::_1));
   }
 
-  return AgentNode::on_configure(state);
+  return NodeAgent::on_configure(state);
 }
 
 dsr_util::CallbackReturn TopicAgent::on_cleanup(const rclcpp_lifecycle::State & state)
@@ -95,7 +95,7 @@ dsr_util::CallbackReturn TopicAgent::on_cleanup(const rclcpp_lifecycle::State & 
     delete_node(dsr_node_name_);
   }
 
-  return AgentNode::on_cleanup(state);
+  return NodeAgent::on_cleanup(state);
 }
 
 void TopicAgent::serial_callback(const std::shared_ptr<rclcpp::SerializedMessage> msg)

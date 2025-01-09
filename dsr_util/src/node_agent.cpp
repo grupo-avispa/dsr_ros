@@ -16,12 +16,12 @@
 // ROS
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_util
 {
 
-AgentNode::AgentNode(std::string ros_node_name, const rclcpp::NodeOptions & options)
+NodeAgent::NodeAgent(std::string ros_node_name, const rclcpp::NodeOptions & options)
 : rclcpp_lifecycle::LifecycleNode(ros_node_name, "", options)
 {
   // Register types
@@ -42,13 +42,13 @@ AgentNode::AgentNode(std::string ros_node_name, const rclcpp::NodeOptions & opti
   this->get_parameter("bond_heartbeat_period", bond_heartbeat_period_);
 }
 
-AgentNode::~AgentNode()
+NodeAgent::~NodeAgent()
 {
   G_.reset();
   rt_.reset();
 }
 
-CallbackReturn AgentNode::on_configure(const rclcpp_lifecycle::State & state)
+CallbackReturn NodeAgent::on_configure(const rclcpp_lifecycle::State & state)
 {
   // Get ROS parameters
   get_common_params();
@@ -68,33 +68,33 @@ CallbackReturn AgentNode::on_configure(const rclcpp_lifecycle::State & state)
   // Create service
   save_dsr_service_ = this->create_service<dsr_msgs::srv::SaveDSR>(
     "save_dsr",
-    std::bind(&AgentNode::save_dsr, this, std::placeholders::_1, std::placeholders::_2));
+    std::bind(&NodeAgent::save_dsr, this, std::placeholders::_1, std::placeholders::_2));
 
   // Add connection signals
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_signal, this, &AgentNode::node_updated);
+    G_.get(), &DSR::DSRGraph::update_node_signal, this, &NodeAgent::node_updated);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &AgentNode::node_attr_updated);
+    G_.get(), &DSR::DSRGraph::update_node_attr_signal, this, &NodeAgent::node_attr_updated);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &AgentNode::edge_updated);
+    G_.get(), &DSR::DSRGraph::update_edge_signal, this, &NodeAgent::edge_updated);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &AgentNode::edge_attr_updated);
+    G_.get(), &DSR::DSRGraph::update_edge_attr_signal, this, &NodeAgent::edge_attr_updated);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &AgentNode::edge_deleted);
+    G_.get(), &DSR::DSRGraph::del_edge_signal, this, &NodeAgent::edge_deleted);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal, this, &AgentNode::node_deleted);
+    G_.get(), &DSR::DSRGraph::del_node_signal, this, &NodeAgent::node_deleted);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::create_node_signal, this, &AgentNode::node_created);
+    G_.get(), &DSR::DSRGraph::create_node_signal, this, &NodeAgent::node_created);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_node_signal_by_node, this, &AgentNode::node_deleted_by_node);
+    G_.get(), &DSR::DSRGraph::del_node_signal_by_node, this, &NodeAgent::node_deleted_by_node);
   QObject::connect(
-    G_.get(), &DSR::DSRGraph::del_edge_signal_by_edge, this, &AgentNode::edge_deleted_by_edge);
+    G_.get(), &DSR::DSRGraph::del_edge_signal_by_edge, this, &NodeAgent::edge_deleted_by_edge);
 
   RCLCPP_INFO(this->get_logger(), "Configured agent node");
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn AgentNode::on_activate(const rclcpp_lifecycle::State & state)
+CallbackReturn NodeAgent::on_activate(const rclcpp_lifecycle::State & state)
 {
   LifecycleNode::on_activate(state);
   RCLCPP_INFO(this->get_logger(), "Activating the node...");
@@ -102,7 +102,7 @@ CallbackReturn AgentNode::on_activate(const rclcpp_lifecycle::State & state)
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn AgentNode::on_deactivate(const rclcpp_lifecycle::State & state)
+CallbackReturn NodeAgent::on_deactivate(const rclcpp_lifecycle::State & state)
 {
   LifecycleNode::on_deactivate(state);
   RCLCPP_INFO(this->get_logger(), "Deactivating the node...");
@@ -110,7 +110,7 @@ CallbackReturn AgentNode::on_deactivate(const rclcpp_lifecycle::State & state)
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn AgentNode::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
+CallbackReturn NodeAgent::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
 {
   RCLCPP_INFO(this->get_logger(), "Cleaning the node...");
 
@@ -122,7 +122,7 @@ CallbackReturn AgentNode::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn AgentNode::on_shutdown(const rclcpp_lifecycle::State & state)
+CallbackReturn NodeAgent::on_shutdown(const rclcpp_lifecycle::State & state)
 {
   RCLCPP_INFO(this->get_logger(), "Shutdown the node from state %s.", state.label().c_str());
 
@@ -134,7 +134,7 @@ CallbackReturn AgentNode::on_shutdown(const rclcpp_lifecycle::State & state)
   return CallbackReturn::SUCCESS;
 }
 
-void AgentNode::get_common_params()
+void NodeAgent::get_common_params()
 {
   // Agent parameters
   declare_parameter_if_not_declared(
@@ -178,7 +178,7 @@ void AgentNode::get_common_params()
   RCLCPP_INFO(this->get_logger(), "The parameter source is set to: [%s]", source_.c_str());
 }
 
-void AgentNode::createBond()
+void NodeAgent::createBond()
 {
   if (bond_heartbeat_period_ > 0.0) {
     RCLCPP_INFO(get_logger(), "Creating bond (%s) to lifecycle manager.", this->get_name());
@@ -192,7 +192,7 @@ void AgentNode::createBond()
   }
 }
 
-void AgentNode::destroyBond()
+void NodeAgent::destroyBond()
 {
   if (bond_heartbeat_period_ > 0.0) {
     RCLCPP_INFO(get_logger(), "Destroying bond (%s) to lifecycle manager.", this->get_name());
@@ -203,7 +203,7 @@ void AgentNode::destroyBond()
   }
 }
 
-void AgentNode::update_rt_attributes(
+void NodeAgent::update_rt_attributes(
   DSR::Node & from, DSR::Node & to, const geometry_msgs::msg::Transform & msg)
 {
   // Get translation and rotation
@@ -227,7 +227,7 @@ void AgentNode::update_rt_attributes(
   rt_->insert_or_assign_edge_RT(from, to.id(), trans, rot);
 }
 
-void AgentNode::save_dsr(
+void NodeAgent::save_dsr(
   const std::shared_ptr<dsr_msgs::srv::SaveDSR::Request> request,
   std::shared_ptr<dsr_msgs::srv::SaveDSR::Response> response)
 {

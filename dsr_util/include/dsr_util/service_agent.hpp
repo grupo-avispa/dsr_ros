@@ -25,7 +25,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 // DSR
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace wasp_dsr_agents
 {
@@ -41,7 +41,7 @@ namespace wasp_dsr_agents
  * @tparam ServiceT The type of the ROS 2 service to call.
  */
 template<class ServiceT>
-class ServiceAgent : public dsr_util::AgentNode
+class ServiceAgent : public dsr_util::NodeAgent
 {
 public:
   /**
@@ -54,7 +54,7 @@ public:
   ServiceAgent(
     std::string ros_node_name, std::string ros_service_name,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : dsr_util::AgentNode(ros_node_name, options), ros_service_name_(ros_service_name)
+  : dsr_util::NodeAgent(ros_node_name, options), ros_service_name_(ros_service_name)
   {
   }
 
@@ -95,7 +95,7 @@ public:
 
     create_service_client(ros_service_name_);
 
-    return AgentNode::on_configure(state);
+    return NodeAgent::on_configure(state);
   }
 
 protected:

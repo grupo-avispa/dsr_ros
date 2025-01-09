@@ -104,49 +104,49 @@ protected:
 };
 
 TEST_F(DsrUtilTest, dockingAgentGetGoalFromDSR) {
-  auto agent_node = std::make_shared<DockingAgentFixture>();
+  auto node_agent = std::make_shared<DockingAgentFixture>();
   auto dummy_docking_node = std::make_shared<DummyDockingServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Insert a node with the goal in the graph
   auto new_node = DSR::Node::create<dock_node_type>("dock");
-  agent_node->get_graph()->insert_node(new_node);
-  agent_node->get_graph()->add_or_modify_attrib_local<dock_id_att>(
+  node_agent->get_graph()->insert_node(new_node);
+  node_agent->get_graph()->add_or_modify_attrib_local<dock_id_att>(
     new_node, static_cast<std::string>("test_id"));
-  agent_node->get_graph()->update_node(new_node);
+  node_agent->get_graph()->update_node(new_node);
 
   // Check the results
-  EXPECT_TRUE(agent_node->get_goal_from_dsr(new_node));
-  EXPECT_EQ(agent_node->get_goal().dock_id, "test_id");
+  EXPECT_TRUE(node_agent->get_goal_from_dsr(new_node));
+  EXPECT_EQ(node_agent->get_goal().dock_id, "test_id");
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, dockingAgentGetGoalFromDSRMisssing) {
-  auto agent_node = std::make_shared<DockingAgentFixture>();
+  auto node_agent = std::make_shared<DockingAgentFixture>();
   auto dummy_docking_node = std::make_shared<DummyDockingServer>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
 
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Insert a node with the goal in the graph but without values
   auto new_node = DSR::Node::create<dock_node_type>("dock");
-  agent_node->get_graph()->insert_node(new_node);
+  node_agent->get_graph()->insert_node(new_node);
 
   // Check the results
-  EXPECT_FALSE(agent_node->get_goal_from_dsr(new_node));
+  EXPECT_FALSE(node_agent->get_goal_from_dsr(new_node));
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 int main(int argc, char ** argv)

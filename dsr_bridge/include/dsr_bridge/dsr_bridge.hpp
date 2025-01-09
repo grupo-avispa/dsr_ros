@@ -29,7 +29,7 @@
 #include "dsr_msgs/msg/node.hpp"
 
 // DSR
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_bridge
 {
@@ -38,7 +38,7 @@ namespace dsr_bridge
  * @class dsr_bridge::DSRBridge
  * @brief Bridge to connect the DSR graphs between machines throughROS 2 topics.
  */
-class DSRBridge : public dsr_util::AgentNode
+class DSRBridge : public dsr_util::NodeAgent
 {
 public:
   /**

@@ -41,7 +41,7 @@ public:
   template<typename node_type>
   std::optional<DSR::Node> add_node(const std::string & name)
   {
-    return dsr_util::AgentNode::add_node<node_type>(name);
+    return dsr_util::NodeAgent::add_node<node_type>(name);
   }
 
   void set_source(const std::string & source)
@@ -73,38 +73,38 @@ public:
 
 TEST_F(DsrUtilTest, topicAgentConfigure) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
 
-  const auto state_after_configure = agent_node->configure();
+  const auto state_after_configure = node_agent->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE);
 
-  agent_node->activate();
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->activate();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, topicAgentConfigureEmptyTopic) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
 
-  const auto state_after_configure = agent_node->configure();
+  const auto state_after_configure = node_agent->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED);
-  agent_node->shutdown();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, topicAgentHandleTopic) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a serialized message
   sensor_msgs::msg::BatteryState ros_msg;
@@ -115,31 +115,31 @@ TEST_F(DsrUtilTest, topicAgentHandleTopic) {
 
   // Just call the function with different topic types
   std::string topic_type = "sensor_msgs/msg/BatteryState";
-  agent_node->handle_topic_type(msg, topic_type);
+  node_agent->handle_topic_type(msg, topic_type);
 
   topic_type = "sensor_msgs/msg/Image";
-  agent_node->handle_topic_type(msg, topic_type);
+  node_agent->handle_topic_type(msg, topic_type);
 
   topic_type = "sensor_msgs/msg/LaserScan";
-  agent_node->handle_topic_type(msg, topic_type);
+  node_agent->handle_topic_type(msg, topic_type);
 
   topic_type = "sensor_msgs/msg/IMU";
-  agent_node->handle_topic_type(msg, topic_type);
+  node_agent->handle_topic_type(msg, topic_type);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, topicAgentModifyAttributeBatteryState) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a battery state message
   sensor_msgs::msg::BatteryState battery_state;
@@ -161,13 +161,13 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeBatteryState) {
   battery_state.serial_number = "123456789";
 
   // Modify the attributes
-  auto node = agent_node->add_node<robot_node_type>("battery_node");
-  agent_node->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
-  agent_node->get_graph()->update_node(node.value());
+  auto node = node_agent->add_node<robot_node_type>("battery_node");
+  node_agent->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
+  node_agent->get_graph()->update_node(node.value());
 
   // Check the attributes
-  EXPECT_TRUE(agent_node->get_graph()->get_node("battery_node").has_value());
-  auto attrs = agent_node->get_graph()->get_node("battery_node").value().attrs();
+  EXPECT_TRUE(node_agent->get_graph()->get_node("battery_node").has_value());
+  auto attrs = node_agent->get_graph()->get_node("battery_node").value().attrs();
   EXPECT_FLOAT_EQ(std::get<float>(attrs["battery_voltage"].value()), battery_state.voltage);
   EXPECT_FLOAT_EQ(std::get<float>(attrs["battery_temperature"].value()), battery_state.temperature);
   EXPECT_FLOAT_EQ(std::get<float>(attrs["battery_current"].value()), battery_state.current);
@@ -198,50 +198,50 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeBatteryState) {
   // Modify the different power supply status
   battery_state.power_supply_status =
     sensor_msgs::msg::BatteryState::POWER_SUPPLY_STATUS_DISCHARGING;
-  agent_node->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
-  agent_node->get_graph()->update_node(node.value());
-  attrs = agent_node->get_graph()->get_node("battery_node").value().attrs();
+  node_agent->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
+  node_agent->get_graph()->update_node(node.value());
+  attrs = node_agent->get_graph()->get_node("battery_node").value().attrs();
   EXPECT_EQ(std::get<std::string>(attrs["battery_power_supply_status"].value()), "discharging");
 
   battery_state.power_supply_status =
     sensor_msgs::msg::BatteryState::POWER_SUPPLY_STATUS_NOT_CHARGING;
-  agent_node->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
-  agent_node->get_graph()->update_node(node.value());
-  attrs = agent_node->get_graph()->get_node("battery_node").value().attrs();
+  node_agent->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
+  node_agent->get_graph()->update_node(node.value());
+  attrs = node_agent->get_graph()->get_node("battery_node").value().attrs();
   EXPECT_EQ(std::get<std::string>(attrs["battery_power_supply_status"].value()), "not_charging");
 
   battery_state.power_supply_status = sensor_msgs::msg::BatteryState::POWER_SUPPLY_STATUS_FULL;
-  agent_node->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
-  agent_node->get_graph()->update_node(node.value());
-  attrs = agent_node->get_graph()->get_node("battery_node").value().attrs();
+  node_agent->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
+  node_agent->get_graph()->update_node(node.value());
+  attrs = node_agent->get_graph()->get_node("battery_node").value().attrs();
   EXPECT_EQ(std::get<std::string>(attrs["battery_power_supply_status"].value()), "full");
 
   battery_state.power_supply_status = sensor_msgs::msg::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
-  agent_node->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
-  agent_node->get_graph()->update_node(node.value());
-  attrs = agent_node->get_graph()->get_node("battery_node").value().attrs();
+  node_agent->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
+  node_agent->get_graph()->update_node(node.value());
+  attrs = node_agent->get_graph()->get_node("battery_node").value().attrs();
   EXPECT_EQ(std::get<std::string>(attrs["battery_power_supply_status"].value()), "unknown");
 
   battery_state.power_supply_status = 5;  // Unknown value
-  agent_node->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
-  agent_node->get_graph()->update_node(node.value());
-  attrs = agent_node->get_graph()->get_node("battery_node").value().attrs();
+  node_agent->modify_attributes<sensor_msgs::msg::BatteryState>(node, battery_state);
+  node_agent->get_graph()->update_node(node.value());
+  attrs = node_agent->get_graph()->get_node("battery_node").value().attrs();
   EXPECT_EQ(std::get<std::string>(attrs["battery_power_supply_status"].value()), "unknown");
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, topicAgentModifyAttributeImage) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create an image message
   sensor_msgs::msg::Image image;
@@ -252,40 +252,40 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeImage) {
   image.data = std::vector<uint8_t>(image.height * image.width * 3, 255);
 
   // Modify the attributes
-  auto node = agent_node->add_node<robot_node_type>("image_node");
-  agent_node->modify_attributes<sensor_msgs::msg::Image>(node, image);
-  agent_node->get_graph()->update_node(node.value());
+  auto node = node_agent->add_node<robot_node_type>("image_node");
+  node_agent->modify_attributes<sensor_msgs::msg::Image>(node, image);
+  node_agent->get_graph()->update_node(node.value());
 
   // Check the attributes
-  EXPECT_TRUE(agent_node->get_graph()->get_node("image_node").has_value());
-  auto attrs = agent_node->get_graph()->get_node("image_node").value().attrs();
+  EXPECT_TRUE(node_agent->get_graph()->get_node("image_node").has_value());
+  auto attrs = node_agent->get_graph()->get_node("image_node").value().attrs();
   EXPECT_EQ(std::get<std::vector<uint8_t>>(attrs["cam_rgb"].value()), image.data);
   EXPECT_EQ(std::get<int>(attrs["cam_rgb_height"].value()), static_cast<int>(image.height));
   EXPECT_EQ(std::get<int>(attrs["cam_rgb_width"].value()), static_cast<int>(image.width));
 
   // Modify the attributes with a different encoding
   image.encoding = sensor_msgs::image_encodings::TYPE_16UC1;
-  agent_node->modify_attributes<sensor_msgs::msg::Image>(node, image);
-  agent_node->get_graph()->update_node(node.value());
-  attrs = agent_node->get_graph()->get_node("image_node").value().attrs();
+  node_agent->modify_attributes<sensor_msgs::msg::Image>(node, image);
+  node_agent->get_graph()->update_node(node.value());
+  attrs = node_agent->get_graph()->get_node("image_node").value().attrs();
   EXPECT_EQ(std::get<std::vector<uint8_t>>(attrs["cam_depth"].value()), image.data);
   EXPECT_EQ(std::get<int>(attrs["cam_depth_height"].value()), static_cast<int>(image.height));
   EXPECT_EQ(std::get<int>(attrs["cam_depth_width"].value()), static_cast<int>(image.width));
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, topicAgentModifyAttributeLaserScan) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a scan message with 7 points
   sensor_msgs::msg::LaserScan scan;
@@ -306,13 +306,13 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeLaserScan) {
   scan.ranges.push_back(12.0);
 
   // Modify the attributes
-  auto node = agent_node->add_node<robot_node_type>("test_node");
-  agent_node->modify_attributes<sensor_msgs::msg::LaserScan>(node, scan);
-  agent_node->get_graph()->update_node(node.value());
+  auto node = node_agent->add_node<robot_node_type>("test_node");
+  node_agent->modify_attributes<sensor_msgs::msg::LaserScan>(node, scan);
+  node_agent->get_graph()->update_node(node.value());
 
   // Check the attributes
-  EXPECT_TRUE(agent_node->get_graph()->get_node("test_node").has_value());
-  auto attrs = agent_node->get_graph()->get_node("test_node").value().attrs();
+  EXPECT_TRUE(node_agent->get_graph()->get_node("test_node").has_value());
+  auto attrs = node_agent->get_graph()->get_node("test_node").value().attrs();
   auto angles = std::get<std::vector<float>>(attrs["laser_angles"].value());
   EXPECT_FLOAT_EQ(angles[0], scan.angle_min);
   EXPECT_FLOAT_EQ(angles[1], scan.angle_min + scan.angle_increment);
@@ -322,39 +322,39 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeLaserScan) {
   EXPECT_FLOAT_EQ(ranges[1], scan.ranges[1]);
   EXPECT_FLOAT_EQ(ranges[2], scan.ranges[2]);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, topicAgentModifyAttributeString) {
   // Create the node
-  auto agent_node = std::make_shared<TopicAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a string message
   std_msgs::msg::String str_msg;
   str_msg.data = "test_string";
 
   // Modify the attributes
-  auto node = agent_node->add_node<robot_node_type>("test_node");
-  agent_node->modify_attributes<std_msgs::msg::String>(node, str_msg);
-  agent_node->get_graph()->update_node(node.value());
+  auto node = node_agent->add_node<robot_node_type>("test_node");
+  node_agent->modify_attributes<std_msgs::msg::String>(node, str_msg);
+  node_agent->get_graph()->update_node(node.value());
 
   // Check the attributes
-  EXPECT_TRUE(agent_node->get_graph()->get_node("test_node").has_value());
-  auto attrs = agent_node->get_graph()->get_node("test_node").value().attrs();
+  EXPECT_TRUE(node_agent->get_graph()->get_node("test_node").has_value());
+  auto attrs = node_agent->get_graph()->get_node("test_node").value().attrs();
   auto text = std::get<std::string>(attrs["text"].value());
   EXPECT_EQ(text, str_msg.data);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 int main(int argc, char ** argv)

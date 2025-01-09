@@ -72,7 +72,7 @@ set(fastrtps_LIBRARIES fastrtps fastcdr)
 set(qt_LIBRARIES Qt5::Core)
 
 # Qt Moc
-qt5_wrap_cpp(qt_agent_moc include/${PROJECT_NAME}/agent_node.hpp
+qt5_wrap_cpp(qt_agent_moc include/${PROJECT_NAME}/node_agent.hpp
   OPTIONS --no-notes # Don't display a note for the headers which don't produce a moc_*.cpp
 )
 qt5_wrap_cpp(qt_executor_moc include/${PROJECT_NAME}/qt_executor.hpp
@@ -80,13 +80,13 @@ qt5_wrap_cpp(qt_executor_moc include/${PROJECT_NAME}/qt_executor.hpp
 )
 
 # Add agent library
-add_library(agent_node SHARED src/agent_node.cpp)
-target_include_directories(agent_node PUBLIC
+add_library(node_agent SHARED src/node_agent.cpp)
+target_include_directories(node_agent PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   ${Eigen3_INCLUDE_DIRS}
 )
-target_link_libraries(agent_node
+target_link_libraries(node_agent
   PUBLIC
   ${dsr_msgs_TARGETS}
   ${dsr_LIBRARIES}
@@ -99,8 +99,8 @@ target_link_libraries(agent_node
   ${fastrtps_LIBRARIES}
   ${tf2_geometry_msgs_TARGETS}
 )
-target_sources(agent_node PRIVATE ${qt_agent_moc})
-ament_target_dependencies(agent_node PUBLIC bond bondcpp) # TODO(ajtudela): Fix this in jazzy
+target_sources(node_agent PRIVATE ${qt_agent_moc})
+ament_target_dependencies(node_agent PUBLIC bond bondcpp) # TODO(ajtudela): Fix this in jazzy
 
 # Add action agent library
 add_library(action_agent INTERFACE)
@@ -110,7 +110,7 @@ target_include_directories(action_agent INTERFACE
 )
 target_link_libraries(action_agent
   INTERFACE
-  agent_node
+  node_agent
   ${dsr_LIBRARIES}
   ${fastrtps_LIBRARIES}
   rclcpp::rclcpp
@@ -134,7 +134,7 @@ target_sources(qt_executor PRIVATE ${qt_executor_moc})
 # ############
 # # Install ##
 # ############
-install(TARGETS action_agent agent_node qt_executor
+install(TARGETS action_agent node_agent qt_executor
   EXPORT ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -173,7 +173,7 @@ endif()
 
 # Export old-style CMake variables
 ament_export_include_directories(include/${PROJECT_NAME})
-ament_export_libraries(agent_node qt_executor)
+ament_export_libraries(node_agent qt_executor)
 ament_export_dependencies(
   bondcpp
   Boost

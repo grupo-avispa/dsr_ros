@@ -21,7 +21,7 @@ namespace dsr_agents
 {
 
 TFAgent::TFAgent(const rclcpp::NodeOptions & options)
-: dsr_util::AgentNode("tf_agent", options)
+: dsr_util::NodeAgent("tf_agent", options)
 {
 }
 
@@ -38,7 +38,7 @@ dsr_util::CallbackReturn TFAgent::on_configure(const rclcpp_lifecycle::State & s
     latched_profile,
     std::bind(&TFAgent::tf_callback, this, std::placeholders::_1));
 
-  return AgentNode::on_configure(state);
+  return NodeAgent::on_configure(state);
 }
 
 dsr_util::CallbackReturn TFAgent::on_cleanup(const rclcpp_lifecycle::State & state)
@@ -54,7 +54,7 @@ dsr_util::CallbackReturn TFAgent::on_cleanup(const rclcpp_lifecycle::State & sta
     }
   }
 
-  return AgentNode::on_cleanup(state);
+  return NodeAgent::on_cleanup(state);
 }
 
 void TFAgent::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg)

@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DSR_UTIL__AGENT_NODE_HPP_
-#define DSR_UTIL__AGENT_NODE_HPP_
+#ifndef DSR_UTIL__NODE_AGENT_HPP_
+#define DSR_UTIL__NODE_AGENT_HPP_
 
 // Qt
 #include <QObject>
@@ -45,22 +45,22 @@ namespace dsr_util
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 /**
- * @class dsr_util::AgentNode
+ * @class dsr_util::NodeAgent
  * @brief Base class to connect the DSR graph with ROS 2. It contains common methods and attributes
  * to send data from ROS 2 to the DSR graph and vice versa. All agents must inherit from this class.
  */
-class AgentNode : public QObject, public rclcpp_lifecycle::LifecycleNode
+class NodeAgent : public QObject, public rclcpp_lifecycle::LifecycleNode
 {
   Q_OBJECT
 
 public:
   /**
-   * @brief Construct a new Agent Node object.
+   * @brief Construct a new Node Agent object.
    *
    * @param ros_node_name Name of the ROS node and the DSR agent.
    * @param options Node options
    */
-  explicit AgentNode(
+  explicit NodeAgent(
     std::string ros_node_name, const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   /**
@@ -104,10 +104,10 @@ public:
   CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
   /**
-   * @brief Destroy the Agent Node object.
+   * @brief Destroy the Node Agent object.
    *
    */
-  virtual ~AgentNode();
+  virtual ~NodeAgent();
 
   /**
    * @brief Create bond connection to lifecycle manager
@@ -592,4 +592,4 @@ private:
 
 }  // namespace dsr_util
 
-#endif  // DSR_UTIL__AGENT_NODE_HPP_
+#endif  // DSR_UTIL__NODE_AGENT_HPP_
