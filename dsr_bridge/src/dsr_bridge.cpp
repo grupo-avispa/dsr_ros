@@ -132,10 +132,6 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
           this->get_logger(),
           "Updated [%s] node successfully of type [%s] in the DSR",
           msg->name.c_str(), msg->type.c_str());
-      } else {
-        RCLCPP_WARN(
-          this->get_logger(),
-          "The node [%s] couldn't be updated in the DSR", msg->name.c_str());
       }
       // Create the node
     } else {
@@ -145,10 +141,6 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
           this->get_logger(),
           "Inserted [%s] node successfully of type [%s] in the DSR",
           msg->name.c_str(), msg->type.c_str());
-      } else {
-        RCLCPP_WARN(
-          this->get_logger(),
-          "The node [%s] couldn't be inserted in the DSR", msg->name.c_str());
       }
     }
     // Delete the node
@@ -285,15 +277,13 @@ void DSRBridge::node_deleted_by_node(const DSR::Node & node)
   }
 }
 
-void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag)
+void DSRBridge::edge_deleted_by_edge(const DSR::Edge & edge)
 {
   // Filter the edges that comes from the same source
-  if (auto dsr_edge = G_->get_edge(from, to, edge_tag); dsr_edge.has_value()) {
-    if (auto source = G_->get_attrib_by_name<source_att>(dsr_edge.value());
-      (source.has_value() && source.value() == source_))
-    {
-      edge_to_ros_pub_->publish(to_msg(dsr_edge.value(), true));
-    }
+  if (auto source = G_->get_attrib_by_name<source_att>(edge);
+    (source.has_value() && source.value() == source_))
+  {
+    edge_to_ros_pub_->publish(to_msg(edge, true));
   }
 }
 

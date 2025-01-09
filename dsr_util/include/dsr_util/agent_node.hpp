@@ -566,6 +566,13 @@ private:
   virtual void edge_deleted(
     std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*edge_tag*/) {}
 
+  /**
+   * @brief Callback executed when an edge is deleted in the DSR graph.
+   *
+   * @param edge The edge.
+   */
+  virtual void edge_deleted_by_edge(const DSR::Edge & /*edge*/) {}
+
   // Service to save the DSR graph into a file.
   rclcpp::Service<dsr_msgs::srv::SaveDSR>::SharedPtr save_dsr_service_;
 

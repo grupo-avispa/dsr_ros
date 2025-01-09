@@ -116,18 +116,16 @@ protected:
   /**
    * @brief Callback executed when a node is deleted in the DSR graph.
    *
-   * @param id The id of the node.
+   * @param node The node.
    */
   void node_deleted_by_node(const DSR::Node & node) override;
 
   /**
    * @brief Callback executed when an edge is deleted in the DSR graph.
    *
-   * @param from The id of the parent node.
-   * @param to The id of the child node.
-   * @param edge_tag The type of the edge.
+   * @param edge The edge.
    */
-  void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag) override;
+  void edge_deleted_by_edge(const DSR::Edge & edge) override;
 
   /**
    * @brief Create a DSR::Node from a ROS 2 message.
