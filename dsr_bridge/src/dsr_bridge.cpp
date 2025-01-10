@@ -202,8 +202,9 @@ void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
     if (auto source = G_->get_attrib_by_name<source_att>(dsr_node.value());
       (source.has_value() && source.value() == source_))
     {
-      // Check if the node type is in the include or exclude list
-      if ((!include_nodes_.empty() &&
+      // Check if the node type is in the include or exclude list, or if both are empty
+      if ((include_nodes_.empty() && exclude_nodes_.empty()) ||
+        (!include_nodes_.empty() &&
         std::find(
           include_nodes_.begin(), include_nodes_.end(),
           dsr_node.value().type()) != include_nodes_.end()) ||
