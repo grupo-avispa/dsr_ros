@@ -122,14 +122,14 @@ def generate_launch_description():
                 respawn=use_respawn,
                 respawn_delay=2.0,
                 parameters=[configured_params],
-                arguments=['--ros-args', '--log-level', log_level]
+                arguments=['--ros-args', '--log-level', ['bridge_workstation:=', log_level]]
             ),
             Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
                 name='lifecycle_manager_dsr_bridge',
                 output='screen',
-                arguments=['--ros-args', '--log-level', log_level],
+                #arguments=['--ros-args', '--log-level', log_level],
                 parameters=[{'autostart': autostart}, {'node_names': lifecycle_nodes}],
             ),
         ],
