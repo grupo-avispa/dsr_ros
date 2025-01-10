@@ -227,6 +227,18 @@ void NodeAgent::update_rt_attributes(
   rt_->insert_or_assign_edge_RT(from, to.id(), trans, rot);
 }
 
+bool NodeAgent::update_node_with_source(DSR::Node & node)
+{
+  G_->add_or_modify_attrib_local<source_att>(node, source_);
+  return G_->update_node(node);
+}
+
+void NodeAgent::update_edge_with_source(DSR::Edge & edge)
+{
+  G_->add_or_modify_attrib_local<source_att>(edge, source_);
+  G_->insert_or_assign_edge(edge);
+}
+
 void NodeAgent::save_dsr(
   const std::shared_ptr<dsr_msgs::srv::SaveDSR::Request> request,
   std::shared_ptr<dsr_msgs::srv::SaveDSR::Response> response)

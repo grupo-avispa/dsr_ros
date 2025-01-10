@@ -127,7 +127,7 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
     // Update the node
     if (auto node = G_->get_node(msg->name); node.has_value()) {
       dsr_util::helpers::modify_attributes_from_string(node.value(), msg->attributes);
-      if (G_->update_node(node.value())) {
+      if (update_node_with_source(node.value())) {
         RCLCPP_DEBUG(
           this->get_logger(),
           "Updated [%s] node successfully of type [%s] in the DSR",

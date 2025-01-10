@@ -14,6 +14,7 @@ Changelog for package dsr_util
 * Added bond.
 * Added service agent.
 * Added helpers functions from dsr_bridge.
+* Added function to update the node and changing the source.
 
 0.1.0 (04-03-2024)
 ------------------

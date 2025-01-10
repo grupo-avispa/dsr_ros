@@ -61,7 +61,7 @@ void NavigationAgent::on_feedback(
         robot_node.value(), static_cast<float>(robot_pose.position.y));
       G_->add_or_modify_attrib_local<pose_angle_att>(
         robot_node.value(), static_cast<float>(tf2::getYaw(robot_pose.orientation)));
-      G_->update_node(robot_node.value());
+      update_node_with_source(robot_node.value());
     }
   }
 }

@@ -94,6 +94,21 @@ public:
     dsr_util::NodeAgent::update_rt_attributes(from, to, msg);
   }
 
+  void update_node_with_source(DSR::Node & node)
+  {
+    dsr_util::NodeAgent::update_node_with_source(node);
+  }
+
+  void update_edge_with_source(DSR::Edge & edge)
+  {
+    dsr_util::NodeAgent::update_edge_with_source(edge);
+  }
+
+  void set_source(const std::string & source)
+  {
+    source_ = source;
+  }
+
   std::shared_ptr<dsr_util::DSRGraphExt> get_graph()
   {
     return G_;
@@ -472,6 +487,75 @@ TEST_F(DsrUtilTest, agentNodeUpdateRTAttributes) {
   EXPECT_FLOAT_EQ(rot[0], 0.0);
   EXPECT_FLOAT_EQ(rot[1], 0.0);
   EXPECT_FLOAT_EQ(rot[2], 0.0);
+
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
+}
+
+TEST_F(DsrUtilTest, agentNodeUpdateNodeAttributesWithSource) {
+  // Create the node
+  auto node_agent = std::make_shared<AgentNodeFixture>("test_node");
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("source", rclcpp::ParameterValue("test"));
+  node_agent->configure();
+  node_agent->activate();
+
+  // Add a node
+  auto parent_node = node_agent->add_node<robot_node_type>("parent_node");
+  auto attributes = parent_node.value().attrs();
+  EXPECT_TRUE(parent_node.has_value());
+  EXPECT_EQ(std::get<std::string>(attributes["source"].value()), "test");
+
+  // Change the source
+  node_agent->set_source("notest");
+
+  // Update the node
+  node_agent->update_node_with_source(parent_node.value());
+
+  // Check the source
+  auto updated_node = node_agent->get_graph()->get_node("parent_node");
+  EXPECT_TRUE(updated_node.has_value());
+  auto updated_attributes = updated_node.value().attrs();
+  EXPECT_EQ(std::get<std::string>(updated_attributes["source"].value()), "notest");
+
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
+}
+
+TEST_F(DsrUtilTest, agentNodeUpdateEdgeAttributesWithSource) {
+  // Create the node
+  auto node_agent = std::make_shared<AgentNodeFixture>("test_node");
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("source", rclcpp::ParameterValue("test"));
+  node_agent->configure();
+  node_agent->activate();
+
+  // Add two nodes
+  auto parent_node = node_agent->add_node<robot_node_type>("parent_node");
+  EXPECT_TRUE(parent_node.has_value());
+  auto child_node = node_agent->add_node<robot_node_type>("child_node");
+  EXPECT_TRUE(child_node.has_value());
+
+  // Add an edge
+  auto edge = node_agent->add_edge<is_edge_type>("parent_node", "child_node");
+  auto attributes = edge.value().attrs();
+  EXPECT_TRUE(edge.has_value());
+  EXPECT_EQ(std::get<std::string>(attributes["source"].value()), "test");
+
+  // Change the source
+  node_agent->set_source("notest");
+
+  // Update the node
+  node_agent->update_edge_with_source(edge.value());
+
+  // Check the source
+  auto updated_edge = node_agent->get_graph()->get_edge(
+    parent_node.value().id(), child_node.value().id(), "is");
+  EXPECT_TRUE(updated_edge.has_value());
+  auto updated_attributes = updated_edge.value().attrs();
+  EXPECT_EQ(std::get<std::string>(updated_attributes["source"].value()), "notest");
 
   node_agent->deactivate();
   node_agent->cleanup();
