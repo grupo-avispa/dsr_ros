@@ -65,6 +65,8 @@ REGISTER_NODE_TYPE(get_random_goal)
 REGISTER_NODE_TYPE(whisper)
 REGISTER_NODE_TYPE(alarm)
 REGISTER_NODE_TYPE(bed)
+REGISTER_NODE_TYPE(listen)
+REGISTER_NODE_TYPE(explanation)
 
 REGISTER_EDGE_TYPE(stopped)
 REGISTER_EDGE_TYPE(is)
@@ -102,6 +104,10 @@ REGISTER_TYPE(zones, std::string, false)
 REGISTER_TYPE(text, std::string, false)
 REGISTER_TYPE(sound, std::string, false)
 REGISTER_TYPE(volume, float, false)
+
+// Explanation types
+REGISTER_TYPE(question, std::string, false)
+REGISTER_TYPE(answer, std::string, false)
 
 // Show types
 REGISTER_TYPE(interface, std::string, false)
