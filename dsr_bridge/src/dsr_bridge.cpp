@@ -270,21 +270,13 @@ void DSRBridge::edge_attr_updated(
 
 void DSRBridge::node_deleted_by_node(const DSR::Node & node)
 {
-  // Filter the nodes that comes from the same source
-  if (auto source = G_->get_attrib_by_name<source_att>(node);
-    (source.has_value() && source.value() == source_))
-  {
-    node_to_ros_pub_->publish(to_msg(node, true));
-  }
+  node_to_ros_pub_->publish(to_msg(node, true));
 }
 
-void DSRBridge::edge_deleted_by_edge(const DSR::Edge & edge)
+void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag)
 {
-  // Filter the edges that comes from the same source
-  if (auto source = G_->get_attrib_by_name<source_att>(edge);
-    (source.has_value() && source.value() == source_))
-  {
-    edge_to_ros_pub_->publish(to_msg(edge, true));
+  if (auto dsr_edge = G_->get_edge(from, to, edge_tag); dsr_edge.has_value()) {
+    edge_to_ros_pub_->publish(to_msg(dsr_edge.value(), true));
   }
 }
 

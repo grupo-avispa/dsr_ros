@@ -266,8 +266,6 @@ protected:
     // Check if the node exists
     bool success = false;
     if (auto node = G_->get_node(id); node.has_value()) {
-      // Update the node with the source attribute
-      update_node_with_source(node.value());
       // Delete the node
       if (G_->delete_node(id)) {
         success = true;
@@ -317,8 +315,6 @@ protected:
     auto parent_node = G_->get_node(from);
     auto child_node = G_->get_node(to);
     if (auto edge = G_->get_edge(from, to, edge_type); edge.has_value()) {
-      // Update the edge with the source attribute
-      update_edge_with_source(edge.value());
       // Delete the edge
       if (G_->delete_edge(from, to, edge_type)) {
         success = true;
