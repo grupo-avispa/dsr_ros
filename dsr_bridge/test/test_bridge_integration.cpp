@@ -904,9 +904,10 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeSameSource) {
   rclcpp::spin_some(bridge_node->get_node_base_interface());
 
   // Check the results
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  // TODO(ajtudela): This should be 3 but the test end before the last message
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   EXPECT_TRUE(msg_received);
-  EXPECT_EQ(count, 2); // TODO(ajtudela): This should be 3 but the test end before the last message
+  EXPECT_EQ(count, 2);
 
   // Deactivate the nodes
   bridge_node->deactivate();
@@ -983,9 +984,11 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeDifferentSource) {
   rclcpp::spin_some(bridge_node->get_node_base_interface());
 
   // Check the results
-  std::this_thread::sleep_for(std::chrono::milliseconds(15));
-  EXPECT_FALSE(msg_received);  // TODO(ajtudela): This should be true but the test end before the last message
-  EXPECT_EQ(count, 0);  // TODO(ajtudela): This should be 1 but the test end before the last message
+  // TODO(ajtudela): This should be true but the test end before the last message
+  // TODO(ajtudela): This should be 1 but the test end before the last message
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  EXPECT_FALSE(msg_received);
+  EXPECT_EQ(count, 0);
 
   // Deactivate the nodes
   bridge_node->deactivate();

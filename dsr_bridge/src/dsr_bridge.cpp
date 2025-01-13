@@ -127,7 +127,7 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
     // Update the node
     if (auto node = G_->get_node(msg->name); node.has_value()) {
       dsr_util::helpers::modify_attributes_from_string(node.value(), msg->attributes);
-      if (update_node_with_source(node.value())) {
+      if (G_->update_node(node.value())) {
         RCLCPP_DEBUG(
           this->get_logger(),
           "Updated [%s] node successfully of type [%s] in the DSR",
@@ -275,9 +275,14 @@ void DSRBridge::node_deleted_by_node(const DSR::Node & node)
 
 void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag)
 {
-  if (auto dsr_edge = G_->get_edge(from, to, edge_tag); dsr_edge.has_value()) {
-    edge_to_ros_pub_->publish(to_msg(dsr_edge.value(), true));
-  }
+  dsr_msgs::msg::Edge edge_msg;
+  edge_msg.header.stamp = this->now();
+  edge_msg.header.frame_id = source_;
+  edge_msg.parent = G_->get_node(from).value().name();
+  edge_msg.child = G_->get_node(to).value().name();
+  edge_msg.type = edge_tag;
+  edge_msg.deleted = true;
+  edge_to_ros_pub_->publish(edge_msg);
 }
 
 DSR::Node DSRBridge::from_msg(const dsr_msgs::msg::Node & msg)
