@@ -993,6 +993,52 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeDifferentSource) {
   sub_thread.join();
 }
 
+TEST_F(DsrUtilTest, DSRBridgeIntegrationGetGraphService) {
+  rclcpp::init(0, nullptr);
+
+  // Create the node
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->configure();
+  bridge_node->activate();
+
+  // Add two DSR nodes
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = bridge_node->add_node<person_node_type>("robot_child");
+
+  // Add a DSR edge
+  auto dsr_edge = bridge_node->add_edge<is_edge_type>("robot_parent", "robot_child");
+
+  // Create the client service
+  auto req = std::make_shared<dsr_msgs::srv::GetGraph::Request>();
+  auto client = bridge_node->create_client<dsr_msgs::srv::GetGraph>("get_graph");
+
+  // Wait for the service to be available
+  ASSERT_TRUE(client->wait_for_service());
+
+  // Call the service
+  auto result = client->async_send_request(req);
+
+  // Wait for the result
+  auto resp = std::make_shared<dsr_msgs::srv::GetGraph::Response>();
+  if (
+    rclcpp::spin_until_future_complete(bridge_node, result) == rclcpp::FutureReturnCode::SUCCESS)
+  {
+    std::cout << "Service call succeeded" << std::endl;
+    resp = result.get();
+  } else {
+    std::cout << "Service call failed" << std::endl;
+  }
+
+  // Check the results
+  EXPECT_EQ(resp->nodes.size(), 3);
+  EXPECT_EQ(resp->edges.size(), 1);
+
+  // Deactivate the nodes
+  bridge_node->deactivate();
+  rclcpp::shutdown();
+}
+
 int main(int argc, char ** argv)
 {
   // QCoreApplication app(argc, argv);

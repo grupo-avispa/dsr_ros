@@ -61,6 +61,7 @@ set(msg_files
 )
 
 set(srv_files
+  "srv/GetGraph.srv"
   "srv/SaveDSR.srv"
 )
 

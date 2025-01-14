@@ -108,6 +108,11 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
   edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
     edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
 
+  // Service
+  get_graph_service_ = this->create_service<GetGraph>(
+    "get_graph", std::bind(
+      &DSRBridge::get_graph_service, this, std::placeholders::_1, std::placeholders::_2));
+
   return NodeAgent::on_configure(state);
 }
 
@@ -193,6 +198,20 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
   } else {
     delete_edge(msg->parent, msg->child, msg->type);
   }
+}
+
+bool DSRBridge::get_graph_service(
+  const std::shared_ptr<GetGraph::Request>/*request*/, std::shared_ptr<GetGraph::Response> response)
+{
+  RCLCPP_INFO(this->get_logger(), "Incoming service request to get the graph");
+
+  std::vector<dsr_msgs::msg::Node> nodes_msg;
+  std::vector<dsr_msgs::msg::Edge> edges_msg;
+  get_graph(nodes_msg, edges_msg);
+
+  response->nodes = nodes_msg;
+  response->edges = edges_msg;
+  return true;
 }
 
 void DSRBridge::node_created(std::uint64_t id, const std::string & /*type*/)
@@ -373,6 +392,24 @@ void DSRBridge::insert_lost_edges()
         }),
       lost_edges_.end());
   }
+}
+
+void DSRBridge::get_graph(
+  std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg)
+{
+  // Get the nodes and edges from the DSR graph
+  for (auto & node : G_->get_nodes()) {
+    nodes_msg.push_back(to_msg(node));
+    if (auto edges = G_->get_edges(node.id()); edges.has_value()) {
+      for (const auto & edge_pair : edges.value()) {
+        auto edge_msg = to_msg(edge_pair.second);
+        edges_msg.push_back(edge_msg);
+      }
+    }
+  }
+
+  // Reverse the nodes
+  std::reverse(nodes_msg.begin(), nodes_msg.end());
 }
 
 }  // namespace dsr_bridge

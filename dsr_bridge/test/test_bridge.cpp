@@ -79,6 +79,12 @@ public:
   {
     dsr_bridge::DSRBridge::insert_lost_edges();
   }
+
+  void get_graph(
+    std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg)
+  {
+    dsr_bridge::DSRBridge::get_graph(nodes_msg, edges_msg);
+  }
 };
 
 TEST_F(DsrUtilTest, DSRBridgeConfigure) {
@@ -149,7 +155,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
   bridge_node->configure();
   bridge_node->activate();
 
-  // Add the DRS nodes
+  // Add the DSR nodes
   auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
   auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
 
@@ -182,7 +188,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
   bridge_node->configure();
   bridge_node->activate();
 
-  // Add the DRS nodes and edge
+  // Add the DSR nodes and edge
   auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
   auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
   auto dsr_edge = bridge_node->add_edge<is_edge_type>("robot_parent", "robot_child");
@@ -217,7 +223,7 @@ TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
   bridge_node->store_lost_edge(edge_msg);
   EXPECT_EQ(bridge_node->get_lost_edges().size(), 1);
 
-  // Add the DRS nodes
+  // Add the DSR nodes
   auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
   auto dsr_child_node = bridge_node->add_node<robot_node_type>("robot_child");
 
@@ -226,6 +232,34 @@ TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
 
   // Check the results
   EXPECT_EQ(bridge_node->get_lost_edges().size(), 0);
+}
+
+TEST_F(DsrUtilTest, DSRBridgeGetGraph) {
+  // Create the node
+  auto bridge_node = std::make_shared<DSRBridgeFixture>();
+  bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node->configure();
+  bridge_node->activate();
+
+  // Add two DSR nodes
+  auto dsr_parent_node = bridge_node->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = bridge_node->add_node<person_node_type>("robot_child");
+
+  // Add a DSR edge
+  auto dsr_edge = bridge_node->add_edge<is_edge_type>("robot_parent", "robot_child");
+
+  // Get the nodes and edges
+  std::vector<dsr_msgs::msg::Node> nodes_msg;
+  std::vector<dsr_msgs::msg::Edge> edges_msg;
+  bridge_node->get_graph(nodes_msg, edges_msg);
+  EXPECT_EQ(nodes_msg.size(), 3);
+  EXPECT_EQ(nodes_msg[0].name, "world");
+  EXPECT_EQ(nodes_msg[1].name, "robot_parent");
+  EXPECT_EQ(nodes_msg[2].name, "robot_child");
+  EXPECT_EQ(edges_msg.size(), 1);
+  EXPECT_EQ(edges_msg[0].parent, "robot_parent");
+  EXPECT_EQ(edges_msg[0].child, "robot_child");
+  EXPECT_EQ(edges_msg[0].type, "is");
 }
 
 int main(int argc, char ** argv)
