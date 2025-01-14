@@ -62,6 +62,22 @@ public:
    */
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
+  /**
+   * @brief Activate the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Deactivate the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+
 protected:
   using GetGraph = dsr_msgs::srv::GetGraph;
 
@@ -182,12 +198,17 @@ protected:
   void insert_lost_edges();
 
   /**
+   * @brief Synchronize the DSR graph using the service to get the graph.
+   */
+  void sync_graph();
+
+  /**
    * @brief Get the nodes and edges from the DSR graph.
    *
    * @param nodes_msg The nodes in the DSR graph in ROS 2 message format.
    * @param edges_msg The edges in the DSR graph in ROS 2 message format.
    */
-  void get_graph(
+  void get_graph_from_dsr(
     std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg);
 
   // Subscribers and publishers for the ROS 2 topics (nodes and edges)
@@ -198,6 +219,8 @@ protected:
 
   // Service to get the graph
   rclcpp::Service<GetGraph>::SharedPtr get_graph_service_;
+  // Timer to synchronize the graph the first time
+  rclcpp::TimerBase::SharedPtr one_off_sync_timer_;
   // ROS 2 topics names
   std::string node_topic_, edge_topic_;
   // Vector of lost edges

@@ -80,10 +80,10 @@ public:
     dsr_bridge::DSRBridge::insert_lost_edges();
   }
 
-  void get_graph(
+  void get_graph_from_dsr(
     std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg)
   {
-    dsr_bridge::DSRBridge::get_graph(nodes_msg, edges_msg);
+    dsr_bridge::DSRBridge::get_graph_from_dsr(nodes_msg, edges_msg);
   }
 };
 
@@ -251,7 +251,7 @@ TEST_F(DsrUtilTest, DSRBridgeGetGraph) {
   // Get the nodes and edges
   std::vector<dsr_msgs::msg::Node> nodes_msg;
   std::vector<dsr_msgs::msg::Edge> edges_msg;
-  bridge_node->get_graph(nodes_msg, edges_msg);
+  bridge_node->get_graph_from_dsr(nodes_msg, edges_msg);
   EXPECT_EQ(nodes_msg.size(), 3);
   EXPECT_EQ(nodes_msg[0].name, "world");
   EXPECT_EQ(nodes_msg[1].name, "robot_parent");

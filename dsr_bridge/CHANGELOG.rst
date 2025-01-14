@@ -13,7 +13,8 @@ Changelog for package dsr_bridge
 * Move some functions to dsr_util::helpers.
 * Added function to check if the edge are lost in bridge.
 * Added service to get the graph.
-* Add filtering options for the nodes.
+* Added filtering options for the nodes.
+* Added sync funcionality.
 
 1.0.0 (04-03-2024)
 ------------------

@@ -110,10 +110,26 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
 
   // Service
   get_graph_service_ = this->create_service<GetGraph>(
-    "get_graph", std::bind(
+    "~/get_graph", std::bind(
       &DSRBridge::get_graph_service, this, std::placeholders::_1, std::placeholders::_2));
 
   return NodeAgent::on_configure(state);
+}
+
+dsr_util::CallbackReturn DSRBridge::on_activate(const rclcpp_lifecycle::State & state)
+{
+  // Timer to synchronize the graph the first time
+  one_off_sync_timer_ =
+    this->create_wall_timer(
+    std::chrono::milliseconds(20), std::bind(&DSRBridge::sync_graph, this));
+
+  return NodeAgent::on_activate(state);
+}
+
+dsr_util::CallbackReturn DSRBridge::on_deactivate(const rclcpp_lifecycle::State & state)
+{
+  one_off_sync_timer_.reset();
+  return NodeAgent::on_deactivate(state);
 }
 
 void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
@@ -207,7 +223,7 @@ bool DSRBridge::get_graph_service(
 
   std::vector<dsr_msgs::msg::Node> nodes_msg;
   std::vector<dsr_msgs::msg::Edge> edges_msg;
-  get_graph(nodes_msg, edges_msg);
+  get_graph_from_dsr(nodes_msg, edges_msg);
 
   response->nodes = nodes_msg;
   response->edges = edges_msg;
@@ -394,7 +410,7 @@ void DSRBridge::insert_lost_edges()
   }
 }
 
-void DSRBridge::get_graph(
+void DSRBridge::get_graph_from_dsr(
   std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg)
 {
   // Get the nodes and edges from the DSR graph
@@ -410,6 +426,44 @@ void DSRBridge::get_graph(
 
   // Reverse the nodes
   std::reverse(nodes_msg.begin(), nodes_msg.end());
+}
+
+void DSRBridge::sync_graph()
+{
+  RCLCPP_INFO(this->get_logger(), "Synchronizing the graph ...");
+
+  for (const auto & service : this->get_service_names_and_types() ) {
+    // Check if the service name ends with "/get_graph" and is not the same as the current one
+    const auto & service_name = service.first;
+    auto current_name = "/" + std::string(this->get_name()) + "/get_graph";
+    if (service_name.ends_with("/get_graph") && service_name != current_name) {
+      RCLCPP_INFO(this->get_logger(), "Found get_graph service: %s", service_name.c_str());
+      // Use this service name to create the client
+      auto client = this->create_client<dsr_msgs::srv::GetGraph>(service_name);
+      client->wait_for_service();
+      // Send the request
+      auto req = std::make_shared<dsr_msgs::srv::GetGraph::Request>();
+      auto result = client->async_send_request(
+        req,
+        [this](rclcpp::Client<dsr_msgs::srv::GetGraph>::SharedFuture response) {
+          // Insert the nodes and edges in the DSR graph
+          for (auto & node_msg : response.get()->nodes) {
+            node_from_ros_callback(std::make_shared<dsr_msgs::msg::Node>(node_msg));
+          }
+          for (auto & edge_msg : response.get()->edges) {
+            edge_from_ros_callback(std::make_shared<dsr_msgs::msg::Edge>(edge_msg));
+          }
+          RCLCPP_INFO(this->get_logger(), "Graph synchronized");
+        });
+      // Cancel the timer
+      this->one_off_sync_timer_->cancel();
+      return;
+    }
+  }
+
+  // Cancel the timer if the service is not found
+  RCLCPP_INFO(this->get_logger(), "get_graph service not found");
+  this->one_off_sync_timer_->cancel();
 }
 
 }  // namespace dsr_bridge

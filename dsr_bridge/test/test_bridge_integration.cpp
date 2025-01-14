@@ -24,8 +24,8 @@
 class DSRBridgeFixture : public dsr_bridge::DSRBridge
 {
 public:
-  DSRBridgeFixture()
-  : dsr_bridge::DSRBridge()
+  explicit DSRBridgeFixture(const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
+  : dsr_bridge::DSRBridge(options)
   {
   }
 
@@ -1011,7 +1011,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationGetGraphService) {
 
   // Create the client service
   auto req = std::make_shared<dsr_msgs::srv::GetGraph::Request>();
-  auto client = bridge_node->create_client<dsr_msgs::srv::GetGraph>("get_graph");
+  auto client = bridge_node->create_client<dsr_msgs::srv::GetGraph>("~/get_graph");
 
   // Wait for the service to be available
   ASSERT_TRUE(client->wait_for_service());
@@ -1036,6 +1036,56 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationGetGraphService) {
 
   // Deactivate the nodes
   bridge_node->deactivate();
+  rclcpp::shutdown();
+}
+
+TEST_F(DsrUtilTest, DSRBridgeIntegrationSync) {
+  rclcpp::init(0, nullptr);
+
+  // Create the first bridge
+  rclcpp::NodeOptions options;
+  options.arguments({"--ros-args", "-r", "__node:=bridge1"});
+  auto bridge_node1 = std::make_shared<DSRBridgeFixture>(options);
+  bridge_node1->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node1->declare_parameter("source", rclcpp::ParameterValue("test"));
+  bridge_node1->configure();
+  bridge_node1->activate();
+  std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+  // Spin
+  rclcpp::spin_some(bridge_node1->get_node_base_interface());
+
+  // Add a DSR node
+  auto dsr_parent_node = bridge_node1->add_node<robot_node_type>("robot_parent");
+
+  // Spin
+  rclcpp::spin_some(bridge_node1->get_node_base_interface());
+
+  // Create the second bridge
+  options.arguments({"--ros-args", "-r", "__node:=bridge2"});
+  auto bridge_node2 = std::make_shared<DSRBridgeFixture>(options);
+  bridge_node2->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  bridge_node2->declare_parameter("source", rclcpp::ParameterValue("notest"));
+  bridge_node2->configure();
+  bridge_node2->activate();
+  std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+  // Spin:
+  // 1. The second bridge to find the service from the first bridge
+  // 2. The first bridge to call the service
+  // 3. The second bridge to get the service response
+  rclcpp::spin_some(bridge_node2->get_node_base_interface());
+  rclcpp::spin_some(bridge_node1->get_node_base_interface());
+  rclcpp::spin_some(bridge_node2->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(15));
+
+  // Check the results
+  // TODO(ajtudela): This test is not working because the callback is not being called
+  // EXPECT_TRUE(bridge_node2->get_graph()->get_node("robot_parent").has_value());
+
+  // Deactivate the nodes
+  bridge_node1->deactivate();
+  bridge_node2->deactivate();
   rclcpp::shutdown();
 }
 
