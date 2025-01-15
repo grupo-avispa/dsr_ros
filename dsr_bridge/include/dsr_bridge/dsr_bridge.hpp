@@ -236,6 +236,8 @@ protected:
 
   // Service to get the graph
   rclcpp::Service<GetGraph>::SharedPtr get_graph_service_;
+  // Client to get the graph
+  rclcpp::Client<GetGraph>::SharedPtr get_graph_client_;
   // Timer to synchronize the graph the first time
   rclcpp::TimerBase::SharedPtr one_off_sync_timer_;
   // ROS 2 topics names

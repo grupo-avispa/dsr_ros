@@ -1055,8 +1055,14 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationSync) {
   // Spin
   rclcpp::spin_some(bridge_node1->get_node_base_interface());
 
-  // Add a DSR node
+  // Add the DSR nodes and edge
   auto dsr_parent_node = bridge_node1->add_node<robot_node_type>("robot_parent");
+  auto dsr_child_node = bridge_node1->add_node<robot_node_type>("robot_child");
+  auto dsr_edge = bridge_node1->add_edge<is_edge_type>("robot_parent", "robot_child");
+  EXPECT_TRUE(
+    bridge_node1->get_graph()->get_edge(
+      bridge_node1->get_graph()->get_node("robot_parent").value().id(),
+      bridge_node1->get_graph()->get_node("robot_child").value().id(), "is").has_value());
 
   // Spin
   rclcpp::spin_some(bridge_node1->get_node_base_interface());
@@ -1080,8 +1086,12 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationSync) {
   std::this_thread::sleep_for(std::chrono::milliseconds(15));
 
   // Check the results
-  // TODO(ajtudela): This test is not working because the callback is not being called
-  // EXPECT_TRUE(bridge_node2->get_graph()->get_node("robot_parent").has_value());
+  EXPECT_TRUE(bridge_node2->get_graph()->get_node("robot_parent").has_value());
+  EXPECT_TRUE(bridge_node2->get_graph()->get_node("robot_child").has_value());
+  EXPECT_TRUE(
+    bridge_node2->get_graph()->get_edge(
+      bridge_node2->get_graph()->get_node("robot_parent").value().id(),
+      bridge_node2->get_graph()->get_node("robot_child").value().id(), "is").has_value());
 
   // Deactivate the nodes
   bridge_node1->deactivate();

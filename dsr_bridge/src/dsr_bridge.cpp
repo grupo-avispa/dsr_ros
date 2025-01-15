@@ -455,11 +455,14 @@ void DSRBridge::sync_graph()
     if (service_name.ends_with("/get_graph") && service_name != current_name) {
       RCLCPP_INFO(this->get_logger(), "Found get_graph service: %s", service_name.c_str());
       // Use this service name to create the client
-      auto client = this->create_client<dsr_msgs::srv::GetGraph>(service_name);
-      client->wait_for_service();
+      get_graph_client_ = this->create_client<dsr_msgs::srv::GetGraph>(service_name);
+      if (!get_graph_client_->wait_for_service(std::chrono::seconds(1))) {
+        RCLCPP_INFO(this->get_logger(), "get_graph service not found");
+        return;
+      }
       // Send the request
       auto req = std::make_shared<dsr_msgs::srv::GetGraph::Request>();
-      auto result = client->async_send_request(
+      auto result = get_graph_client_->async_send_request(
         req,
         [this](rclcpp::Client<dsr_msgs::srv::GetGraph>::SharedFuture response) {
           // Insert the nodes and edges in the DSR graph
