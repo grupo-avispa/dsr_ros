@@ -132,6 +132,22 @@ dsr_util::CallbackReturn DSRBridge::on_deactivate(const rclcpp_lifecycle::State 
   return NodeAgent::on_deactivate(state);
 }
 
+dsr_util::CallbackReturn DSRBridge::on_cleanup(const rclcpp_lifecycle::State & state)
+{
+  node_to_ros_pub_.reset();
+  edge_to_ros_pub_.reset();
+
+  return NodeAgent::on_cleanup(state);
+}
+
+dsr_util::CallbackReturn DSRBridge::on_shutdown(const rclcpp_lifecycle::State & state)
+{
+  node_from_ros_sub_.reset();
+  edge_from_ros_sub_.reset();
+
+  return NodeAgent::on_shutdown(state);
+}
+
 void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
 {
   RCLCPP_INFO_ONCE(

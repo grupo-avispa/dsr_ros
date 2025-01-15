@@ -25,6 +25,7 @@
 
 // ROS
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 #include "dsr_msgs/msg/edge.hpp"
 #include "dsr_msgs/msg/node.hpp"
 #include "dsr_msgs/srv/get_graph.hpp"
@@ -77,6 +78,22 @@ public:
    * @return CallbackReturn
    */
   CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Cleanup the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Shutdown the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
 protected:
   using GetGraph = dsr_msgs::srv::GetGraph;
@@ -214,8 +231,8 @@ protected:
   // Subscribers and publishers for the ROS 2 topics (nodes and edges)
   rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;
   rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
-  rclcpp::Publisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
-  rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
 
   // Service to get the graph
   rclcpp::Service<GetGraph>::SharedPtr get_graph_service_;
