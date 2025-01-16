@@ -455,7 +455,7 @@ void DSRBridge::sync_graph()
       // Use this service name to create the client
       get_graph_client_ = this->create_client<dsr_msgs::srv::GetGraph>(service_name);
       if (!get_graph_client_->wait_for_service(std::chrono::seconds(1))) {
-        RCLCPP_INFO(this->get_logger(), "get_graph service not found");
+        RCLCPP_WARN(this->get_logger(), "get_graph service not found");
         return;
       }
       // Send the request

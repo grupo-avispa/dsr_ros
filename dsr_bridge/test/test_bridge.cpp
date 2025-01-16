@@ -87,7 +87,7 @@ public:
   }
 };
 
-TEST_F(DsrUtilTest, DSRBridgeConfigure) {
+TEST_F(DsrUtilTest, bridgeConfigure) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -101,7 +101,7 @@ TEST_F(DsrUtilTest, DSRBridgeConfigure) {
   bridge_node->shutdown();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeCreateDSRNode) {
+TEST_F(DsrUtilTest, bridgeCreateDSRNode) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -126,7 +126,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSRNode) {
   EXPECT_THROW(bridge_node->from_msg(node_msg), std::runtime_error);
 }
 
-TEST_F(DsrUtilTest, DSRBridgeCreateMsgNode) {
+TEST_F(DsrUtilTest, bridgeCreateMsgNode) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -148,7 +148,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateMsgNode) {
   EXPECT_TRUE(node_msg.deleted);
 }
 
-TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
+TEST_F(DsrUtilTest, bridgeCreateDSREdge) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -181,7 +181,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateDSREdge) {
   EXPECT_THROW(bridge_node->from_msg(edge_msg), std::runtime_error);
 }
 
-TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
+TEST_F(DsrUtilTest, bridgeCreateMsgEdge) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -205,7 +205,7 @@ TEST_F(DsrUtilTest, DSRBridgeCreateMsgEdge) {
   EXPECT_TRUE(edge_msg.deleted);
 }
 
-TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
+TEST_F(DsrUtilTest, bridgeInsertLostEdges) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
@@ -234,7 +234,7 @@ TEST_F(DsrUtilTest, DSRBridgeInsertLostEdges) {
   EXPECT_EQ(bridge_node->get_lost_edges().size(), 0);
 }
 
-TEST_F(DsrUtilTest, DSRBridgeGetGraph) {
+TEST_F(DsrUtilTest, bridgeGetGraph) {
   // Create the node
   auto bridge_node = std::make_shared<DSRBridgeFixture>();
   bridge_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
