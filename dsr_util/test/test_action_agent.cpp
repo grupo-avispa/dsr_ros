@@ -322,7 +322,7 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionCancel) {
   auto edge = node_agent->add_edge<wants_to_edge_type>("robot", "move");
 
   // Wait until the edge becomes 'is_performing'
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
   auto is_performing_edge = node_agent->get_graph()->get_edge(
     node_agent->get_graph()->get_node("robot").value().id(),
     node_agent->get_graph()->get_node("move").value().id(), "is_performing");
@@ -332,7 +332,7 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionCancel) {
   edge = node_agent->add_edge<cancel_edge_type>("robot", "move");
 
   // Wait for the action to finish
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the result
   EXPECT_FALSE(node_agent->get_graph()->get_node("move").has_value());
