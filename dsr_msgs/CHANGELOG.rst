@@ -7,6 +7,7 @@ Changelog for package dsr_msgs
 * Rename to dsr_msgs.
 * Update license to Apache 2.0.
 * Added GetGraph.srv.
+* Remove updated field from Edge.msg and Node.msg.
 
 0.2.0 (08-02-2024)
 ------------------

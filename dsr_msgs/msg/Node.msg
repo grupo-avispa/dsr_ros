@@ -6,5 +6,4 @@ std_msgs/Header   header           # Header
 string            name             # Name of the node
 string            type             # Type of the node
 string[]          attributes       # Attributes of the node
-bool              updated          # True if the node has been updated
 bool              deleted          # True if the node has been deleted
