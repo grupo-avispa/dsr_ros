@@ -2,7 +2,7 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.0.0 (16-01-2025)
 ------------------
 * Improve DSR documentation.
 * Better information and refactor in navAgent.

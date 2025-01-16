@@ -2,7 +2,7 @@
 Changelog for package dsr_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.0.0 (16-01-2025)
 ------------------
 * Rename to dsr_msgs.
 * Update license to Apache 2.0.

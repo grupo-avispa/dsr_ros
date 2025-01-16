@@ -2,7 +2,7 @@
 Changelog for package dsr_util
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.0.0 (16-01-2025)
 ------------------
 * Update license to Apache 2.0.
 * Improve formating.

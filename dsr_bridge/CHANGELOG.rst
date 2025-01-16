@@ -2,7 +2,7 @@
 Changelog for package dsr_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.0.0 (16-01-2025)
 ------------------
 * Update license to Apache 2.0.
 * Improve formating.
@@ -16,7 +16,7 @@ Changelog for package dsr_bridge
 * Added filtering options for the nodes.
 * Added sync funcionality.
 
-1.0.0 (04-03-2024)
+0.1.0 (04-03-2024)
 ------------------
 * Initial release.
 * Create README.md.
