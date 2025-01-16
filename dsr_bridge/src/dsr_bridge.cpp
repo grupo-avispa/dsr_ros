@@ -358,7 +358,6 @@ dsr_msgs::msg::Node DSRBridge::to_msg(const DSR::Node & node, bool deleted)
   node_msg.type = node.type();
   node_msg.attributes = dsr_util::helpers::attributes_to_string(node.attrs());
   node_msg.deleted = deleted;
-  node_msg.updated = false;
   return node_msg;
 }
 
@@ -392,7 +391,6 @@ dsr_msgs::msg::Edge DSRBridge::to_msg(const DSR::Edge & edge, bool deleted)
     edge_msg.child = child_node.value().name();
     edge_msg.type = edge.type();
     edge_msg.attributes = dsr_util::helpers::attributes_to_string(edge.attrs());
-    edge_msg.updated = false;
     edge_msg.deleted = deleted;
   }
   return edge_msg;

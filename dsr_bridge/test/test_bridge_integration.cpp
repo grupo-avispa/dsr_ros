@@ -74,7 +74,7 @@ public:
   }
 };
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateNode) {
+TEST_F(DsrUtilTest, bridgeIntegrationFromROSCreateNode) {
   rclcpp::init(0, nullptr);
 
   // Create a publisher node
@@ -134,7 +134,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateNode) {
   pub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyNode) {
+TEST_F(DsrUtilTest, bridgeIntegrationFromROSModifyNode) {
   rclcpp::init(0, nullptr);
 
   // Create a publisher node
@@ -205,7 +205,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyNode) {
   pub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSDeleteNode) {
+TEST_F(DsrUtilTest, bridgeIntegrationFromROSDeleteNode) {
   rclcpp::init(0, nullptr);
 
   // Create a publisher node
@@ -258,7 +258,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSDeleteNode) {
   pub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateEdge) {
+TEST_F(DsrUtilTest, bridgeIntegrationFromROSCreateEdge) {
   rclcpp::init(0, nullptr);
 
   // Create a publisher node
@@ -354,7 +354,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSCreateEdge) {
   pub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyEdge) {
+TEST_F(DsrUtilTest, bridgeIntegrationFromROSModifyEdge) {
   rclcpp::init(0, nullptr);
 
   // Create a publisher node
@@ -431,7 +431,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSModifyEdge) {
   pub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSDeleteEdge) {
+TEST_F(DsrUtilTest, bridgeIntegrationFromROSDeleteEdge) {
   rclcpp::init(0, nullptr);
 
   // Create a publisher node
@@ -499,7 +499,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationFromROSDeleteEdge) {
   pub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeSameSource) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeSameSource) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -560,6 +560,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeSameSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results
   EXPECT_TRUE(msg_received);
@@ -573,7 +574,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeSameSource) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeDifferentSource) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeDifferentSource) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -631,6 +632,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeDifferentSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results
   EXPECT_TRUE(msg_received);
@@ -644,7 +646,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeDifferentSource) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeInclude) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeInclude) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -693,6 +695,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeInclude) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results: the count should be 1 because the second node is not included
   EXPECT_TRUE(msg_received);
@@ -706,7 +709,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeInclude) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeExclude) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeExclude) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -755,6 +758,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeExclude) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results: the count should be 1 because the second node is not included
   EXPECT_TRUE(msg_received);
@@ -768,7 +772,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeExclude) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeIncludeExclude) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeIncludeExclude) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -819,6 +823,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeIncludeExclude) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results: the count should be 1 because the second node is not included
   EXPECT_TRUE(msg_received);
@@ -832,7 +837,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSNodeIncludeExclude) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeSameSource) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSEdgeSameSource) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -902,6 +907,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeSameSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results
   EXPECT_TRUE(msg_received);
@@ -915,7 +921,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeSameSource) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeDifferentSource) {
+TEST_F(DsrUtilTest, bridgeIntegrationToROSEdgeDifferentSource) {
   rclcpp::init(0, nullptr);
 
   // Create a subscriber node
@@ -980,6 +986,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeDifferentSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results
   EXPECT_TRUE(msg_received);
@@ -993,7 +1000,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationToROSEdgeDifferentSource) {
   sub_thread.join();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationGetGraphService) {
+TEST_F(DsrUtilTest, bridgeIntegrationGetGraphService) {
   rclcpp::init(0, nullptr);
 
   // Create the node
@@ -1039,7 +1046,7 @@ TEST_F(DsrUtilTest, DSRBridgeIntegrationGetGraphService) {
   rclcpp::shutdown();
 }
 
-TEST_F(DsrUtilTest, DSRBridgeIntegrationSync) {
+TEST_F(DsrUtilTest, bridgeIntegrationSync) {
   rclcpp::init(0, nullptr);
 
   // Create the first bridge
