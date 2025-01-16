@@ -887,6 +887,7 @@ TEST_F(DsrUtilTest, bridgeIntegrationToROSEdgeSameSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   // Check the results: now, the message subscriber should have a publisher
   EXPECT_EQ(msg_sub->get_publisher_count(), 1);
@@ -901,13 +902,14 @@ TEST_F(DsrUtilTest, bridgeIntegrationToROSEdgeSameSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   // Delete the edge
   bridge_node->delete_edge("robot_parent", "robot_child", "is");
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
-  std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   // Check the results
   EXPECT_TRUE(msg_received);
