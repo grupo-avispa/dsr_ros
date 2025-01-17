@@ -66,6 +66,8 @@ REGISTER_NODE_TYPE(whisper)
 REGISTER_NODE_TYPE(alarm)
 REGISTER_NODE_TYPE(bed)
 REGISTER_NODE_TYPE(listen)
+REGISTER_NODE_TYPE(generate_response)
+REGISTER_NODE_TYPE(generate_prompt)
 REGISTER_NODE_TYPE(explanation)
 
 REGISTER_EDGE_TYPE(stopped)
@@ -105,8 +107,15 @@ REGISTER_TYPE(text, std::string, false)
 REGISTER_TYPE(sound, std::string, false)
 REGISTER_TYPE(volume, float, false)
 
+// RASA types
+REGISTER_TYPE(port, int, false)
+REGISTER_TYPE(intent, std::string, false)
+REGISTER_TYPE(entity, std::string, false)
+
 // Explanation types
 REGISTER_TYPE(question, std::string, false)
+REGISTER_TYPE(role, std::string, false)
+REGISTER_TYPE(first_answer, std::string, false)
 REGISTER_TYPE(answer, std::string, false)
 
 // Show types
