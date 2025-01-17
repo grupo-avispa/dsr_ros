@@ -543,6 +543,7 @@ TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeSameSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Check the results: now, the message subscriber should have a publisher
   EXPECT_EQ(msg_sub->get_publisher_count(), 1);
@@ -554,6 +555,7 @@ TEST_F(DsrUtilTest, bridgeIntegrationToROSNodeSameSource) {
 
   // Spin
   rclcpp::spin_some(bridge_node->get_node_base_interface());
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   // Delete the node
   bridge_node->delete_node("robot_name");
