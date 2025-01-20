@@ -108,6 +108,7 @@ TEST_F(DsrUtilTest, dockingAgentGetGoalFromDSR) {
   auto dummy_docking_node = std::make_shared<DummyDockingServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("dock_robot"));
 
   node_agent->configure();
   node_agent->activate();
@@ -133,6 +134,7 @@ TEST_F(DsrUtilTest, dockingAgentGetGoalFromDSRMisssing) {
   auto dummy_docking_node = std::make_shared<DummyDockingServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("dock_robot"));
 
   node_agent->configure();
   node_agent->activate();

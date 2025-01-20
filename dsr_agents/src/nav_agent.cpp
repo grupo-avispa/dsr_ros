@@ -23,8 +23,7 @@ namespace dsr_agents
 {
 
 NavigationAgent::NavigationAgent(const rclcpp::NodeOptions & options)
-: dsr_util::ActionAgent<nav2_msgs::action::NavigateToPose>(
-    "navigation_agent", "navigate_to_pose", options)
+: dsr_util::ActionAgent<nav2_msgs::action::NavigateToPose>("navigation_agent", options)
 {
 }
 

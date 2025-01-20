@@ -49,13 +49,11 @@ public:
    * @brief Construct a new Action Agent object.
    *
    * @param ros_node_name The name of the ROS node.
-   * @param ros_action_name The name of the ROS action.
    * @param options The options for the ROS node.
    */
   ActionAgent(
-    std::string ros_node_name, std::string ros_action_name,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : dsr_util::NodeAgent(ros_node_name, options), ros_action_name_(ros_action_name)
+    std::string ros_node_name, const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
+  : dsr_util::NodeAgent(ros_node_name, options)
   {
     // Initialize the input and output messages
     goal_ = typename ActionT::Goal();
@@ -76,6 +74,22 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override
   {
     // DSR parameters
+    declare_parameter_if_not_declared(
+      this, "ros_action_name", rclcpp::ParameterValue(""),
+      rcl_interfaces::msg::ParameterDescriptor()
+      .set__description("The name of the action in ROS 2"));
+    this->get_parameter("ros_action_name", ros_action_name_);
+    RCLCPP_INFO(
+      this->get_logger(),
+      "The parameter ros_action_name is set to: [%s]", ros_action_name_.c_str());
+
+    if (ros_action_name_.empty()) {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "The parameter ros_action_name is not set. Please set the parameter ros_action_name");
+      return CallbackReturn::FAILURE;
+    }
+
     // If the action name is not set, use the ROS node name
     declare_parameter_if_not_declared(
       this, "dsr_action_name", rclcpp::ParameterValue(ros_action_name_),

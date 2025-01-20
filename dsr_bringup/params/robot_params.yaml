@@ -15,12 +15,14 @@ nav_agent:
     agent_id: 102
     source: robot
     dsr_action_name: move
+    ros_action_name: "navigate_to_pose"
 docking_agent:
   ros__parameters:
     agent_name: docking_agent
     agent_id: 103
     source: robot
     dsr_action_name: dock
+    ros_action_name: "dock_robot"
 battery_agent:
   ros__parameters:
     agent_name: battery_agent
@@ -28,4 +30,4 @@ battery_agent:
     source: robot
     dsr_node_name: battery
     dsr_parent_node_name: robot
-    ros_topic: /battery
+    ros_topic: "/battery"

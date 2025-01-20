@@ -24,8 +24,7 @@ class ActionAgentFixture : public dsr_util::ActionAgent<test_msgs::action::Fibon
 {
 public:
   explicit ActionAgentFixture(const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : dsr_util::ActionAgent<test_msgs::action::Fibonacci>(
-      "action_agent", "test_fibonacci", options)
+  : dsr_util::ActionAgent<test_msgs::action::Fibonacci>("action_agent", options)
   {
   }
 
@@ -138,6 +137,7 @@ TEST_F(DsrUtilTest, actionAgentConfigure) {
   auto dummy_server_node = std::make_shared<DummyActionServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("test_fibonacci"));
 
   const auto state_after_configure = node_agent->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE);
@@ -162,12 +162,27 @@ TEST_F(DsrUtilTest, actionAgentConfigureWithoutServer) {
   rclcpp::shutdown();
 }
 
+TEST_F(DsrUtilTest, actionAgentConfigureWithoutROSActionName) {
+  rclcpp::init(0, nullptr);
+  auto node_agent = std::make_shared<ActionAgentFixture>();
+  auto dummy_server_node = std::make_shared<DummyActionServer>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+
+  const auto state_after_configure = node_agent->configure();
+  ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_UNCONFIGURED);
+  node_agent->shutdown();
+  dummy_server_node.reset();
+  rclcpp::shutdown();
+}
+
 TEST_F(DsrUtilTest, actionAgentAbortCancelAction) {
   rclcpp::init(0, nullptr);
   auto node_agent = std::make_shared<ActionAgentFixture>();
   auto dummy_server_node = std::make_shared<DummyActionServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("test_fibonacci"));
 
   // Configure and activate the node
   node_agent->configure();
@@ -206,6 +221,7 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionSucceeded) {
   dummy_server_node->setExecutionDuration(std::chrono::milliseconds(5));
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("test_fibonacci"));
 
   // Configure and activate the node
   node_agent->configure();
@@ -256,6 +272,7 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionAbort) {
   dummy_server_node->setExecutionDuration(std::chrono::milliseconds(5));
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("test_fibonacci"));
 
   // Configure and activate the node
   node_agent->configure();
@@ -305,6 +322,7 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionCancel) {
   dummy_server_node->setExecutionDuration(std::chrono::milliseconds(5));
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("test_fibonacci"));
 
   // Configure and activate the node
   node_agent->configure();
@@ -352,6 +370,7 @@ TEST_F(DsrUtilTest, actionAgentWantsToActionMissing) {
   auto dummy_server_node = std::make_shared<DummyActionServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("move"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("test_fibonacci"));
 
   // Configure and activate the node
   node_agent->configure();

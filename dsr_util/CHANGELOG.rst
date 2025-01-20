@@ -2,6 +2,10 @@
 Changelog for package dsr_util
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.0 (20-01-2025)
+------------------
+* Added ros_action_name as parameter.
+
 1.0.0 (16-01-2025)
 ------------------
 * Update license to Apache 2.0.

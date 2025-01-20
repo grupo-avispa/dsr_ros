@@ -114,6 +114,7 @@ TEST_F(DsrUtilTest, navAgentGetGoalFromDSR) {
   auto dummy_navigator_node = std::make_shared<DummyNavigationServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("navigate_to_pose"));
 
   node_agent->configure();
   node_agent->activate();
@@ -145,6 +146,7 @@ TEST_F(DsrUtilTest, navAgentGetGoalFromDSRMisssing) {
   auto dummy_navigator_node = std::make_shared<DummyNavigationServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("navigate_to_pose"));
 
   node_agent->configure();
   node_agent->activate();
@@ -166,6 +168,7 @@ TEST_F(DsrUtilTest, navAgentOnFeedback) {
   auto dummy_navigator_node = std::make_shared<DummyNavigationServer>();
   node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
   node_agent->declare_parameter("dsr_action_name", rclcpp::ParameterValue("test_topic"));
+  node_agent->declare_parameter("ros_action_name", rclcpp::ParameterValue("navigate_to_pose"));
 
   node_agent->configure();
   node_agent->activate();
