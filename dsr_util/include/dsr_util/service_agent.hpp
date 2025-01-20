@@ -72,6 +72,22 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override
   {
     // DSR parameters
+    declare_parameter_if_not_declared(
+      this, "ros_service_name", rclcpp::ParameterValue(""),
+      rcl_interfaces::msg::ParameterDescriptor()
+      .set__description("The name of the action in ROS 2"));
+    this->get_parameter("ros_service_name", ros_service_name_);
+    RCLCPP_INFO(
+      this->get_logger(),
+      "The parameter ros_service_name is set to: [%s]", ros_service_name_.c_str());
+
+    if (ros_service_name_.empty()) {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "The parameter ros_service_name is not set. Please set the parameter ros_service_name");
+      return CallbackReturn::FAILURE;
+    }
+
     // If the action name is not set, use the ROS node name
     declare_parameter_if_not_declared(
       this, "dsr_action_name", rclcpp::ParameterValue(ros_service_name_),
