@@ -85,12 +85,13 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
 
   if (!include_nodes_.empty()) {
     RCLCPP_WARN(
-      this->get_logger(), "The parameter include is not empty. It has priority over exclude.");
+      this->get_logger(),
+      "The parameter include_nodes is not empty. It has priority over exclude.");
   } else {
     exclude_nodes_ = exclude;
     RCLCPP_INFO(
       this->get_logger(),
-      "The parameter exclude is set to: [%s]",
+      "The parameter exclude_nodes is set to: [%s]",
       std::accumulate(
         exclude_nodes_.begin(), exclude_nodes_.end(), std::string(),
         [](const std::string & a, const std::string & b) -> std::string {
@@ -446,6 +447,11 @@ void DSRBridge::sync_graph()
 {
   RCLCPP_INFO(this->get_logger(), "Synchronizing the graph ...");
 
+  while (rclcpp::ok() && this->get_service_names_and_types().size() == 0) {
+    RCLCPP_INFO(this->get_logger(), "Waiting for services to be available");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   for (const auto & service : this->get_service_names_and_types() ) {
     // Check if the service name ends with "/get_graph" and is not the same as the current one
     const auto & service_name = service.first;
@@ -479,7 +485,7 @@ void DSRBridge::sync_graph()
   }
 
   // Cancel the timer if the service is not found
-  RCLCPP_INFO(this->get_logger(), "get_graph service not found");
+  RCLCPP_WARN(this->get_logger(), "get_graph service not found");
   this->one_off_sync_timer_->cancel();
 }
 
