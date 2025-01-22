@@ -330,8 +330,8 @@ void DSRBridge::edge_deleted(std::uint64_t from, std::uint64_t to, const std::st
   dsr_msgs::msg::Edge edge_msg;
   edge_msg.header.stamp = this->now();
   edge_msg.header.frame_id = source_;
-  edge_msg.parent = G_->get_node(from).value().name();
-  edge_msg.child = G_->get_node(to).value().name();
+  edge_msg.parent = G_->get_node(from).has_value() ? G_->get_node(from).value().name() : "";
+  edge_msg.child = G_->get_node(to).has_value() ? G_->get_node(to).value().name() : "";
   edge_msg.type = edge_tag;
   edge_msg.deleted = true;
   edge_to_ros_pub_->publish(edge_msg);
@@ -446,11 +446,6 @@ void DSRBridge::get_graph_from_dsr(
 void DSRBridge::sync_graph()
 {
   RCLCPP_INFO(this->get_logger(), "Synchronizing the graph ...");
-
-  while (rclcpp::ok() && this->get_service_names_and_types().size() == 0) {
-    RCLCPP_INFO(this->get_logger(), "Waiting for services to be available");
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
 
   for (const auto & service : this->get_service_names_and_types() ) {
     // Check if the service name ends with "/get_graph" and is not the same as the current one
