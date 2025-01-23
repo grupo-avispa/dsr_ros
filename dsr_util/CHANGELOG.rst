@@ -5,6 +5,7 @@ Changelog for package dsr_util
 1.1.0 (20-01-2025)
 ------------------
 * Added ros_action_name as parameter.
+* Store the action node in the action agent.
 
 1.0.0 (16-01-2025)
 ------------------

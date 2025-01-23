@@ -189,7 +189,7 @@ protected:
       [this](const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result) {
         result_ = result;
         on_result(result);
-        update_dsr_when_result_received();
+        update_dsr_when_result_received(result);
         goal_handle_.reset();
       };
     send_goal_options.feedback_callback =
@@ -197,7 +197,7 @@ protected:
         const std::shared_ptr<const typename ActionT::Feedback> feedback) {
         feedback_ = feedback;
         on_feedback(feedback);
-        update_dsr_when_feedback_received();
+        update_dsr_when_feedback_received(feedback);
       };
 
     auto future_goal_handle = action_client_->async_send_goal(goal_, send_goal_options);
@@ -255,16 +255,18 @@ protected:
   /**
    * @brief Update the DSR graph when the action server sends a feedback.
    */
-  void update_dsr_when_feedback_received()
+  void update_dsr_when_feedback_received(
+    const std::shared_ptr<const typename ActionT::Feedback>/*feedback*/)
   {
   }
 
   /**
    * @brief Update the DSR graph when the action server sends a result.
    */
-  void update_dsr_when_result_received()
+  void update_dsr_when_result_received(
+    const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result)
   {
-    switch (result_.code) {
+    switch (result.code) {
       case rclcpp_action::ResultCode::SUCCEEDED:
         // Replace the 'is_performing' edge with a 'finished' edge between robot and action
         if (replace_edge<finished_edge_type>(source_, dsr_action_name_, "is_performing")) {
@@ -316,7 +318,8 @@ protected:
       if (robot_node.has_value() && robot_node.value().name() == source_ &&
         action_node.has_value() && action_node.value().type() == dsr_action_name_)
       {
-        if (get_goal_from_dsr(action_node.value())) {
+        action_node_ = action_node.value();
+        if (get_goal_from_dsr(action_node_)) {
           send_new_goal();
           RCLCPP_INFO(this->get_logger(), "Starting the action '%s'", dsr_action_name_.c_str());
         } else {
@@ -331,8 +334,9 @@ protected:
     }
   }
 
-  // DSR action name
+  // DSR action
   std::string dsr_action_name_;
+  DSR::Node action_node_;
 
   // ROS action name
   std::string ros_action_name_;
