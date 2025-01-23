@@ -23,6 +23,7 @@
 #include "dsr_util/qt_executor.hpp"
 #include "dsr_util/helpers.hpp"
 #include "dsr_bridge/dsr_bridge.hpp"
+#include "rclcpp/qos.hpp"
 
 namespace dsr_bridge
 {
@@ -100,14 +101,16 @@ dsr_util::CallbackReturn DSRBridge::on_configure(const rclcpp_lifecycle::State &
   }
 
   // Publisher to the other DSR bridge
-  node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 10);
-  edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 10);
+  node_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Node>(node_topic_, 100);
+  edge_to_ros_pub_ = this->create_publisher<dsr_msgs::msg::Edge>(edge_topic_, 100);
 
   // Subscriber to the external DSR graph
   node_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Node>(
-    node_topic_, 10, std::bind(&DSRBridge::node_from_ros_callback, this, std::placeholders::_1));
+    node_topic_, rclcpp::QoS(100).reliable(),
+    std::bind(&DSRBridge::node_from_ros_callback, this, std::placeholders::_1));
   edge_from_ros_sub_ = this->create_subscription<dsr_msgs::msg::Edge>(
-    edge_topic_, 10, std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
+    edge_topic_, rclcpp::QoS(100).reliable(),
+    std::bind(&DSRBridge::edge_from_ros_callback, this, std::placeholders::_1));
 
   // Service
   get_graph_service_ = this->create_service<GetGraph>(
@@ -208,7 +211,7 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
       lost_edges_.push_back(*msg);
       RCLCPP_WARN(
         this->get_logger(),
-        "Th edge [%s->%s] of type [%s] has been stored until the nodes are created",
+        "The edge [%s->%s] of type [%s] has been stored until the nodes are created",
         msg->parent.c_str(), msg->child.c_str(), msg->type.c_str());
     } else {
       // Update the edge attributes or create it
