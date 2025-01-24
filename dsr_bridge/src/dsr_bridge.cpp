@@ -177,6 +177,7 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
       // Create the node
     } else {
       auto new_node = from_msg(*msg);
+      G_->add_or_modify_attrib_local<timestamp_alivetime_att>(new_node, static_cast<uint64_t>(std::time(nullptr)));
       if (auto id = G_->insert_node(new_node); id.has_value()) {
         RCLCPP_DEBUG(
           this->get_logger(),
