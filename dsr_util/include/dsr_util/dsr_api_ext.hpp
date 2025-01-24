@@ -22,6 +22,7 @@
 #include <tuple>
 #include <string>
 #include <vector>
+#include <ctime>
 
 // DSR
 #include "dsr/api/dsr_api.h"
@@ -81,6 +82,7 @@ public:
     add_or_modify_attrib_local<priority_att>(new_node, priority);
     // Add source value
     add_or_modify_attrib_local<source_att>(new_node, source);
+    add_or_modify_attrib_local<timestamp_creation_att>(new_node, static_cast<uint64_t>(std::time(nullptr)));
     return new_node;
   }
 
