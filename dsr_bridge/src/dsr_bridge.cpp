@@ -168,6 +168,8 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
     // Update the node
     if (auto node = G_->get_node(msg->name); node.has_value()) {
       dsr_util::helpers::modify_attributes_from_string(node.value(), msg->attributes);
+      G_->add_or_modify_attrib_local<timestamp_alivetime_att>(
+        node.value(), static_cast<uint64_t>(this->now().nanoseconds()));
       if (G_->update_node(node.value())) {
         RCLCPP_DEBUG(
           this->get_logger(),
@@ -177,8 +179,8 @@ void DSRBridge::node_from_ros_callback(const dsr_msgs::msg::Node::SharedPtr msg)
       // Create the node
     } else {
       auto new_node = from_msg(*msg);
-      G_->add_or_modify_attrib_local<timestamp_alivetime_att>(new_node, static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
-      std::cout << std::endl << static_cast<uint64_t>(std::time(nullptr)) << std::endl << std::endl;
+      G_->add_or_modify_attrib_local<timestamp_alivetime_att>(
+        new_node, static_cast<uint64_t>(this->now().nanoseconds()));
       if (auto id = G_->insert_node(new_node); id.has_value()) {
         RCLCPP_DEBUG(
           this->get_logger(),
@@ -224,6 +226,9 @@ void DSRBridge::edge_from_ros_callback(const dsr_msgs::msg::Edge::SharedPtr msg)
       } else {
         new_edge = from_msg(*msg);
       }
+      // Update the timestamp
+      G_->add_or_modify_attrib_local<timestamp_alivetime_att>(
+        new_edge, static_cast<uint64_t>(this->now().nanoseconds()));
       // Insert the edge in the DSR graph
       if (G_->insert_or_assign_edge(new_edge)) {
         RCLCPP_DEBUG(

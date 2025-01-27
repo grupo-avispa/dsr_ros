@@ -136,6 +136,9 @@ protected:
     // Create the node
     auto new_node =
       G_->create_node_with_pose<node_type, is_edge_type>(name, "", 0, source_);
+    // Update the timestamp
+    G_->add_or_modify_attrib_local<timestamp_creation_att>(
+      new_node, static_cast<uint64_t>(this->now().nanoseconds()));
     // Insert the node into the DSR graph
     if (auto id = G_->insert_node(new_node); id.has_value()) {
       return_node = new_node;
@@ -176,6 +179,9 @@ protected:
     // Create the node
     auto new_node =
       G_->create_node_with_pose<node_type, edge_type>(name, connecting_node_name, 0, source_);
+    // Update the timestamp
+    G_->add_or_modify_attrib_local<timestamp_creation_att>(
+      new_node, static_cast<uint64_t>(this->now().nanoseconds()));
     // Insert the node into the DSR graph
     if (auto id = G_->insert_node(new_node); id.has_value()) {
       return_node = new_node;
@@ -212,6 +218,9 @@ protected:
     if (parent_node.has_value() && child_node.has_value()) {
       // Create the edge
       auto new_edge = G_->create_edge_with_source<edge_type>(from, to, source_);
+      // Update the timestamp
+      G_->add_or_modify_attrib_local<timestamp_creation_att>(
+        new_edge, static_cast<uint64_t>(this->now().nanoseconds()));
       // Insert the edge into the DSR graph
       if (G_->insert_or_assign_edge(new_edge)) {
         return_edge = new_edge;
