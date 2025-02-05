@@ -2,7 +2,7 @@
 Changelog for package dsr_bridge
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.0.0 (16-01-2025)
 ------------------
 * Update license to Apache 2.0.
 * Improve formating.
@@ -12,8 +12,11 @@ Changelog for package dsr_bridge
 * Move launch to bringup.
 * Move some functions to dsr_util::helpers.
 * Added function to check if the edge are lost in bridge.
+* Added service to get the graph.
+* Added filtering options for the nodes.
+* Added sync funcionality.
 
-1.0.0 (04-03-2024)
+0.1.0 (04-03-2024)
 ------------------
 * Initial release.
 * Create README.md.

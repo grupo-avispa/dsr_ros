@@ -26,7 +26,7 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 
 // DSR
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_agents
 {
@@ -35,7 +35,7 @@ namespace dsr_agents
  * @class dsr_agents::TFAgent
  * @brief Agent to receive and send TF messages from ROS 2 to the DSR graph.
  */
-class TFAgent : public dsr_util::AgentNode
+class TFAgent : public dsr_util::NodeAgent
 {
 public:
   /**

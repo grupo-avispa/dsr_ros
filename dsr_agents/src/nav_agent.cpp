@@ -23,14 +23,14 @@ namespace dsr_agents
 {
 
 NavigationAgent::NavigationAgent(const rclcpp::NodeOptions & options)
-: dsr_util::ActionAgent<nav2_msgs::action::NavigateToPose>(
-    "navigation_agent", "navigate_to_pose", options)
+: dsr_util::ActionAgent<nav2_msgs::action::NavigateToPose>("navigation_agent", options)
 {
 }
 
-void NavigationAgent::get_goal_from_dsr(DSR::Node action_node)
+bool NavigationAgent::get_goal_from_dsr(DSR::Node action_node)
 {
   // Get the attributes from the move node
+  bool success = false;
   auto goal_x = G_->get_attrib_by_name<goal_x_att>(action_node);
   auto goal_y = G_->get_attrib_by_name<goal_y_att>(action_node);
   auto goal_angle = G_->get_attrib_by_name<goal_angle_att>(action_node);
@@ -42,9 +42,9 @@ void NavigationAgent::get_goal_from_dsr(DSR::Node action_node)
     goal_.pose.pose.position.x = goal_x.value();
     goal_.pose.pose.position.y = goal_y.value();
     goal_.pose.pose.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, goal_angle.value()));
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Goal not found in the move node");
+    success = true;
   }
+  return success;
 }
 
 void NavigationAgent::on_feedback(
@@ -60,7 +60,7 @@ void NavigationAgent::on_feedback(
         robot_node.value(), static_cast<float>(robot_pose.position.y));
       G_->add_or_modify_attrib_local<pose_angle_att>(
         robot_node.value(), static_cast<float>(tf2::getYaw(robot_pose.orientation)));
-      G_->update_node(robot_node.value());
+      update_node_with_source(robot_node.value());
     }
   }
 }

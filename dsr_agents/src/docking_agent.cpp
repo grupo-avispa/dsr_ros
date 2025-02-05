@@ -21,18 +21,18 @@ namespace dsr_agents
 {
 
 DockingAgent::DockingAgent(const rclcpp::NodeOptions & options)
-: dsr_util::ActionAgent<opennav_docking_msgs::action::DockRobot>(
-    "docking_agent", "dock_robot", options)
+: dsr_util::ActionAgent<opennav_docking_msgs::action::DockRobot>("docking_agent", options)
 {
 }
 
-void DockingAgent::get_goal_from_dsr(DSR::Node action_node)
+bool DockingAgent::get_goal_from_dsr(DSR::Node action_node)
 {
+  bool success = false;
   if (auto dock_id = G_->get_attrib_by_name<dock_id_att>(action_node); dock_id.has_value()) {
     goal_.dock_id = dock_id.value();
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Docking ID not found in the DSR graph");
+    success = true;
   }
+  return success;
 }
 }  // namespace dsr_agents
 

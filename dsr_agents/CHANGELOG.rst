@@ -2,7 +2,11 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.1.0 (20-01-2025)
+------------------
+* Added ros_action_name as parameter.
+
+1.0.0 (16-01-2025)
 ------------------
 * Improve DSR documentation.
 * Better information and refactor in navAgent.
@@ -15,12 +19,12 @@ Changelog for package dsr_agents
 * Remove viewer as it's integrated in dsr_rqt_plugin.
 * Remove QtExecutor as it's integrated in dsr_util.
 * Move ros_to_dsr_types.hpp to dsr_util.
-* Move agent_node.hpp to dsr_util and move agents.
+* Move node_agent.hpp to dsr_util and move agents.
 * Skip the removal of person if they are interacting.
 * Add the rooms to the DSR and the edges between them and the objects.
 * Improve formating.
 * Update license to Apache 2.0.
-* Move DSR callback functions to agent_node.
+* Move DSR callback functions to node_agent.
 * Move action_agent to dsr_util.
 * CMakeLists.txt use modern idioms.
 * Remove agents with private code.
@@ -84,12 +88,12 @@ Changelog for package dsr_agents
 * Added parameter for reading a world file.
 * Added viewer.
 * Generic and tf agents both inherit from agent node.
-* Added agent_node class (.h and .cpp files).
+* Added node_agent class (.h and .cpp files).
 * Added service to save dsr into a JSON file.
 * Remove redundant agent_name.
 * Added function to get random pos.
 * Improve create node.
-* Added RT update attributes to agent_node.
+* Added RT update attributes to node_agent.
 * Add sleeps to prevent unsynchronization with the DSR.
 * Use frame_id from ROS message if parent_name is empty.
 

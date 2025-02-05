@@ -130,7 +130,8 @@ target_include_directories(tf_agent PUBLIC
 target_link_libraries(tf_agent
   PUBLIC
   rclcpp::rclcpp
-  dsr_util::agent_node
+  rclcpp_lifecycle::rclcpp_lifecycle
+  dsr_util::node_agent
   ${tf2_msgs_TARGETS}
   PRIVATE
   ${fastrtps_LIBRARIES}
@@ -159,11 +160,11 @@ target_include_directories(topic_agent PUBLIC
 target_link_libraries(topic_agent
   PUBLIC
   rclcpp::rclcpp
-  dsr_util::agent_node
+  rclcpp_lifecycle::rclcpp_lifecycle
+  dsr_util::node_agent
   PRIVATE
   ${fastrtps_LIBRARIES}
   rclcpp_components::component
-  rclcpp_lifecycle::rclcpp_lifecycle
   ${sensor_msgs_TARGETS}
   ${std_msgs_TARGETS}
 )

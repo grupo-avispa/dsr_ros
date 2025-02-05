@@ -44,8 +44,9 @@ protected:
    * @brief Get the dock_id from the DSR node.
    *
    * @param action_node The DSR node with the dock_id information.
+   * @return true If the dock_id is successfully obtained.
    */
-  void get_goal_from_dsr(DSR::Node action_node) override;
+  bool get_goal_from_dsr(DSR::Node action_node) override;
 };
 
 }  // namespace dsr_agents

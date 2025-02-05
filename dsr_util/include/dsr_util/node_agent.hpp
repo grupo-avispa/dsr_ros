@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DSR_UTIL__AGENT_NODE_HPP_
-#define DSR_UTIL__AGENT_NODE_HPP_
+#ifndef DSR_UTIL__NODE_AGENT_HPP_
+#define DSR_UTIL__NODE_AGENT_HPP_
 
 // Qt
 #include <QObject>
@@ -45,22 +45,22 @@ namespace dsr_util
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 /**
- * @class dsr_util::AgentNode
+ * @class dsr_util::NodeAgent
  * @brief Base class to connect the DSR graph with ROS 2. It contains common methods and attributes
  * to send data from ROS 2 to the DSR graph and vice versa. All agents must inherit from this class.
  */
-class AgentNode : public QObject, public rclcpp_lifecycle::LifecycleNode
+class NodeAgent : public QObject, public rclcpp_lifecycle::LifecycleNode
 {
   Q_OBJECT
 
 public:
   /**
-   * @brief Construct a new Agent Node object.
+   * @brief Construct a new Node Agent object.
    *
    * @param ros_node_name Name of the ROS node and the DSR agent.
    * @param options Node options
    */
-  explicit AgentNode(
+  explicit NodeAgent(
     std::string ros_node_name, const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   /**
@@ -104,10 +104,10 @@ public:
   CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
 
   /**
-   * @brief Destroy the Agent Node object.
+   * @brief Destroy the Node Agent object.
    *
    */
-  virtual ~AgentNode();
+  virtual ~NodeAgent();
 
   /**
    * @brief Create bond connection to lifecycle manager
@@ -136,6 +136,9 @@ protected:
     // Create the node
     auto new_node =
       G_->create_node_with_pose<node_type, is_edge_type>(name, "", 0, source_);
+    // Update the timestamp
+    G_->add_or_modify_attrib_local<timestamp_creation_att>(
+      new_node, static_cast<uint64_t>(this->now().nanoseconds()));
     // Insert the node into the DSR graph
     if (auto id = G_->insert_node(new_node); id.has_value()) {
       return_node = new_node;
@@ -176,6 +179,9 @@ protected:
     // Create the node
     auto new_node =
       G_->create_node_with_pose<node_type, edge_type>(name, connecting_node_name, 0, source_);
+    // Update the timestamp
+    G_->add_or_modify_attrib_local<timestamp_creation_att>(
+      new_node, static_cast<uint64_t>(this->now().nanoseconds()));
     // Insert the node into the DSR graph
     if (auto id = G_->insert_node(new_node); id.has_value()) {
       return_node = new_node;
@@ -212,6 +218,9 @@ protected:
     if (parent_node.has_value() && child_node.has_value()) {
       // Create the edge
       auto new_edge = G_->create_edge_with_source<edge_type>(from, to, source_);
+      // Update the timestamp
+      G_->add_or_modify_attrib_local<timestamp_creation_att>(
+        new_edge, static_cast<uint64_t>(this->now().nanoseconds()));
       // Insert the edge into the DSR graph
       if (G_->insert_or_assign_edge(new_edge)) {
         return_edge = new_edge;
@@ -445,6 +454,23 @@ protected:
     DSR::Node & from, DSR::Node & to, const geometry_msgs::msg::Transform & msg);
 
   /**
+   * @brief Update the attributes of the given node in the DSR graph
+   * and change the source attribute to the name of the physical machine (set by source_).
+   *
+   * @param node
+   * @return true If the node was updated successfully. False otherwise.
+   */
+  bool update_node_with_source(DSR::Node & node);
+
+  /**
+   * @brief Update the attributes of the given edge in the DSR graph
+   * and change the source attribute to the name of the physical machine (set by source_).
+   *
+   * @param edge
+   */
+  void update_edge_with_source(DSR::Edge & edge);
+
+  /**
    * @brief Pointer to the DSR graph.
    */
   std::shared_ptr<dsr_util::DSRGraphExt> G_;
@@ -566,6 +592,13 @@ private:
   virtual void edge_deleted(
     std::uint64_t /*from*/, std::uint64_t /*to*/, const std::string & /*edge_tag*/) {}
 
+  /**
+   * @brief Callback executed when an edge is deleted in the DSR graph.
+   *
+   * @param edge The edge.
+   */
+  virtual void edge_deleted_by_edge(const DSR::Edge & /*edge*/) {}
+
   // Service to save the DSR graph into a file.
   rclcpp::Service<dsr_msgs::srv::SaveDSR>::SharedPtr save_dsr_service_;
 
@@ -585,4 +618,4 @@ private:
 
 }  // namespace dsr_util
 
-#endif  // DSR_UTIL__AGENT_NODE_HPP_
+#endif  // DSR_UTIL__NODE_AGENT_HPP_

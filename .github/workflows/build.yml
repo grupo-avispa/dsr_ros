@@ -5,8 +5,7 @@ name: Build
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, humble]
   pull_request:
 
 env:
@@ -55,3 +54,9 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           slug: grupo-avispa/dsr_ros
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests

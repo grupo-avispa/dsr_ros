@@ -1,5 +1,6 @@
 bridge_workstation:
   ros__parameters:
+    agent_name: bridge_agent
     agent_id: 200
     source: workstation
     dsr_input_file: ''

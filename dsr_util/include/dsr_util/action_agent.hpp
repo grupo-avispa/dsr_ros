@@ -27,7 +27,7 @@
 
 // DSR
 #include "dsr/api/dsr_api.h"
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_util
 {
@@ -42,20 +42,18 @@ namespace dsr_util
  * @tparam ActionT The type of the ROS 2 action.
  */
 template<class ActionT>
-class ActionAgent : public dsr_util::AgentNode
+class ActionAgent : public dsr_util::NodeAgent
 {
 public:
   /**
    * @brief Construct a new Action Agent object.
    *
    * @param ros_node_name The name of the ROS node.
-   * @param ros_action_name The name of the ROS action.
    * @param options The options for the ROS node.
    */
   ActionAgent(
-    std::string ros_node_name, std::string ros_action_name,
-    const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : dsr_util::AgentNode(ros_node_name, options), ros_action_name_(ros_action_name)
+    std::string ros_node_name, const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
+  : dsr_util::NodeAgent(ros_node_name, options)
   {
     // Initialize the input and output messages
     goal_ = typename ActionT::Goal();
@@ -76,6 +74,22 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override
   {
     // DSR parameters
+    declare_parameter_if_not_declared(
+      this, "ros_action_name", rclcpp::ParameterValue(""),
+      rcl_interfaces::msg::ParameterDescriptor()
+      .set__description("The name of the action in ROS 2"));
+    this->get_parameter("ros_action_name", ros_action_name_);
+    RCLCPP_INFO(
+      this->get_logger(),
+      "The parameter ros_action_name is set to: [%s]", ros_action_name_.c_str());
+
+    if (ros_action_name_.empty()) {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "The parameter ros_action_name is not set. Please set the parameter ros_action_name");
+      return CallbackReturn::FAILURE;
+    }
+
     // If the action name is not set, use the ROS node name
     declare_parameter_if_not_declared(
       this, "dsr_action_name", rclcpp::ParameterValue(ros_action_name_),
@@ -86,21 +100,20 @@ public:
       this->get_logger(),
       "The parameter dsr_action_name is set to: [%s]", dsr_action_name_.c_str());
 
-    int wait_for_service_timeout_s;
+    int wait_for_service_timeout;
     declare_parameter_if_not_declared(
       this, "wait_for_service_timeout", rclcpp::ParameterValue(1000),
       rcl_interfaces::msg::ParameterDescriptor()
       .set__description("The timeout value for waiting for a service to response"));
-    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout_s);
+    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout);
     RCLCPP_INFO(
       this->get_logger(),
-      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout_s);
-    wait_for_service_timeout_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::duration<int>(wait_for_service_timeout_s));
+      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout);
+    wait_for_service_timeout_ = std::chrono::milliseconds(wait_for_service_timeout);
 
     create_action_client(ros_action_name_);
 
-    return AgentNode::on_configure(state);
+    return NodeAgent::on_configure(state);
   }
 
 protected:
@@ -109,11 +122,15 @@ protected:
   /**
    * @brief Function to perform some user-defined operation when the goal is received from the DSR.
    * Usually, this function should fill the goal message with the data from the DSR node.
+   *
+   * @param action_node The DSR node with the goal information.
+   * @return true If the goal is successfully obtained.
    */
-  virtual void get_goal_from_dsr(DSR::Node action_node) = 0;
+  virtual bool get_goal_from_dsr(DSR::Node action_node) = 0;
 
   /**
    * @brief Create instance of an action client
+   *
    * @param ros_action_name Action name to create client for
    */
   void create_action_client(const std::string & ros_action_name)
@@ -160,24 +177,27 @@ protected:
   {
     auto send_goal_options = typename rclcpp_action::Client<ActionT>::SendGoalOptions();
     send_goal_options.goal_response_callback =
-      [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal) {
-        if (!goal) {
+      [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal_handle) {
+        if (!goal_handle) {
           RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
         } else {
           update_dsr_when_goal_accepted();
+          goal_handle_ = goal_handle;
         }
       };
     send_goal_options.result_callback =
       [this](const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result) {
         result_ = result;
-        update_dsr_when_result_received();
+        on_result(result);
+        update_dsr_when_result_received(result);
+        goal_handle_.reset();
       };
     send_goal_options.feedback_callback =
       [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr,
         const std::shared_ptr<const typename ActionT::Feedback> feedback) {
         feedback_ = feedback;
         on_feedback(feedback);
-        update_dsr_when_feedback_received();
+        update_dsr_when_feedback_received(feedback);
       };
 
     auto future_goal_handle = action_client_->async_send_goal(goal_, send_goal_options);
@@ -209,7 +229,15 @@ protected:
   /**
    * @brief Function to perform some user-defined operation inside the feedback callback.
    */
-  virtual void on_feedback(const std::shared_ptr<const typename ActionT::Feedback> feedback)
+  virtual void on_feedback(const std::shared_ptr<const typename ActionT::Feedback>/*feedback*/)
+  {
+  }
+
+  /**
+   * @brief Function to perform some user-defined operation inside the result callback.
+   */
+  virtual void on_result(
+    const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & /*result*/)
   {
   }
 
@@ -227,16 +255,18 @@ protected:
   /**
    * @brief Update the DSR graph when the action server sends a feedback.
    */
-  void update_dsr_when_feedback_received()
+  void update_dsr_when_feedback_received(
+    const std::shared_ptr<const typename ActionT::Feedback>/*feedback*/)
   {
   }
 
   /**
    * @brief Update the DSR graph when the action server sends a result.
    */
-  void update_dsr_when_result_received()
+  void update_dsr_when_result_received(
+    const typename rclcpp_action::ClientGoalHandle<ActionT>::WrappedResult & result)
   {
-    switch (result_.code) {
+    switch (result.code) {
       case rclcpp_action::ResultCode::SUCCEEDED:
         // Replace the 'is_performing' edge with a 'finished' edge between robot and action
         if (replace_edge<finished_edge_type>(source_, dsr_action_name_, "is_performing")) {
@@ -247,12 +277,6 @@ protected:
         // Replace the 'is_performing' edge with a 'failed' edge between robot and action
         if (replace_edge<failed_edge_type>(source_, dsr_action_name_, "is_performing")) {
           RCLCPP_ERROR(this->get_logger(), "Goal aborted");
-        }
-        break;
-      case rclcpp_action::ResultCode::CANCELED:
-        // Replace the 'is_performing' edge with a 'canceled' edge between robot and action
-        if (replace_edge<cancel_edge_type>(source_, dsr_action_name_, "is_performing")) {
-          RCLCPP_ERROR(this->get_logger(), "Goal canceled");
         }
         break;
       default:
@@ -283,7 +307,8 @@ protected:
         if (G_->delete_node(action_node.value())) {
           cancel_action();
           RCLCPP_INFO(
-            this->get_logger(), "Action '%s' has been canceled", dsr_action_name_.c_str());
+            this->get_logger(),
+            "Action '%s' has been %sed", dsr_action_name_.c_str(), type.c_str());
         }
       }
       // Check if the robot wants to start the action: robot ---(wants_to)--> action
@@ -293,15 +318,25 @@ protected:
       if (robot_node.has_value() && robot_node.value().name() == source_ &&
         action_node.has_value() && action_node.value().type() == dsr_action_name_)
       {
-        get_goal_from_dsr(action_node.value());
-        send_new_goal();
-        RCLCPP_INFO(this->get_logger(), "Starting the action '%s'", dsr_action_name_.c_str());
+        action_node_ = action_node.value();
+        if (get_goal_from_dsr(action_node_)) {
+          send_new_goal();
+          RCLCPP_INFO(this->get_logger(), "Starting the action '%s'", dsr_action_name_.c_str());
+        } else {
+          // Replace the 'wants_to' edge with a 'failed' edge between robot and action
+          if (replace_edge<failed_edge_type>(source_, dsr_action_name_, "wants_to")) {
+            RCLCPP_ERROR(
+              this->get_logger(), "Missing goal information in the DSR for the action node '%s'",
+              action_node.value().name().c_str());
+          }
+        }
       }
     }
   }
 
-  // DSR action name
+  // DSR action
   std::string dsr_action_name_;
+  DSR::Node action_node_;
 
   // ROS action name
   std::string ros_action_name_;

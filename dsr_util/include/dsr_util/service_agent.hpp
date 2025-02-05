@@ -25,7 +25,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 // DSR
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace wasp_dsr_agents
 {
@@ -41,7 +41,7 @@ namespace wasp_dsr_agents
  * @tparam ServiceT The type of the ROS 2 service to call.
  */
 template<class ServiceT>
-class ServiceAgent : public dsr_util::AgentNode
+class ServiceAgent : public dsr_util::NodeAgent
 {
 public:
   /**
@@ -54,7 +54,7 @@ public:
   ServiceAgent(
     std::string ros_node_name, std::string ros_service_name,
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
-  : dsr_util::AgentNode(ros_node_name, options), ros_service_name_(ros_service_name)
+  : dsr_util::NodeAgent(ros_node_name, options), ros_service_name_(ros_service_name)
   {
   }
 
@@ -72,6 +72,22 @@ public:
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override
   {
     // DSR parameters
+    declare_parameter_if_not_declared(
+      this, "ros_service_name", rclcpp::ParameterValue(""),
+      rcl_interfaces::msg::ParameterDescriptor()
+      .set__description("The name of the action in ROS 2"));
+    this->get_parameter("ros_service_name", ros_service_name_);
+    RCLCPP_INFO(
+      this->get_logger(),
+      "The parameter ros_service_name is set to: [%s]", ros_service_name_.c_str());
+
+    if (ros_service_name_.empty()) {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "The parameter ros_service_name is not set. Please set the parameter ros_service_name");
+      return CallbackReturn::FAILURE;
+    }
+
     // If the action name is not set, use the ROS node name
     declare_parameter_if_not_declared(
       this, "dsr_action_name", rclcpp::ParameterValue(ros_service_name_),
@@ -82,21 +98,20 @@ public:
       this->get_logger(),
       "The parameter dsr_action_name is set to: [%s]", dsr_action_name_.c_str());
 
-    int wait_for_service_timeout_s;
+    int wait_for_service_timeout;
     declare_parameter_if_not_declared(
       this, "wait_for_service_timeout", rclcpp::ParameterValue(1000),
       rcl_interfaces::msg::ParameterDescriptor()
       .set__description("The timeout value for waiting for a service to response"));
-    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout_s);
+    this->get_parameter("wait_for_service_timeout", wait_for_service_timeout);
     RCLCPP_INFO(
       this->get_logger(),
-      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout_s);
-    wait_for_service_timeout_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::duration<int>(wait_for_service_timeout_s));
+      "The parameter wait_for_service_timeout is set to: [%i]", wait_for_service_timeout);
+    wait_for_service_timeout_ = std::chrono::milliseconds(wait_for_service_timeout);
 
     create_service_client(ros_service_name_);
 
-    return AgentNode::on_configure(state);
+    return NodeAgent::on_configure(state);
   }
 
 protected:
@@ -169,7 +184,8 @@ protected:
         // Delete the action node from the DSR graph
         if (G_->delete_node(action_node.value())) {
           RCLCPP_INFO(
-            this->get_logger(), "Action '%s' has been canceled", dsr_action_name_.c_str());
+            this->get_logger(),
+            "Action '%s' has been %sed", dsr_action_name_.c_str(), type.c_str());
         }
       }
       // Check if the robot wants to start the action: robot ---(wants_to)--> action

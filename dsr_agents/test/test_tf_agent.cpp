@@ -62,21 +62,21 @@ public:
 
 TEST_F(DsrUtilTest, tfAgentConfigure) {
   // Create the node
-  auto agent_node = std::make_shared<TFAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  auto node_agent = std::make_shared<TFAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
 
-  const auto state_after_configure = agent_node->configure();
+  const auto state_after_configure = node_agent->configure();
   ASSERT_EQ(state_after_configure.id(), lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE);
 
-  agent_node->activate();
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->activate();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 TEST_F(DsrUtilTest, tfAgentSortTFByParentFrame) {
   // Create the node
-  auto agent_node = std::make_shared<TFAgentFixture>();
+  auto node_agent = std::make_shared<TFAgentFixture>();
 
   // Create a sample unsorted TFMessage
   tf2_msgs::msg::TFMessage unsorted_trf;
@@ -94,7 +94,7 @@ TEST_F(DsrUtilTest, tfAgentSortTFByParentFrame) {
   unsorted_trf.transforms.push_back(trf3);
 
   // Sort the TFMessage
-  auto sorted_trf = agent_node->sort_tf_by_parent_frame(unsorted_trf);
+  auto sorted_trf = node_agent->sort_tf_by_parent_frame(unsorted_trf);
 
   // Check the order of the sorted TFMessage
   ASSERT_EQ(sorted_trf.transforms.size(), 3);
@@ -108,10 +108,10 @@ TEST_F(DsrUtilTest, tfAgentSortTFByParentFrame) {
 
 TEST_F(DsrUtilTest, tfAgentReplaceFramesWithDSRNames) {
   // Create the node
-  auto agent_node = std::make_shared<TFAgentFixture>();
+  auto node_agent = std::make_shared<TFAgentFixture>();
 
   // Set the source
-  agent_node->set_source("robot");
+  node_agent->set_source("robot");
 
   // Create a sample sorted TFMessage
   tf2_msgs::msg::TFMessage sorted_trf;
@@ -129,7 +129,7 @@ TEST_F(DsrUtilTest, tfAgentReplaceFramesWithDSRNames) {
   sorted_trf.transforms.push_back(trf3);
 
   // Replace the frames with the DSR names
-  agent_node->replace_frames_with_dsr_names(sorted_trf);
+  node_agent->replace_frames_with_dsr_names(sorted_trf);
 
   // Check the DSR names
   ASSERT_EQ(sorted_trf.transforms.size(), 3);
@@ -143,10 +143,10 @@ TEST_F(DsrUtilTest, tfAgentReplaceFramesWithDSRNames) {
 
 TEST_F(DsrUtilTest, tfAgentStoreDSRNames) {
   // Create the node
-  auto agent_node = std::make_shared<TFAgentFixture>();
+  auto node_agent = std::make_shared<TFAgentFixture>();
 
   // Set the source
-  agent_node->set_source("robot");
+  node_agent->set_source("robot");
 
   // Create a sample sorted TFMessage
   tf2_msgs::msg::TFMessage sorted_trf;
@@ -165,7 +165,7 @@ TEST_F(DsrUtilTest, tfAgentStoreDSRNames) {
 
   // Replace the frames with the DSR names
   std::vector<std::string> dsr_names;
-  agent_node->store_dsr_names(sorted_trf, dsr_names);
+  node_agent->store_dsr_names(sorted_trf, dsr_names);
 
   // Check the DSR names
   ASSERT_EQ(dsr_names.size(), 4);
@@ -177,13 +177,13 @@ TEST_F(DsrUtilTest, tfAgentStoreDSRNames) {
 
 TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {
   // Create the node
-  auto agent_node = std::make_shared<TFAgentFixture>();
-  agent_node->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
-  agent_node->declare_parameter("source", rclcpp::ParameterValue("test_robot"));
+  auto node_agent = std::make_shared<TFAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("source", rclcpp::ParameterValue("test_robot"));
 
   // Configure and activate the node
-  agent_node->configure();
-  agent_node->activate();
+  node_agent->configure();
+  node_agent->activate();
 
   // Create a sample sorted TFMessage
   tf2_msgs::msg::TFMessage sorted_trf;
@@ -224,19 +224,19 @@ TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {
   sorted_trf.transforms.push_back(trf3);
 
   // Insert and update the TFMessage into the DSR graph
-  agent_node->insert_and_update_tf_into_dsr(sorted_trf);
+  node_agent->insert_and_update_tf_into_dsr(sorted_trf);
 
   // Check the nodes in the DSR graph
-  EXPECT_TRUE(agent_node->get_graph()->get_node("world").has_value());
-  EXPECT_TRUE(agent_node->get_graph()->get_node("map").has_value());
-  EXPECT_TRUE(agent_node->get_graph()->get_node("base_link").has_value());
-  EXPECT_TRUE(agent_node->get_graph()->get_node("camera_link").has_value());
-  EXPECT_TRUE(agent_node->get_graph()->get_node("odom").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("world").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("map").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("base_link").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("camera_link").has_value());
+  EXPECT_TRUE(node_agent->get_graph()->get_node("odom").has_value());
 
   // Check the edges and RT attributes
-  auto rt_edge1 = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("map").value().id(),
-    agent_node->get_graph()->get_node("base_link").value().id(), "RT");
+  auto rt_edge1 = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("map").value().id(),
+    node_agent->get_graph()->get_node("base_link").value().id(), "RT");
   EXPECT_TRUE(rt_edge1.has_value());
 
   auto attrs1 = rt_edge1.value().attrs();
@@ -250,9 +250,9 @@ TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {
   EXPECT_FLOAT_EQ(rot1[1], 0.0);
   EXPECT_FLOAT_EQ(rot1[2], 0.0);
 
-  auto rt_edge2 = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("base_link").value().id(),
-    agent_node->get_graph()->get_node("camera_link").value().id(), "RT");
+  auto rt_edge2 = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("base_link").value().id(),
+    node_agent->get_graph()->get_node("camera_link").value().id(), "RT");
   EXPECT_TRUE(rt_edge2.has_value());
 
   auto attrs2 = rt_edge2.value().attrs();
@@ -266,9 +266,9 @@ TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {
   EXPECT_FLOAT_EQ(rot2[1], 0.0);
   EXPECT_FLOAT_EQ(rot2[2], 0.0);
 
-  auto rt_edge3 = agent_node->get_graph()->get_edge(
-    agent_node->get_graph()->get_node("map").value().id(),
-    agent_node->get_graph()->get_node("odom").value().id(), "RT");
+  auto rt_edge3 = node_agent->get_graph()->get_edge(
+    node_agent->get_graph()->get_node("map").value().id(),
+    node_agent->get_graph()->get_node("odom").value().id(), "RT");
   EXPECT_TRUE(rt_edge3.has_value());
 
   auto attrs3 = rt_edge3.value().attrs();
@@ -282,9 +282,9 @@ TEST_F(DsrUtilTest, tfAgentInsertAndUpdateTFIntoDSR) {
   EXPECT_FLOAT_EQ(rot3[1], 0.0);
   EXPECT_FLOAT_EQ(rot3[2], 0.0);
 
-  agent_node->deactivate();
-  agent_node->cleanup();
-  agent_node->shutdown();
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
 }
 
 int main(int argc, char ** argv)

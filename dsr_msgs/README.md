@@ -8,5 +8,6 @@ This package contains messages and services to interact with the [dsr_agents](..
 * [Node](msg/Node.msg): ROS equivalent of the `DSR Node`.
 
 ## Services (.srv)
+* [GetGraph](srv/getGraph.srv): Get the current DSR graph.
 * [SaveDSR](srv/SaveDSR.srv): Save the current DSR into a file.
 

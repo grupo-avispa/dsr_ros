@@ -25,11 +25,13 @@
 
 // ROS
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_publisher.hpp"
 #include "dsr_msgs/msg/edge.hpp"
 #include "dsr_msgs/msg/node.hpp"
+#include "dsr_msgs/srv/get_graph.hpp"
 
 // DSR
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_bridge
 {
@@ -38,7 +40,7 @@ namespace dsr_bridge
  * @class dsr_bridge::DSRBridge
  * @brief Bridge to connect the DSR graphs between machines throughROS 2 topics.
  */
-class DSRBridge : public dsr_util::AgentNode
+class DSRBridge : public dsr_util::NodeAgent
 {
 public:
   /**
@@ -61,7 +63,41 @@ public:
    */
   CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
 
+  /**
+   * @brief Activate the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Deactivate the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Cleanup the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+
+  /**
+   * @brief Shutdown the node
+   *
+   * @param state State of the node
+   * @return CallbackReturn
+   */
+  CallbackReturn on_shutdown(const rclcpp_lifecycle::State & state) override;
+
 protected:
+  using GetGraph = dsr_msgs::srv::GetGraph;
+
   /**
    * @brief Callback executed when a node is received from a ROS 2 topic.
    *
@@ -116,7 +152,7 @@ protected:
   /**
    * @brief Callback executed when a node is deleted in the DSR graph.
    *
-   * @param id The id of the node.
+   * @param node The node.
    */
   void node_deleted_by_node(const DSR::Node & node) override;
 
@@ -127,7 +163,17 @@ protected:
    * @param to The id of the child node.
    * @param edge_tag The type of the edge.
    */
-  void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag) override;
+  void edge_deleted(std::uint64_t from, std::uint64_t to, const std::string & edge_tag);
+
+  /**
+   * @brief Callback executed when the service to get the graph is called.
+   *
+   * @param request Empty request.
+   * @param response The graph in ROS 2 message format.
+   * @return true If the graph was successfully sent.
+   */
+  bool get_graph_service(
+    const std::shared_ptr<GetGraph::Request> request, std::shared_ptr<GetGraph::Response> response);
 
   /**
    * @brief Create a DSR::Node from a ROS 2 message.
@@ -168,12 +214,38 @@ protected:
    */
   void insert_lost_edges();
 
+  /**
+   * @brief Synchronize the DSR graph using the service to get the graph.
+   */
+  void sync_graph();
+
+  /**
+   * @brief Get the nodes and edges from the DSR graph.
+   *
+   * @param nodes_msg The nodes in the DSR graph in ROS 2 message format.
+   * @param edges_msg The edges in the DSR graph in ROS 2 message format.
+   */
+  void get_graph_from_dsr(
+    std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg);
+
+  // Subscribers and publishers for the ROS 2 topics (nodes and edges)
   rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;
   rclcpp::Subscription<dsr_msgs::msg::Edge>::SharedPtr edge_from_ros_sub_;
-  rclcpp::Publisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
-  rclcpp::Publisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<dsr_msgs::msg::Node>::SharedPtr node_to_ros_pub_;
+  rclcpp_lifecycle::LifecyclePublisher<dsr_msgs::msg::Edge>::SharedPtr edge_to_ros_pub_;
+
+  // Service to get the graph
+  rclcpp::Service<GetGraph>::SharedPtr get_graph_service_;
+  // Client to get the graph
+  rclcpp::Client<GetGraph>::SharedPtr get_graph_client_;
+  // Timer to synchronize the graph the first time
+  rclcpp::TimerBase::SharedPtr one_off_sync_timer_;
+  // ROS 2 topics names
   std::string node_topic_, edge_topic_;
+  // Vector of lost edges
   std::vector<dsr_msgs::msg::Edge> lost_edges_;
+  // List of node types to include or exclude
+  std::vector<std::string> include_nodes_, exclude_nodes_;
 };
 
 }  // namespace dsr_bridge

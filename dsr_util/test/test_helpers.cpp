@@ -17,7 +17,7 @@
 #include "dsr_util/helpers.hpp"
 #include "dsr/core/types/user_types.h"
 
-TEST(DsrUtilTest, StringToAttribute) {
+TEST(DsrUtilTest, stringToAttribute) {
   // Test string
   auto att = dsr_util::helpers::string_to_attribute("test", 0);
   EXPECT_EQ(std::get<std::string>(att.value()), "test");
@@ -72,7 +72,7 @@ TEST(DsrUtilTest, StringToAttribute) {
   att = dsr_util::helpers::string_to_attribute("test", 15);
 }
 
-TEST(DsrUtilTest, AttributeToString) {
+TEST(DsrUtilTest, attributeToString) {
   // Test string
   DSR::Attribute att;
   att.value("test");
@@ -115,7 +115,7 @@ TEST(DsrUtilTest, AttributeToString) {
   EXPECT_EQ(dsr_util::helpers::attribute_to_string(att), "");
 }
 
-TEST(DsrUtilTest, AttributesToString) {
+TEST(DsrUtilTest, attributesToString) {
   std::map<std::string, DSR::Attribute> atts;
   DSR::Attribute att;
   att.value(1.0);
@@ -133,7 +133,7 @@ TEST(DsrUtilTest, AttributesToString) {
   EXPECT_EQ(att_str[5], "8");
 }
 
-TEST(DsrUtilTest, AttributesToStringByNames) {
+TEST(DsrUtilTest, attributesToStringByNames) {
   auto node = DSR::Node::create<robot_node_type>("test");
   DSR::Attribute att;
   att.value(1.0);
@@ -151,13 +151,13 @@ TEST(DsrUtilTest, AttributesToStringByNames) {
   EXPECT_EQ(att_str[5], "8");
 }
 
-TEST(DsrUtilTest, GetAttributeType) {
+TEST(DsrUtilTest, getAttributeType) {
   DSR::Attribute att;
   att.value("test");
   EXPECT_EQ(dsr_util::helpers::get_type_from_attribute(att), "0");
 }
 
-TEST(DsrUtilTest, ModifyAttributesFromString) {
+TEST(DsrUtilTest, modifyAttributesFromString) {
   auto node = DSR::Node::create<robot_node_type>("test");
   auto attrs_str = std::vector<std::string>{"pos_x", "1.0", "2", "pos_y", "2.0", "2"};
   dsr_util::helpers::modify_attributes_from_string(node, attrs_str);

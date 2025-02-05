@@ -36,11 +36,19 @@ Node that receives the messages from the DSR side and creates the corresponding 
 
 #### Parameters
 
-* **`source`** (string, default: "robot")
+* **`include_nodes`** (string, default: "")
 
-	The source if the messages.
+	Comma separated list of nodes to be sent to the other DSR bridge.
 
-### Common parameters for all nodes
+* **`exclude_nodes`** (string, default: "")
+
+	Comma separated list of nodes to be excluded from the nodes to be sent to the other DSR bridge.
+
+#### Parameters (common for all agents)
+
+* **`agent_name`** (string, default: "")
+
+	The name of the agent that will be used.
 
 * **`agent_id`** (int, default: 0)
 
@@ -50,10 +58,14 @@ Node that receives the messages from the DSR side and creates the corresponding 
 
 	The path to the DSR file that will be loaded.
 
+* **`source`** (string, default: "robot")
+
+	The source of the nodes / edges.
+
 ## Future work
 - [x] Convert nodes to LifeCycleNodes.
 - [x] Store the edges if the nodes are not available. and re-send them when the nodes are available.
-- [ ] Add filtering options for the nodes / edges.
+- [x] Add filtering options for the nodes / edges.
 - [ ] Add resync function.
 
 

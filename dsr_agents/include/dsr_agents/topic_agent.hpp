@@ -27,7 +27,7 @@
 #include "rclcpp/serialization.hpp"
 
 // DSR
-#include "dsr_util/agent_node.hpp"
+#include "dsr_util/node_agent.hpp"
 
 namespace dsr_agents
 {
@@ -36,7 +36,7 @@ namespace dsr_agents
  * @class dsr_agents::TopicAgent
  * @brief Agent to receive and send messages from ROS 2 topics to the DSR graph.
  */
-class TopicAgent : public dsr_util::AgentNode
+class TopicAgent : public dsr_util::NodeAgent
 {
 public:
   /**

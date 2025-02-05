@@ -2,7 +2,11 @@
 Changelog for package dsr_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.0.0 (XX-XX-XXXX)
+1.1.0 (20-01-2025)
+------------------
+* Added ros_action_name as parameter.
+
+1.0.0 (16-01-2025)
 ------------------
 * Initial release.
 * Move launch and params files from dsr_agents to dsr_bringup.
