@@ -194,7 +194,7 @@ protected:
       };
     send_goal_options.feedback_callback =
       [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr,
-        const std::shared_ptr<const typename ActionT::Feedback> feedback) {
+      const std::shared_ptr<const typename ActionT::Feedback> feedback) {
         feedback_ = feedback;
         on_feedback(feedback);
         update_dsr_when_feedback_received(feedback);
