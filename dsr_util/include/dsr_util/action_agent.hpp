@@ -100,7 +100,7 @@ public:
       this->get_logger(),
       "The parameter dsr_action_name is set to: [%s]", dsr_action_name_.c_str());
 
-    int wait_for_service_timeout;
+    int wait_for_service_timeout = 1000;
     declare_parameter_if_not_declared(
       this, "wait_for_service_timeout", rclcpp::ParameterValue(1000),
       rcl_interfaces::msg::ParameterDescriptor()
