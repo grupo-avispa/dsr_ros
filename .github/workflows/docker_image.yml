@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows: ["Build"]
-    branches: [main, humble]
+    branches: [main, jazzy]
     types:
       - completed
 
@@ -14,11 +14,11 @@ concurrency:
 
 jobs:
   docker-image:
-    runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@v4.2.2
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
 
@@ -36,7 +36,7 @@ jobs:
         id: dsr_ros-builder
 
       - name: Cache Docker layers
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.0
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}

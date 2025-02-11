@@ -21,7 +21,7 @@ namespace dsr_agents
 {
 
 DockingAgent::DockingAgent(const rclcpp::NodeOptions & options)
-: dsr_util::ActionAgent<opennav_docking_msgs::action::DockRobot>("docking_agent", options)
+: dsr_util::ActionAgent<nav2_msgs::action::DockRobot>("docking_agent", options)
 {
 }
 

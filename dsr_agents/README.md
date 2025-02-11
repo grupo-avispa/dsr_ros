@@ -12,12 +12,6 @@ In addition to the generic template, depending on the specific task for which th
 * **`Navigation agent:`**  facilitates the execution of navigation commands from the DSR.
 * **`TF agent:`** publishes the transformation tree as nodes in the DSR, providing a visual representation of transformations across different reference frames in the CORTEX environment.
 
-**Keywords:** ROS2, cortex, dsr, deep space representation
-
-**Author: Alberto Tudela, Oscar Pons Fernández, José Galeas Merchan<br />**
-
-The dsr_agents package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
-
 ## Nodes
 
 ### topic_agent
@@ -104,8 +98,6 @@ Agent that publishes the transformations tree as RT nodes in the DSR. This allow
 
 	The source of the nodes / edges.
 
-[Ubuntu]: https://ubuntu.com/
-[ROS2]: https://docs.ros.org/en/humble/
 [tf2_msgs/TFMessage]: http://docs.ros.org/api/tf2_msgs/html/msg/TFMessage.html
 [nav2_msgs/action/NavigateToPose]: hhttps://github.com/ros-planning/navigation2/blob/main/nav2_msgs/action/NavigateToPose.action
 [opennav_docking_msgs/action/DockRobot]: https://github.com/open-navigation/opennav_docking/blob/main/opennav_docking_msgs/action/DockRobot.action

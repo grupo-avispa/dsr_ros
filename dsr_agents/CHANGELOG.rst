@@ -2,6 +2,11 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.1 (11-02-2025)
+------------------
+* Change opennav_docking_msgs to nav2_msgs.
+* First jazzy release.
+
 1.1.0 (20-01-2025)
 ------------------
 * Added ros_action_name as parameter.

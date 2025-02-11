@@ -1,6 +1,6 @@
 # dsr_ros
 
-![ROS2](https://img.shields.io/badge/ros2-humble-blue?logo=ros&logoColor=white)
+![ROS2](https://img.shields.io/badge/ros2-jazzy-blue?logo=ros&logoColor=white)
 ![License](https://img.shields.io/github/license/grupo-avispa/dsr_ros)
 [![Build](https://github.com/grupo-avispa/dsr_ros/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/grupo-avispa/dsr_ros/actions/workflows/build.yml)
 [![Docker image](https://github.com/grupo-avispa/dsr_ros/actions/workflows/docker_image.yml/badge.svg?branch=main)](https://github.com/grupo-avispa/dsr_ros/actions/workflows/docker_image.yml)
@@ -25,7 +25,7 @@ A ROS 2 stack that contains agents, interfaces and RQT plugins for connecting to
 
 **Author: Alberto Tudela, José Galeas Merchan, Óscar Pons Fernández<br />**
 
-The dsr_ros package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
+The dsr_ros package has been tested under [ROS2] Jazzy on [Ubuntu] 24.04. This is research code, expect that it changes often and any fitness for a particular purpose is disclaimed.
 
 ## Installation
 
@@ -33,7 +33,7 @@ The dsr_ros package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This 
 
 #### Dependencies
 
-- [Robot Operating System (ROS) 2](https://docs.ros.org/en/humble/) (middleware for robotics)
+- [Robot Operating System (ROS) 2](https://docs.ros.org/en/jazzy/) (middleware for robotics)
 - [Cortex](https://github.com/grupo-avispa/cortex) (DSR library)
 - [FAST-DDS](https://github.com/eProsima/Fast-DDS) (eprosima Fast DDS)
 
@@ -42,9 +42,9 @@ The dsr_ros package has been tested under [ROS2] Humble on [Ubuntu] 22.04. This 
 To build from source, clone the latest version of the repository into your colcon workspace and compile the package using the following commands:
 ```bash
 cd colcon_workspace/src
-git clone https://github.com/grupo-avispa/dsr_ros.git -b humble
+git clone https://github.com/grupo-avispa/dsr_ros.git -b jazzy
 cd ../
-rosdep install -i --from-path src --rosdistro humble -y
+rosdep install -i --from-path src --rosdistro jazzy -y
 colcon build --symlink-install
 ```
 
@@ -56,4 +56,4 @@ colcon build --symlink-install
 [dsr_util]: ./dsr_util
 
 [Ubuntu]: https://ubuntu.com/
-[ROS2]: https://docs.ros.org/en/humble/
+[ROS2]: https://docs.ros.org/en/jazzy/

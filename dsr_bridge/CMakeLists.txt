@@ -75,7 +75,7 @@ target_link_libraries(dsr_bridge
   ${fastrtps_LIBRARIES}
   rclcpp_components::component
 )
-ament_target_dependencies(dsr_bridge PUBLIC nav2_util) # TODO(ajtudela): Fix this in jazzy
+ament_target_dependencies(dsr_bridge PUBLIC nav2_util) # TODO(ajtudela): Fix this in kilted
 
 # Add executable
 add_executable(dsr_bridge_node src/main.cpp)
@@ -113,7 +113,6 @@ install(DIRECTORY include/
 # ###########
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  find_package(ament_index_cpp REQUIRED)
 
   # the following line skips the linter which checks for copyrights
   set(ament_cmake_copyright_FOUND TRUE)

@@ -52,7 +52,6 @@ find_package(fastrtps REQUIRED)
 find_package(fastcdr REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
-find_package(opennav_docking_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -80,7 +79,7 @@ target_include_directories(docking_agent PUBLIC
 target_link_libraries(docking_agent
   PUBLIC
   dsr_util::action_agent
-  ${opennav_docking_msgs_TARGETS}
+  ${nav2_msgs_TARGETS}
   PRIVATE
   rclcpp_components::component
 )
@@ -208,7 +207,6 @@ install(DIRECTORY include/
 # ###########
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  find_package(ament_index_cpp REQUIRED)
 
   # the following line skips the linter which checks for copyrights
   set(ament_cmake_copyright_FOUND TRUE)
@@ -227,7 +225,6 @@ ament_export_dependencies(
   fastcdr
   geometry_msgs
   nav2_msgs
-  opennav_docking_msgs
   rclcpp
   rclcpp_action
   rclcpp_components

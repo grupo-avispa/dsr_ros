@@ -2,6 +2,10 @@
 Changelog for package dsr_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.1 (11-02-2025)
+------------------
+* First jazzy release.
+
 1.1.0 (20-01-2025)
 ------------------
 * Added ros_action_name as parameter.

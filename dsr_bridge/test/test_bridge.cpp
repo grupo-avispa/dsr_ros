@@ -248,6 +248,8 @@ TEST_F(DsrUtilTest, bridgeGetGraph) {
   // Add a DSR edge
   auto dsr_edge = bridge_node->add_edge<is_edge_type>("robot_parent", "robot_child");
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
   // Get the nodes and edges
   std::vector<dsr_msgs::msg::Node> nodes_msg;
   std::vector<dsr_msgs::msg::Edge> edges_msg;

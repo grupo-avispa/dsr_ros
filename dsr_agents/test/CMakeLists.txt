@@ -1,3 +1,4 @@
+find_package(ament_index_cpp REQUIRED)
 find_package(dsr_util REQUIRED)
 find_package(nav2_util REQUIRED)
 

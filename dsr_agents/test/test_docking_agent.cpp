@@ -17,7 +17,7 @@
 #include "dsr_agents/docking_agent.hpp"
 #include "dsr_util/utils/test_dsr_setup.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
-#include "opennav_docking_msgs/action/dock_robot.hpp"
+#include "nav2_msgs/action/dock_robot.hpp"
 #include "nav2_util/simple_action_server.hpp"
 
 
@@ -36,7 +36,7 @@ public:
     return DockingAgent::get_goal_from_dsr(action_node);
   }
 
-  opennav_docking_msgs::action::DockRobot::Goal get_goal()
+  nav2_msgs::action::DockRobot::Goal get_goal()
   {
     return goal_;
   }
@@ -50,7 +50,7 @@ public:
 class DummyDockingServer : rclcpp::Node
 {
 public:
-  using ActionT = opennav_docking_msgs::action::DockRobot;
+  using ActionT = nav2_msgs::action::DockRobot;
   using ActionServer = nav2_util::SimpleActionServer<ActionT>;
 
   DummyDockingServer()

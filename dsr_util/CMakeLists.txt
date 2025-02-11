@@ -88,6 +88,7 @@ target_include_directories(node_agent PUBLIC
 )
 target_link_libraries(node_agent
   PUBLIC
+  bondcpp::bondcpp
   ${dsr_msgs_TARGETS}
   ${dsr_LIBRARIES}
   ${geometry_msgs_TARGETS}
@@ -95,12 +96,12 @@ target_link_libraries(node_agent
   rclcpp_lifecycle::rclcpp_lifecycle
   ${qt_LIBRARIES}
   PRIVATE
+  ${bond_TARGETS}
   Eigen3::Eigen
   ${fastrtps_LIBRARIES}
   ${tf2_geometry_msgs_TARGETS}
 )
 target_sources(node_agent PRIVATE ${qt_agent_moc})
-ament_target_dependencies(node_agent PUBLIC bond bondcpp) # TODO(ajtudela): Fix this in jazzy
 
 # Add action agent library
 add_library(action_agent INTERFACE)
@@ -162,7 +163,6 @@ install(DIRECTORY test/utils/
 # ###########
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  find_package(ament_index_cpp REQUIRED)
 
   # the following line skips the linter which checks for copyrights
   set(ament_cmake_copyright_FOUND TRUE)

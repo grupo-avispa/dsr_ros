@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "dsr_util/node_agent.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"

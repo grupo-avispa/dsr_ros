@@ -17,7 +17,7 @@
 #define DSR_AGENTS__DOCKING_AGENT_HPP_
 
 // ROS
-#include "opennav_docking_msgs/action/dock_robot.hpp"
+#include "nav2_msgs/action/dock_robot.hpp"
 
 // DSR
 #include "dsr_util/action_agent.hpp"
@@ -29,7 +29,7 @@ namespace dsr_agents
  * @class dsr_agents::DockingAgent
  * @brief Agent to dock the robot in a charging station.
  */
-class DockingAgent : public dsr_util::ActionAgent<opennav_docking_msgs::action::DockRobot>
+class DockingAgent : public dsr_util::ActionAgent<nav2_msgs::action::DockRobot>
 {
 public:
   /**

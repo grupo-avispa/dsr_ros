@@ -69,6 +69,3 @@ Node that receives the messages from the DSR side and creates the corresponding 
 - [ ] Add resync function.
 
 
-[Ubuntu]: https://ubuntu.com/
-[ROS2]: https://docs.ros.org/en/humble/
-

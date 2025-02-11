@@ -5,7 +5,7 @@ name: Build
 
 on:
   push:
-    branches: [main, humble]
+    branches: [main, jazzy]
   pull_request:
 
 env:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4.2.2
@@ -35,7 +35,7 @@ jobs:
             dsr_msgs
             dsr_rqt_plugin
             dsr_util
-          target-ros2-distro: humble
+          target-ros2-distro: jazzy
           colcon-defaults: |
             {
               "build": {
