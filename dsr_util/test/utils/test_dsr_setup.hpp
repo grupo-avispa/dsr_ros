@@ -19,7 +19,7 @@
 #include <tuple>
 
 #include "gtest/gtest.h"
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "dsr_util/dsr_api_ext.hpp"
 
 #ifndef UTILS__TEST_DSR_SETUP_HPP_
