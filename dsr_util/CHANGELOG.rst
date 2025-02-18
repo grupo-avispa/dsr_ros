@@ -2,6 +2,10 @@
 Changelog for package dsr_util
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.2 (18-02-2025)
+------------------
+* Handle the case when the action server rejects the goal.
+
 1.1.1 (11-02-2025)
 ------------------
 * First jazzy release.

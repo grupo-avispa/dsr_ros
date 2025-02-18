@@ -179,7 +179,7 @@ protected:
     send_goal_options.goal_response_callback =
       [this](typename rclcpp_action::ClientGoalHandle<ActionT>::SharedPtr goal_handle) {
         if (!goal_handle) {
-          RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
+          update_dsr_when_goal_rejected();
         } else {
           update_dsr_when_goal_accepted();
           goal_handle_ = goal_handle;
@@ -249,6 +249,17 @@ protected:
     // Replace the 'wants_to' edge with a 'is_performing' edge between robot and action
     if (replace_edge<is_performing_edge_type>(source_, dsr_action_name_, "wants_to")) {
       RCLCPP_INFO(this->get_logger(), "Goal was accepted by the action server");
+    }
+  }
+
+  /**
+   * @brief Update the DSR graph when the action server rejects the goal.
+   */
+  void update_dsr_when_goal_rejected()
+  {
+    // Replace the 'wants_to' edge with a 'failed' edge between robot and action
+    if (replace_edge<failed_edge_type>(source_, dsr_action_name_, "wants_to")) {
+      RCLCPP_ERROR(this->get_logger(), "Goal was rejected by the action server");
     }
   }
 
