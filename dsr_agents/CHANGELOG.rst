@@ -2,6 +2,10 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.0 (13-03-2025)
+------------------
+* Added IMU agent.
+
 1.1.1 (11-02-2025)
 ------------------
 * Change opennav_docking_msgs to nav2_msgs.

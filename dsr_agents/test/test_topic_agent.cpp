@@ -19,6 +19,7 @@
 #include "lifecycle_msgs/msg/state.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -106,25 +107,49 @@ TEST_F(DsrUtilTest, topicAgentHandleTopic) {
   node_agent->configure();
   node_agent->activate();
 
-  // Create a serialized message
+  // Create a serialized battery message
   sensor_msgs::msg::BatteryState ros_msg;
   ros_msg.header.frame_id = "test_frame";
-  auto serializer = rclcpp::Serialization<sensor_msgs::msg::BatteryState>();
+  auto serializer_battery = rclcpp::Serialization<sensor_msgs::msg::BatteryState>();
   auto msg = std::make_shared<rclcpp::SerializedMessage>();
-  serializer.serialize_message(&ros_msg, msg.get());
-
-  // Just call the function with different topic types
+  serializer_battery.serialize_message(&ros_msg, msg.get());
+  // And handle the message
   std::string topic_type = "sensor_msgs/msg/BatteryState";
   node_agent->handle_topic_type(msg, topic_type);
 
+  // Create a serialized image message
+  sensor_msgs::msg::Image image_msg;
+  image_msg.header.frame_id = "test_frame";
+  auto serializer_img = rclcpp::Serialization<sensor_msgs::msg::Image>();
+  msg = std::make_shared<rclcpp::SerializedMessage>();
+  serializer_img.serialize_message(&image_msg, msg.get());
+  // And handle the message
   topic_type = "sensor_msgs/msg/Image";
   node_agent->handle_topic_type(msg, topic_type);
 
+  // Create a serialized IMU message
+  sensor_msgs::msg::Imu imu_msg;
+  imu_msg.header.frame_id = "test_frame";
+  auto serializer_imu = rclcpp::Serialization<sensor_msgs::msg::Imu>();
+  msg = std::make_shared<rclcpp::SerializedMessage>();
+  serializer_imu.serialize_message(&imu_msg, msg.get());
+  // And handle the message
+  topic_type = "sensor_msgs/msg/Imu";
+  node_agent->handle_topic_type(msg, topic_type);
+
+  // Create a serialized laser scan message
+  sensor_msgs::msg::LaserScan scan_msg;
+  scan_msg.header.frame_id = "test_frame";
+  auto serializer_laser = rclcpp::Serialization<sensor_msgs::msg::LaserScan>();
+  msg = std::make_shared<rclcpp::SerializedMessage>();
+  serializer_laser.serialize_message(&scan_msg, msg.get());
+  // And handle the message
   topic_type = "sensor_msgs/msg/LaserScan";
   node_agent->handle_topic_type(msg, topic_type);
 
-  topic_type = "sensor_msgs/msg/IMU";
-  node_agent->handle_topic_type(msg, topic_type);
+  // Handle an unknown message
+  std::string unknown_type = "unknown_type";
+  node_agent->handle_topic_type(msg, unknown_type);
 
   node_agent->deactivate();
   node_agent->cleanup();
@@ -271,6 +296,52 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeImage) {
   EXPECT_EQ(std::get<std::vector<uint8_t>>(attrs["cam_depth"].value()), image.data);
   EXPECT_EQ(std::get<int>(attrs["cam_depth_height"].value()), static_cast<int>(image.height));
   EXPECT_EQ(std::get<int>(attrs["cam_depth_width"].value()), static_cast<int>(image.width));
+
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
+}
+
+TEST_F(DsrUtilTest, topicAgentModifyAttributeImu) {
+  // Create the node
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+
+  // Configure and activate the node
+  node_agent->configure();
+  node_agent->activate();
+
+  // Create an IMU message
+  sensor_msgs::msg::Imu imu_msg;
+  imu_msg.header.frame_id = "imu_frame";
+  imu_msg.angular_velocity.x = 0.1;
+  imu_msg.angular_velocity.y = 0.2;
+  imu_msg.angular_velocity.z = 0.3;
+  imu_msg.linear_acceleration.x = 1.0;
+  imu_msg.linear_acceleration.y = 1.1;
+  imu_msg.linear_acceleration.z = 1.2;
+  imu_msg.header.stamp.sec = 123456789;
+  imu_msg.header.stamp.nanosec = 987654321;
+
+  // Modify the attributes
+  auto node = node_agent->add_node<robot_node_type>("imu_node");
+  node_agent->modify_attributes<sensor_msgs::msg::Imu>(node, imu_msg);
+  node_agent->get_graph()->update_node(node.value());
+
+  // Check the attributes
+  EXPECT_TRUE(node_agent->get_graph()->get_node("imu_node").has_value());
+  auto attrs = node_agent->get_graph()->get_node("imu_node").value().attrs();
+  auto angular_velocity = std::get<std::vector<float>>(attrs["imu_gyroscope"].value());
+  EXPECT_FLOAT_EQ(angular_velocity[0], imu_msg.angular_velocity.x);
+  EXPECT_FLOAT_EQ(angular_velocity[1], imu_msg.angular_velocity.y);
+  EXPECT_FLOAT_EQ(angular_velocity[2], imu_msg.angular_velocity.z);
+  auto linear_acceleration = std::get<std::vector<float>>(attrs["imu_accelerometer"].value());
+  EXPECT_FLOAT_EQ(linear_acceleration[0], imu_msg.linear_acceleration.x);
+  EXPECT_FLOAT_EQ(linear_acceleration[1], imu_msg.linear_acceleration.y);
+  EXPECT_FLOAT_EQ(linear_acceleration[2], imu_msg.linear_acceleration.z);
+  float timestamp = imu_msg.header.stamp.sec + imu_msg.header.stamp.nanosec / 1e9;
+  EXPECT_FLOAT_EQ(std::get<float>(attrs["imu_time_stamp"].value()), timestamp);
 
   node_agent->deactivate();
   node_agent->cleanup();

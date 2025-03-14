@@ -3,7 +3,7 @@ bridge_robot:
     agent_name: bridge_agent
     agent_id: 100
     source: robot
-    dsr_input_file: ''
+    dsr_input_file: ""
 tf_agent:
   ros__parameters:
     agent_name: tf_agent
@@ -31,3 +31,11 @@ battery_agent:
     dsr_node_name: battery
     dsr_parent_node_name: robot
     ros_topic: "/battery"
+imu_agent:
+  ros__parameters:
+    agent_name: imu_agent
+    agent_id: 105
+    source: robot
+    dsr_node_name: imu
+    dsr_parent_node_name: robot
+    ros_topic: "/imu"

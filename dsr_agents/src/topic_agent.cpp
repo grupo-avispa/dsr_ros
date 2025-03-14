@@ -21,6 +21,7 @@
 #include "rosidl_typesupport_cpp/message_type_support.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -122,6 +123,10 @@ void TopicAgent::handle_topic_type(
   } else if (topic_type == "sensor_msgs/msg/Image") {
     deserialize_and_update_attributes
     <sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>(
+      msg, dsr_node_name_, dsr_parent_node_name_);
+  } else if (topic_type == "sensor_msgs/msg/Imu") {
+    deserialize_and_update_attributes
+    <sensor_msgs::msg::Imu, imu_node_type, has_edge_type>(
       msg, dsr_node_name_, dsr_parent_node_name_);
   } else if (topic_type == "sensor_msgs/msg/LaserScan") {
     deserialize_and_update_attributes
@@ -229,6 +234,32 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::Image>(
   RCLCPP_DEBUG(
     this->get_logger(),
     "Update [%s] node with attributes: ", node.value().name().c_str());
+}
+
+template<>
+void TopicAgent::modify_attributes<sensor_msgs::msg::Imu>(
+  std::optional<DSR::Node> & node, const sensor_msgs::msg::Imu & msg)
+{
+  // Modify the attributes of the node
+  std::vector<float> angular_velocity(3);
+  angular_velocity[0] = static_cast<float>(msg.angular_velocity.x);
+  angular_velocity[1] = static_cast<float>(msg.angular_velocity.y);
+  angular_velocity[2] = static_cast<float>(msg.angular_velocity.z);
+  G_->add_or_modify_attrib_local<imu_gyroscope_att>(node.value(), angular_velocity);
+
+  std::vector<float> linear_acceleration(3);
+  linear_acceleration[0] = static_cast<float>(msg.linear_acceleration.x);
+  linear_acceleration[1] = static_cast<float>(msg.linear_acceleration.y);
+  linear_acceleration[2] = static_cast<float>(msg.linear_acceleration.z);
+  G_->add_or_modify_attrib_local<imu_accelerometer_att>(node.value(), linear_acceleration);
+
+  // Convert the timestamp to float
+  float timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9;
+  G_->add_or_modify_attrib_local<imu_time_stamp_att>(node.value(), timestamp);
+
+  // Print the attributes of the node
+  RCLCPP_DEBUG(
+    this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
 }
 
 template<>

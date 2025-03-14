@@ -129,7 +129,7 @@ def generate_launch_description():
                 executable='lifecycle_manager',
                 name='lifecycle_manager_dsr_bridge',
                 output='screen',
-                #arguments=['--ros-args', '--log-level', log_level],
+                arguments=['--ros-args', '--log-level', log_level],
                 parameters=[{'autostart': autostart}, {'node_names': lifecycle_nodes}],
             ),
         ],

@@ -51,7 +51,8 @@ def generate_launch_description():
         'tf_agent',
         'nav_agent',
         'docking_agent',
-        'battery_agent'
+        'battery_agent',
+        'imu_agent',
     ]
 
     # Create our own temporary YAML files that include substitutions
@@ -169,6 +170,16 @@ def generate_launch_description():
                 arguments=['--ros-args', '--log-level', log_level]
             ),
             Node(
+                package='dsr_agents',
+                executable='topic_agent_node',
+                name='imu_agent',
+                output='screen',
+                respawn=use_respawn,
+                respawn_delay=2.0,
+                parameters=[configured_params],
+                arguments=['--ros-args', '--log-level', log_level]
+            ),
+            Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
                 name='lifecycle_manager_dsr',
@@ -221,6 +232,12 @@ def generate_launch_description():
                         package='dsr_agents',
                         plugin='dsr_agents::TopicAgent',
                         name='battery_agent',
+                        parameters=[configured_params],
+                    ),
+                    ComposableNode(
+                        package='dsr_agents',
+                        plugin='dsr_agents::TopicAgent',
+                        name='imu_agent',
                         parameters=[configured_params],
                     ),
                     ComposableNode(
