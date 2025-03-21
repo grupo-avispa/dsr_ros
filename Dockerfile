@@ -14,7 +14,7 @@ RUN apt update && apt install --no-install-recommends -y \
     python3-colcon-clean
 RUN rosdep update
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
-    rosdep install -q -r -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO && \
+    PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install -q -r -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO && \
     rm -rf /var/lib/apt/lists/*
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build
 RUN colcon clean workspace --base-select build log -y
