@@ -1,0 +1,139 @@
+{
+    "DSRModel": {
+        "symbols": {
+            "0": {
+                "attribute": {
+                    "color": {
+                        "type": 0,
+                        "value": "Red"
+                    },
+                    "level": {
+                        "type": 1,
+                        "value": 0
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "0"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 100.0
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -100.0
+                    }
+                },
+                "id": "0",
+                "links": [
+                ],
+                "name": "world",
+                "type": "world"
+            },
+            "1": {
+                "attribute": {
+                    "color": {
+                        "type": 0,
+                        "value": "Khaki"
+                    },
+                    "depth": {
+                        "type": 1,
+                        "value": 2400
+                    },
+                    "height": {
+                        "type": 1,
+                        "value": 2490
+                    },
+                    "level": {
+                        "type": 1,
+                        "value": 1
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "1"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 301.856506
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -116.037514
+                    },
+                    "texture": {
+                        "type": 0,
+                        "value": "#ddf7e3"
+                    },
+                    "width": {
+                        "type": 1,
+                        "value": 120
+                    }
+                },
+                "id": "1",
+                "links": [
+                    {
+                        "dst": "0",
+                        "label": "in",
+                        "linkAttribute": {
+                        },
+                        "src": "1"
+                    }
+                ],
+                "name": "robot",
+                "type": "robot"
+            },
+            "2": {
+                "attribute": {
+                    "color": {
+                        "type": 0,
+                        "value": "Khaki"
+                    },
+                    "depth": {
+                        "type": 1,
+                        "value": 2400
+                    },
+                    "height": {
+                        "type": 1,
+                        "value": 2490
+                    },
+                    "level": {
+                        "type": 1,
+                        "value": 1
+                    },
+                    "parent": {
+                        "type": 7,
+                        "value": "1"
+                    },
+                    "pos_x": {
+                        "type": 2,
+                        "value": 501.856506
+                    },
+                    "pos_y": {
+                        "type": 2,
+                        "value": -216.037514
+                    },
+                    "texture": {
+                        "type": 0,
+                        "value": "#fdf7e3"
+                    },
+                    "width": {
+                        "type": 1,
+                        "value": 120
+                    }
+                },
+                "id": "2",
+                "links": [
+                    {
+                        "dst": "0",
+                        "label": "in",
+                        "linkAttribute": {
+                        },
+                        "src": "2"
+                    }
+                ],
+                "name": "floor",
+                "type": "floor"
+            }
+        }
+    }
+}
