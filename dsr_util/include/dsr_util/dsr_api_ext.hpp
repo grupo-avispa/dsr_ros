@@ -46,7 +46,7 @@ public:
    * @param input_file The input file to load the DSR graph.
    */
   DSRGraphExt(const std::string & name, uint32_t agent_identifier, const std::string & input_file)
-  : DSRGraph(name, agent_identifier, input_file, true)
+  : DSRGraph(name, agent_identifier, input_file)
   {
   }
 

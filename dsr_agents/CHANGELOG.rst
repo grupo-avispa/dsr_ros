@@ -2,6 +2,10 @@
 Changelog for package dsr_agents
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.3.0 (27-03-2025)
+------------------
+* Added velocity agent.
+
 1.2.0 (13-03-2025)
 ------------------
 * Added IMU agent.

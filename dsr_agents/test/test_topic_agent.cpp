@@ -17,6 +17,7 @@
 #include "dsr_agents/topic_agent.hpp"
 #include "dsr_util/utils/test_dsr_setup.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/imu.hpp"
@@ -107,14 +108,24 @@ TEST_F(DsrUtilTest, topicAgentHandleTopic) {
   node_agent->configure();
   node_agent->activate();
 
+  // Create a serialized twiststamped message
+  geometry_msgs::msg::TwistStamped twist_msg;
+  twist_msg.header.frame_id = "test_frame";
+  auto serializer_twist = rclcpp::Serialization<geometry_msgs::msg::TwistStamped>();
+  auto msg = std::make_shared<rclcpp::SerializedMessage>();
+  serializer_twist.serialize_message(&twist_msg, msg.get());
+  // And handle the message
+  std::string topic_type = "geometry_msgs/msg/TwistStamped";
+  node_agent->handle_topic_type(msg, topic_type);
+
   // Create a serialized battery message
   sensor_msgs::msg::BatteryState ros_msg;
   ros_msg.header.frame_id = "test_frame";
   auto serializer_battery = rclcpp::Serialization<sensor_msgs::msg::BatteryState>();
-  auto msg = std::make_shared<rclcpp::SerializedMessage>();
+  msg = std::make_shared<rclcpp::SerializedMessage>();
   serializer_battery.serialize_message(&ros_msg, msg.get());
   // And handle the message
-  std::string topic_type = "sensor_msgs/msg/BatteryState";
+  topic_type = "sensor_msgs/msg/BatteryState";
   node_agent->handle_topic_type(msg, topic_type);
 
   // Create a serialized image message
@@ -150,6 +161,51 @@ TEST_F(DsrUtilTest, topicAgentHandleTopic) {
   // Handle an unknown message
   std::string unknown_type = "unknown_type";
   node_agent->handle_topic_type(msg, unknown_type);
+
+  node_agent->deactivate();
+  node_agent->cleanup();
+  node_agent->shutdown();
+}
+
+TEST_F(DsrUtilTest, topicAgentModifyAttributeVelocity) {
+  // Create the node
+  auto node_agent = std::make_shared<TopicAgentFixture>();
+  node_agent->declare_parameter("dsr_input_file", rclcpp::ParameterValue(test_file_));
+  node_agent->declare_parameter("ros_topic", rclcpp::ParameterValue("test_topic"));
+
+  // Configure and activate the node
+  node_agent->configure();
+  node_agent->activate();
+
+  // Create TwistedStamped message
+  geometry_msgs::msg::TwistStamped twist_msg;
+  twist_msg.header.frame_id = "test_frame";
+  twist_msg.header.stamp.sec = 1;
+  twist_msg.header.stamp.nanosec = 500000000;
+  twist_msg.twist.linear.x = 1.0;
+  twist_msg.twist.linear.y = 2.0;
+  twist_msg.twist.linear.z = 3.0;
+  twist_msg.twist.angular.x = 4.0;
+  twist_msg.twist.angular.y = 5.0;
+  twist_msg.twist.angular.z = 6.0;
+
+  // Modify the attributes
+  auto node = node_agent->add_node<robot_node_type>("vel_node");
+  node_agent->modify_attributes<geometry_msgs::msg::TwistStamped>(node, twist_msg);
+  node_agent->get_graph()->update_node(node.value());
+
+  // Check the attributes
+  EXPECT_TRUE(node_agent->get_graph()->get_node("vel_node").has_value());
+  auto attrs = node_agent->get_graph()->get_node("vel_node").value().attrs();
+  auto linear_velocity = std::get<std::vector<float>>(attrs["robot_local_linear_velocity"].value());
+  EXPECT_FLOAT_EQ(linear_velocity[0], twist_msg.twist.linear.x);
+  EXPECT_FLOAT_EQ(linear_velocity[1], twist_msg.twist.linear.y);
+  EXPECT_FLOAT_EQ(linear_velocity[2], twist_msg.twist.linear.z);
+  auto angular_velocity =
+    std::get<std::vector<float>>(attrs["robot_local_angular_velocity"].value());
+  EXPECT_FLOAT_EQ(angular_velocity[0], twist_msg.twist.angular.x);
+  EXPECT_FLOAT_EQ(angular_velocity[1], twist_msg.twist.angular.y);
+  EXPECT_FLOAT_EQ(angular_velocity[2], twist_msg.twist.angular.z);
 
   node_agent->deactivate();
   node_agent->cleanup();
@@ -315,14 +371,14 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeImu) {
   // Create an IMU message
   sensor_msgs::msg::Imu imu_msg;
   imu_msg.header.frame_id = "imu_frame";
+  imu_msg.header.stamp.sec = 123456789;
+  imu_msg.header.stamp.nanosec = 987654321;
   imu_msg.angular_velocity.x = 0.1;
   imu_msg.angular_velocity.y = 0.2;
   imu_msg.angular_velocity.z = 0.3;
   imu_msg.linear_acceleration.x = 1.0;
   imu_msg.linear_acceleration.y = 1.1;
   imu_msg.linear_acceleration.z = 1.2;
-  imu_msg.header.stamp.sec = 123456789;
-  imu_msg.header.stamp.nanosec = 987654321;
 
   // Modify the attributes
   auto node = node_agent->add_node<robot_node_type>("imu_node");
@@ -332,6 +388,8 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeImu) {
   // Check the attributes
   EXPECT_TRUE(node_agent->get_graph()->get_node("imu_node").has_value());
   auto attrs = node_agent->get_graph()->get_node("imu_node").value().attrs();
+  float timestamp = imu_msg.header.stamp.sec + imu_msg.header.stamp.nanosec / 1e9;
+  EXPECT_FLOAT_EQ(std::get<float>(attrs["imu_time_stamp"].value()), timestamp);
   auto angular_velocity = std::get<std::vector<float>>(attrs["imu_gyroscope"].value());
   EXPECT_FLOAT_EQ(angular_velocity[0], imu_msg.angular_velocity.x);
   EXPECT_FLOAT_EQ(angular_velocity[1], imu_msg.angular_velocity.y);
@@ -340,8 +398,6 @@ TEST_F(DsrUtilTest, topicAgentModifyAttributeImu) {
   EXPECT_FLOAT_EQ(linear_acceleration[0], imu_msg.linear_acceleration.x);
   EXPECT_FLOAT_EQ(linear_acceleration[1], imu_msg.linear_acceleration.y);
   EXPECT_FLOAT_EQ(linear_acceleration[2], imu_msg.linear_acceleration.z);
-  float timestamp = imu_msg.header.stamp.sec + imu_msg.header.stamp.nanosec / 1e9;
-  EXPECT_FLOAT_EQ(std::get<float>(attrs["imu_time_stamp"].value()), timestamp);
 
   node_agent->deactivate();
   node_agent->cleanup();

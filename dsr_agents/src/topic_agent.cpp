@@ -24,7 +24,7 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
-#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 
@@ -117,7 +117,11 @@ void TopicAgent::handle_topic_type(
   const std::shared_ptr<rclcpp::SerializedMessage> & msg, const std::string & topic_type)
 {
   // TODO(ajtudela): Replace 'has_edge_type' to a type according to (sensor, actuator, etc)
-  if (topic_type == "sensor_msgs/msg/BatteryState") {
+  if (topic_type == "geometry_msgs/msg/TwistStamped") {
+    deserialize_and_update_attributes
+    <geometry_msgs::msg::TwistStamped, robot_node_type, has_edge_type>(
+      msg, dsr_node_name_, dsr_parent_node_name_);
+  } else if (topic_type == "sensor_msgs/msg/BatteryState") {
     deserialize_and_update_attributes
     <sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>(
       msg, dsr_node_name_, dsr_parent_node_name_);
@@ -132,10 +136,6 @@ void TopicAgent::handle_topic_type(
   } else if (topic_type == "sensor_msgs/msg/LaserScan") {
     deserialize_and_update_attributes
     <sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
-  } else if (topic_type == "geometry_msgs/msg/Twist") {
-    deserialize_and_update_attributes
-    <geometry_msgs::msg::Twist, robot_node_type, has_edge_type>(
       msg, dsr_node_name_, dsr_parent_node_name_);
   } else {
     RCLCPP_WARN_ONCE(
@@ -155,7 +155,6 @@ void TopicAgent::deserialize_and_update_attributes(
   serializer.deserialize_message(msg.get(), &ros_msg);
 
   // If the parent name is empty, the parent is the frame_id of the ROS message
-  
   auto new_parent_name = parent_name.empty() ? ros_topic_ : parent_name;
 
   // Add the node with the edge if the node does not exist
@@ -170,6 +169,28 @@ void TopicAgent::deserialize_and_update_attributes(
       update_node_with_source(dsr_node.value());
     }
   }
+}
+
+template<>
+void TopicAgent::modify_attributes<geometry_msgs::msg::TwistStamped>(
+  std::optional<DSR::Node> & node, const geometry_msgs::msg::TwistStamped & msg)
+{
+  // Modify the attributes of the node
+  std::vector<float> linear_velocity(3);
+  linear_velocity[0] = msg.twist.linear.x;
+  linear_velocity[1] = msg.twist.linear.y;
+  linear_velocity[2] = msg.twist.linear.z;
+  G_->add_or_modify_attrib_local<robot_local_linear_velocity_att>(node.value(), linear_velocity);
+
+  std::vector<float> angular_velocity(3);
+  angular_velocity[0] = msg.twist.angular.x;
+  angular_velocity[1] = msg.twist.angular.y;
+  angular_velocity[2] = msg.twist.angular.z;
+  G_->add_or_modify_attrib_local<robot_local_angular_velocity_att>(node.value(), angular_velocity);
+
+  // Print the attributes of the node
+  RCLCPP_DEBUG(
+    this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
 }
 
 template<>
@@ -248,43 +269,20 @@ void TopicAgent::modify_attributes<sensor_msgs::msg::Imu>(
 {
   // Modify the attributes of the node
   std::vector<float> angular_velocity(3);
-  angular_velocity[0] = static_cast<float>(msg.angular_velocity.x);
-  angular_velocity[1] = static_cast<float>(msg.angular_velocity.y);
-  angular_velocity[2] = static_cast<float>(msg.angular_velocity.z);
+  angular_velocity[0] = msg.angular_velocity.x;
+  angular_velocity[1] = msg.angular_velocity.y;
+  angular_velocity[2] = msg.angular_velocity.z;
   G_->add_or_modify_attrib_local<imu_gyroscope_att>(node.value(), angular_velocity);
 
   std::vector<float> linear_acceleration(3);
-  linear_acceleration[0] = static_cast<float>(msg.linear_acceleration.x);
-  linear_acceleration[1] = static_cast<float>(msg.linear_acceleration.y);
-  linear_acceleration[2] = static_cast<float>(msg.linear_acceleration.z);
+  linear_acceleration[0] = msg.linear_acceleration.x;
+  linear_acceleration[1] = msg.linear_acceleration.y;
+  linear_acceleration[2] = msg.linear_acceleration.z;
   G_->add_or_modify_attrib_local<imu_accelerometer_att>(node.value(), linear_acceleration);
 
   // Convert the timestamp to float
   float timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9;
   G_->add_or_modify_attrib_local<imu_time_stamp_att>(node.value(), timestamp);
-
-  // Print the attributes of the node
-  RCLCPP_DEBUG(
-    this->get_logger(), "Update [%s] node with attributes: ", node.value().name().c_str());
-}
-
-template<>
-void TopicAgent::modify_attributes<geometry_msgs::msg::Twist>(
-  std::optional<DSR::Node> & node, const geometry_msgs::msg::Twist & msg)
-{
-  // Modify the attributes of the node
-  std::vector<float> linear_velocity(3);
-  linear_velocity[0] = static_cast<float>(msg.linear.x);
-  linear_velocity[1] = static_cast<float>(msg.linear.y);
-  linear_velocity[2] = static_cast<float>(msg.linear.z);
-  RCLCPP_INFO(this->get_logger(), "Linear velocity: [%f, %f, %f]", linear_velocity[0], linear_velocity[1], linear_velocity[2]);
-  G_->add_or_modify_attrib_local<robot_local_linear_velocity_att>(node.value(), linear_velocity);
-
-  std::vector<float> angular_velocity(3);
-  angular_velocity[0] = static_cast<float>(msg.angular.x);
-  angular_velocity[1] = static_cast<float>(msg.angular.y);
-  angular_velocity[2] = static_cast<float>(msg.angular.z);
-  G_->add_or_modify_attrib_local<robot_local_angular_velocity_att>(node.value(), angular_velocity);
 
   // Print the attributes of the node
   RCLCPP_DEBUG(
