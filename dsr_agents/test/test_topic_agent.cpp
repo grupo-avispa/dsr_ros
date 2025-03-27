@@ -57,15 +57,6 @@ public:
     return dsr_agents::TopicAgent::handle_topic_type(msg, topic_type);
   }
 
-  template<typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE>
-  void deserialize_and_update_attributes(
-    const std::shared_ptr<rclcpp::SerializedMessage> msg,
-    const std::string & node_name, const std::string & parent_name)
-  {
-    dsr_agents::TopicAgent::deserialize_and_update_attributes<ROS_TYPE, NODE_TYPE, EDGE_TYPE>(
-      msg, node_name, parent_name);
-  }
-
   template<typename ROS_TYPE> void modify_attributes(
     std::optional<DSR::Node> & node, const ROS_TYPE & msg)
   {

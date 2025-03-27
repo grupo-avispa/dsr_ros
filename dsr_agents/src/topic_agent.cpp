@@ -93,9 +93,7 @@ dsr_util::CallbackReturn TopicAgent::on_cleanup(const rclcpp_lifecycle::State & 
   generic_sub_.reset();
 
   // Delete the node from the DSR graph
-  if (auto dsr_node = G_->get_node(dsr_node_name_); dsr_node.has_value()) {
-    delete_node(dsr_node_name_);
-  }
+  delete_node(dsr_node_name_);
 
   return NodeAgent::on_cleanup(state);
 }
@@ -119,24 +117,19 @@ void TopicAgent::handle_topic_type(
   // TODO(ajtudela): Replace 'has_edge_type' to a type according to (sensor, actuator, etc)
   if (topic_type == "geometry_msgs/msg/TwistStamped") {
     deserialize_and_update_attributes
-    <geometry_msgs::msg::TwistStamped, robot_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
+    <geometry_msgs::msg::TwistStamped, robot_node_type, has_edge_type>(msg);
   } else if (topic_type == "sensor_msgs/msg/BatteryState") {
     deserialize_and_update_attributes
-    <sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
+    <sensor_msgs::msg::BatteryState, battery_node_type, has_edge_type>(msg);
   } else if (topic_type == "sensor_msgs/msg/Image") {
     deserialize_and_update_attributes
-    <sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
+    <sensor_msgs::msg::Image, rgbd_node_type, has_edge_type>(msg);
   } else if (topic_type == "sensor_msgs/msg/Imu") {
     deserialize_and_update_attributes
-    <sensor_msgs::msg::Imu, imu_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
+    <sensor_msgs::msg::Imu, imu_node_type, has_edge_type>(msg);
   } else if (topic_type == "sensor_msgs/msg/LaserScan") {
     deserialize_and_update_attributes
-    <sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>(
-      msg, dsr_node_name_, dsr_parent_node_name_);
+    <sensor_msgs::msg::LaserScan, laser_node_type, has_edge_type>(msg);
   } else {
     RCLCPP_WARN_ONCE(
       this->get_logger(),
@@ -146,8 +139,7 @@ void TopicAgent::handle_topic_type(
 
 template<typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE>
 void TopicAgent::deserialize_and_update_attributes(
-  const std::shared_ptr<rclcpp::SerializedMessage> msg,
-  const std::string & node_name, const std::string & parent_name)
+  const std::shared_ptr<rclcpp::SerializedMessage> msg)
 {
   // Deserialize a message to ROS_TYPE
   ROS_TYPE ros_msg;
@@ -155,15 +147,16 @@ void TopicAgent::deserialize_and_update_attributes(
   serializer.deserialize_message(msg.get(), &ros_msg);
 
   // If the parent name is empty, the parent is the frame_id of the ROS message
-  auto new_parent_name = parent_name.empty() ? ros_topic_ : parent_name;
+  auto new_parent_name =
+    dsr_parent_node_name_.empty() ? ros_msg.header.frame_id : dsr_parent_node_name_;
 
   // Add the node with the edge if the node does not exist
-  if (auto dsr_node = G_->get_node(node_name); !dsr_node.has_value()) {
-    add_node_with_edge<NODE_TYPE, EDGE_TYPE>(node_name, new_parent_name);
+  if (auto dsr_node = G_->get_node(dsr_node_name_); !dsr_node.has_value()) {
+    add_node_with_edge<NODE_TYPE, EDGE_TYPE>(dsr_node_name_, new_parent_name);
   }
 
   // Update the attributes of the node only if its priority is 0
-  if (auto dsr_node = G_->get_node(node_name); dsr_node.has_value()) {
+  if (auto dsr_node = G_->get_node(dsr_node_name_); dsr_node.has_value()) {
     if (G_->get_priority(dsr_node.value()) == 0) {
       modify_attributes<ROS_TYPE>(dsr_node, ros_msg);
       update_node_with_source(dsr_node.value());

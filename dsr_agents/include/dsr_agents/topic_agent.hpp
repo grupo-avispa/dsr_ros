@@ -73,19 +73,15 @@ protected:
     const std::shared_ptr<rclcpp::SerializedMessage> & msg, const std::string & topic_type);
 
   /**
-   * @brief Deserialize the message and update the attributes in the DSR graph.
+   * @brief Deserialize the message and insert or update the attributes in the DSR graph.
    *
    * @tparam ROS_TYPE Type of the ROS message
    * @tparam NODE_TYPE Type of the DSR node
    * @tparam EDGE_TYPE Type of the DSR edge
    * @param msg Serialized message
-   * @param node_name Name of the DSR node
-   * @param parent_name Name of the parent DSR node
    */
   template<typename ROS_TYPE, typename NODE_TYPE, typename EDGE_TYPE>
-  void deserialize_and_update_attributes(
-    const std::shared_ptr<rclcpp::SerializedMessage> msg,
-    const std::string & node_name, const std::string & parent_name);
+  void deserialize_and_update_attributes(const std::shared_ptr<rclcpp::SerializedMessage> msg);
 
   /**
    * @brief Modify the attributes of the node depending on the type of the ROS message

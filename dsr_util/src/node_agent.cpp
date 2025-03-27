@@ -58,7 +58,7 @@ CallbackReturn NodeAgent::on_configure(const rclcpp_lifecycle::State & state)
     G_ = std::make_shared<dsr_util::DSRGraphExt>(agent_name_, agent_id_, dsr_input_file_);
   } catch (const DSR::DSRException & e) {
     RCLCPP_ERROR(this->get_logger(), e.what());
-    on_cleanup(state);
+    LifecycleNode::on_cleanup(state);
     return CallbackReturn::FAILURE;
   }
 

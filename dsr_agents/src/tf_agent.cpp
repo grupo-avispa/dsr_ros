@@ -49,9 +49,7 @@ dsr_util::CallbackReturn TFAgent::on_cleanup(const rclcpp_lifecycle::State & sta
 
   // Delete all the nodes from the DSR graph
   for (auto dsr_name : dsr_nodes_) {
-    if (auto dsr_node = G_->get_node(dsr_name); dsr_node.has_value()) {
-      delete_node(dsr_name);
-    }
+    delete_node(dsr_name);
   }
 
   return NodeAgent::on_cleanup(state);
