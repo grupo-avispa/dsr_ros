@@ -36,7 +36,7 @@ DSRView::~DSRView()
 void DSRView::initPlugin(qt_gui_cpp::PluginContext & context)
 {
   // Start DSR graph
-  G_ = std::make_shared<DSR::DSRGraph>(0, "DSRView", 255, "");
+  G_ = std::make_shared<DSR::DSRGraph>("DSRView", 255, "");
   // Set the DSR viewer
   QMainWindow * window = new QMainWindow();
   int current_opts = DSR::DSRViewer::view::tree | DSR::DSRViewer::view::graph |
