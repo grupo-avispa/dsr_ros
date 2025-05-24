@@ -48,6 +48,24 @@ rosdep install -i --from-path src --rosdistro jazzy -y
 colcon build --symlink-install
 ```
 
+#### Acknowledgements
+If you find this research useful, kindly cite the paper:
+```bibtex
+
+@Article{electronics20244583,
+author = {Galeas, José and Tudela, Alberto and Pons, Óscar and Bandera, Juan Pedro and Bandera, Antonio},
+title = {Design of a Cyber-Physical System-of-Systems Architecture for Elderly Care at Home},
+journal = {Electronics},
+volume = {13},
+year = {2024},
+number = {23},
+article-number = {4583},
+url = {https://www.mdpi.com/2079-9292/13/23/4583},
+issn = {2079-9292},
+doi = {10.3390/electronics13234583}
+}
+```
+
 [dsr_agents]: ./dsr_agents
 [dsr_bridge]: ./dsr_bridge
 [dsr_bringup]: ./dsr_bringup
