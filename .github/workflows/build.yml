@@ -18,7 +18,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4.2.2
       - name: Setup ROS 2
-        uses: ros-tooling/setup-ros@0.7.9
+        uses: ros-tooling/setup-ros@0.7.15
       - name: Install Cortex
         run: |
           mkdir $CORTEX_PATH && cd $CORTEX_PATH
@@ -26,9 +26,9 @@ jobs:
           chmod +x installation.sh
           ./installation.sh
       - name: Install dependencies
-        uses: ros-tooling/action-ros-ci@0.3.15
+        uses: ros-tooling/action-ros-ci@0.4.5
         with:
-          package-name: 
+          package-name: |
             dsr_ros
             dsr_agents
             dsr_bridge

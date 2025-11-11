@@ -247,13 +247,7 @@ bool DSRBridge::get_graph_service(
   const std::shared_ptr<GetGraph::Request>/*request*/, std::shared_ptr<GetGraph::Response> response)
 {
   RCLCPP_INFO(this->get_logger(), "Incoming service request to get the graph");
-
-  std::vector<dsr_msgs::msg::Node> nodes_msg;
-  std::vector<dsr_msgs::msg::Edge> edges_msg;
-  get_graph_from_dsr(nodes_msg, edges_msg);
-
-  response->nodes = nodes_msg;
-  response->edges = edges_msg;
+  response->graph = get_graph_from_dsr();
   return true;
 }
 
@@ -435,22 +429,24 @@ void DSRBridge::insert_lost_edges()
   }
 }
 
-void DSRBridge::get_graph_from_dsr(
-  std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg)
+dsr_msgs::msg::Graph DSRBridge::get_graph_from_dsr()
 {
   // Get the nodes and edges from the DSR graph
+  dsr_msgs::msg::Graph graph_msg;
+  graph_msg.header.stamp = this->now();
   for (auto & node : G_->get_nodes()) {
-    nodes_msg.push_back(to_msg(node));
+    graph_msg.nodes.push_back(to_msg(node));
     if (auto edges = G_->get_edges(node.id()); edges.has_value()) {
       for (const auto & edge_pair : edges.value()) {
         auto edge_msg = to_msg(edge_pair.second);
-        edges_msg.push_back(edge_msg);
+        graph_msg.edges.push_back(edge_msg);
       }
     }
   }
 
   // Reverse the nodes
-  std::reverse(nodes_msg.begin(), nodes_msg.end());
+  std::reverse(graph_msg.nodes.begin(), graph_msg.nodes.end());
+  return graph_msg;
 }
 
 void DSRBridge::sync_graph()
@@ -475,10 +471,10 @@ void DSRBridge::sync_graph()
         req,
         [this](rclcpp::Client<dsr_msgs::srv::GetGraph>::SharedFuture response) {
           // Insert the nodes and edges in the DSR graph
-          for (auto & node_msg : response.get()->nodes) {
+          for (auto & node_msg : response.get()->graph.nodes) {
             node_from_ros_callback(std::make_shared<dsr_msgs::msg::Node>(node_msg));
           }
-          for (auto & edge_msg : response.get()->edges) {
+          for (auto & edge_msg : response.get()->graph.edges) {
             edge_from_ros_callback(std::make_shared<dsr_msgs::msg::Edge>(edge_msg));
           }
           RCLCPP_INFO(this->get_logger(), "Graph synchronized");

@@ -2,6 +2,10 @@
 Changelog for package dsr_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.1.0 (11-11-2025)
+------------------
+* Added Graph.msg.
+
 1.0.1 (11-02-2025)
 ------------------
 * First jazzy release.

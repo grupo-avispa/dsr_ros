@@ -80,10 +80,9 @@ public:
     dsr_bridge::DSRBridge::insert_lost_edges();
   }
 
-  void get_graph_from_dsr(
-    std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg)
+  dsr_msgs::msg::Graph get_graph_from_dsr()
   {
-    dsr_bridge::DSRBridge::get_graph_from_dsr(nodes_msg, edges_msg);
+    return dsr_bridge::DSRBridge::get_graph_from_dsr();
   }
 };
 
@@ -250,18 +249,16 @@ TEST_F(DsrUtilTest, bridgeGetGraph) {
 
   std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-  // Get the nodes and edges
-  std::vector<dsr_msgs::msg::Node> nodes_msg;
-  std::vector<dsr_msgs::msg::Edge> edges_msg;
-  bridge_node->get_graph_from_dsr(nodes_msg, edges_msg);
-  EXPECT_EQ(nodes_msg.size(), 3);
-  EXPECT_EQ(nodes_msg[0].name, "world");
-  EXPECT_EQ(nodes_msg[1].name, "robot_parent");
-  EXPECT_EQ(nodes_msg[2].name, "robot_child");
-  EXPECT_EQ(edges_msg.size(), 1);
-  EXPECT_EQ(edges_msg[0].parent, "robot_parent");
-  EXPECT_EQ(edges_msg[0].child, "robot_child");
-  EXPECT_EQ(edges_msg[0].type, "is");
+  // Get the graph
+  auto graph_msg = bridge_node->get_graph_from_dsr();
+  EXPECT_EQ(graph_msg.nodes.size(), 3);
+  EXPECT_EQ(graph_msg.nodes[0].name, "world");
+  EXPECT_EQ(graph_msg.nodes[1].name, "robot_parent");
+  EXPECT_EQ(graph_msg.nodes[2].name, "robot_child");
+  EXPECT_EQ(graph_msg.edges.size(), 1);
+  EXPECT_EQ(graph_msg.edges[0].parent, "robot_parent");
+  EXPECT_EQ(graph_msg.edges[0].child, "robot_child");
+  EXPECT_EQ(graph_msg.edges[0].type, "is");
 }
 
 int main(int argc, char ** argv)

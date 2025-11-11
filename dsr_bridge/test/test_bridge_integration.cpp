@@ -1042,8 +1042,8 @@ TEST_F(DsrUtilTest, bridgeIntegrationGetGraphService) {
   }
 
   // Check the results
-  EXPECT_EQ(resp->nodes.size(), 3);
-  EXPECT_EQ(resp->edges.size(), 1);
+  EXPECT_EQ(resp->graph.nodes.size(), 3);
+  EXPECT_EQ(resp->graph.edges.size(), 1);
 
   // Deactivate the nodes
   bridge_node->deactivate();

@@ -2,5 +2,4 @@
 
 
 ---
-Node[]      nodes # Nodes in the graph
-Edge[]      edges # Edges are directed from the source node to the target node
+dsr_msgs/Graph graph

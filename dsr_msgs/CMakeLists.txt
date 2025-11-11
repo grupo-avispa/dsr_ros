@@ -57,6 +57,7 @@ find_package(std_msgs REQUIRED)
 # ###############################################
 set(msg_files
   "msg/Edge.msg"
+  "msg/Graph.msg"
   "msg/Node.msg"
 )
 

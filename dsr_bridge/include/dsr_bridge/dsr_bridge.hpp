@@ -220,13 +220,11 @@ protected:
   void sync_graph();
 
   /**
-   * @brief Get the nodes and edges from the DSR graph.
+   * @brief Get the graph from the DSR in ROS 2 message format.
    *
-   * @param nodes_msg The nodes in the DSR graph in ROS 2 message format.
-   * @param edges_msg The edges in the DSR graph in ROS 2 message format.
+   * @return dsr_msgs::msg::Graph The graph in ROS 2 message format.
    */
-  void get_graph_from_dsr(
-    std::vector<dsr_msgs::msg::Node> & nodes_msg, std::vector<dsr_msgs::msg::Edge> & edges_msg);
+  dsr_msgs::msg::Graph get_graph_from_dsr();
 
   // Subscribers and publishers for the ROS 2 topics (nodes and edges)
   rclcpp::Subscription<dsr_msgs::msg::Node>::SharedPtr node_from_ros_sub_;
