@@ -49,6 +49,7 @@ jobs:
           done
       - name: Verify ROS Python tooling
         run: |
+          source /opt/ros/jazzy/setup.bash
           if ! python3 -c "import ament_package" 2>/dev/null; then
             echo "::warning::ament_package not importable, reinstalling ros-jazzy-ament-package"
             sudo apt-get install --reinstall -y ros-jazzy-ament-package
