@@ -16,11 +16,11 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    container:
+      image: ros:jazzy
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
-      - name: Setup ROS 2
-        uses: ros-tooling/setup-ros@0.7.19
       - name: Install Cortex
         run: |
           mkdir $CORTEX_PATH && cd $CORTEX_PATH
