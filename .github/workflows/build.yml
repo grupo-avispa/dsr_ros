@@ -27,6 +27,33 @@ jobs:
           curl -o installation.sh https://raw.githubusercontent.com/grupo-avispa/cortex/development/installation.sh
           chmod +x installation.sh
           ./installation.sh
+      - name: Cache APT packages
+        uses: actions/cache@v4.2.0
+        with:
+          path: ${{ github.workspace }}/.apt-cache/archives
+          key: ${{ runner.os }}-jazzy-apt-${{ hashFiles('**/package.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-jazzy-apt-
+      - name: Install ROS dependencies (rosdep)
+        run: |
+          sudo mkdir -p "$GITHUB_WORKSPACE/.apt-cache/archives/partial"
+          echo 'Dir::Cache::Archives "'"$GITHUB_WORKSPACE"'/.apt-cache/archives";' | sudo tee /etc/apt/apt.conf.d/99-workspace-archives >/dev/null
+          sudo apt-get update
+          rosdep update --rosdistro jazzy
+          for attempt in 1 2 3; do
+            if rosdep install --from-paths . --ignore-src -r -y --rosdistro jazzy; then
+              break
+            fi
+            echo "rosdep install failed (attempt $attempt/3), retrying in 5s..."
+            sleep 5
+          done
+      - name: Verify ROS Python tooling
+        run: |
+          if ! python3 -c "import ament_package" 2>/dev/null; then
+            echo "::warning::ament_package not importable, reinstalling ros-jazzy-ament-package"
+            sudo apt-get install --reinstall -y ros-jazzy-ament-package
+          fi
+          python3 -c "import ament_package; print('ament_package OK:', ament_package.__file__)"
       - name: Install dependencies
         uses: ros-tooling/action-ros-ci@0.4.8
         with:
@@ -38,6 +65,7 @@ jobs:
             dsr_rqt_plugin
             dsr_util
           target-ros2-distro: jazzy
+          skip-rosdep-install: true
           colcon-defaults: |
             {
               "build": {
